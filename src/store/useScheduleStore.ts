@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import type { Schedule } from "../types/schedule";
-import { loadSchedules, saveSchedules } from "../utils/storage";
+import { persistSchedulesToAllPlaces } from "../utils/schedulePersistence";
 
 type ScheduleInput = Omit<Schedule, "id"> & { id?: string };
 
 function persist(schedules: Schedule[]): void {
-  saveSchedules(schedules);
+  persistSchedulesToAllPlaces(schedules);
 }
 
 export const useScheduleStore = create<{
@@ -14,7 +14,7 @@ export const useScheduleStore = create<{
   updateSchedule: (schedule: Schedule) => void;
   removeSchedule: (id: string) => void;
 }>()((set, get) => ({
-  schedules: loadSchedules(),
+  schedules: [],
 
   addSchedule: (input) => {
     const id = input.id ?? crypto.randomUUID();

@@ -1,30 +1,43 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Calendar } from "./components/Calendar";
 import { DaySchedulesModal } from "./components/DaySchedulesModal";
 import { Fab } from "./components/Fab";
 import { InboxSidebar } from "./components/InboxSidebar";
 import { ScheduleFormModal } from "./components/ScheduleFormModal";
+import { SettingsDock } from "./components/SettingsDock";
 import { useScheduleStore } from "./store/useScheduleStore";
 import type { Schedule } from "./types/schedule";
 import { isInboxSchedule } from "./types/schedule";
+import { schedulesForDate } from "./utils/calendarQueries";
 import { dayjs, parseDateKey, toDateKey } from "./utils/date";
-import { sortSchedulesForDay } from "./utils/sortSchedules";
+import { bootstrapSchedules } from "./utils/schedulePersistence";
 
 type FormMode =
   | { kind: "add"; defaultDate: string | null }
   | { kind: "edit"; schedule: Schedule };
-
-function schedulesForDate(schedules: Schedule[], dateKey: string): Schedule[] {
-  return schedules
-    .filter((s) => s.date === dateKey)
-    .sort(sortSchedulesForDay);
-}
 
 export default function App() {
   const schedules = useScheduleStore((s) => s.schedules);
   const addSchedule = useScheduleStore((s) => s.addSchedule);
   const updateSchedule = useScheduleStore((s) => s.updateSchedule);
   const removeSchedule = useScheduleStore((s) => s.removeSchedule);
+
+  const [bootReady, setBootReady] = useState(false);
+  const [jsonFromServer, setJsonFromServer] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const r = await bootstrapSchedules();
+      if (!alive) return;
+      useScheduleStore.setState({ schedules: r.schedules });
+      setJsonFromServer(r.jsonFromServer);
+      setBootReady(true);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const [cursor, setCursor] = useState(() => dayjs());
   const [dayModalDate, setDayModalDate] = useState<string | null>(null);
@@ -66,50 +79,23 @@ export default function App() {
     setFormMode({ kind: "add", defaultDate });
   };
 
-  const handleFab = () => {
-    openAddForm(lastPickedDate);
-  };
-
-  const handleSaveSchedule = (schedule: Schedule) => {
-    const exists = schedules.some((s) => s.id === schedule.id);
-    if (exists) {
-      updateSchedule(schedule);
-    } else {
-      addSchedule(schedule);
-    }
-  };
-
   const clearDragUi = () => {
     setDropHighlightKey(null);
     setInboxDropActive(false);
-  };
-
-  const handleDropInboxSchedule = (scheduleId: string, dateKey: string) => {
-    const s = schedules.find((x) => x.id === scheduleId);
-    if (!s || !isInboxSchedule(s)) return;
-    updateSchedule({
-      ...s,
-      date: dateKey,
-      startTime: "",
-      endTime: "",
-    });
-  };
-
-  const handleDropScheduleToInbox = (scheduleId: string) => {
-    const s = schedules.find((x) => x.id === scheduleId);
-    if (!s || isInboxSchedule(s)) return;
-    updateSchedule({
-      ...s,
-      date: "",
-      startTime: "",
-      endTime: "",
-    });
   };
 
   const handleCalendarDropHighlight = (key: string | null) => {
     setDropHighlightKey(key);
     if (key !== null) setInboxDropActive(false);
   };
+
+  if (!bootReady) {
+    return (
+      <div className="flex h-full min-h-0 items-center justify-center bg-watson-bg text-watson-muted">
+        正在加载日程数据…
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
@@ -120,7 +106,11 @@ export default function App() {
         onEdit={(s) => setFormMode({ kind: "edit", schedule: s })}
         onDelete={(id) => removeSchedule(id)}
         onDragEnd={clearDragUi}
-        onDropScheduleToInbox={handleDropScheduleToInbox}
+        onDropScheduleToInbox={(scheduleId) => {
+          const s = schedules.find((x) => x.id === scheduleId);
+          if (!s || isInboxSchedule(s)) return;
+          updateSchedule({ ...s, date: "", startTime: "", endTime: "" });
+        }}
         onInboxAsDropTargetEnter={() => {
           setDropHighlightKey(null);
           setInboxDropActive(true);
@@ -138,11 +128,21 @@ export default function App() {
           schedulesByDate={schedulesByDate}
           dropHighlightKey={dropHighlightKey}
           onDropHighlightChange={handleCalendarDropHighlight}
-          onDropInboxSchedule={handleDropInboxSchedule}
+          onDropInboxSchedule={(scheduleId, dateKey) => {
+            const s = schedules.find((x) => x.id === scheduleId);
+            if (!s || !isInboxSchedule(s)) return;
+            updateSchedule({
+              ...s,
+              date: dateKey,
+              startTime: "",
+              endTime: "",
+            });
+          }}
           onScheduleDragEnd={clearDragUi}
         />
       </main>
-      <Fab onClick={handleFab} />
+      <Fab onClick={() => openAddForm(lastPickedDate)} />
+      <SettingsDock schedules={schedules} jsonFromServer={jsonFromServer} />
 
       <DaySchedulesModal
         open={dayModalDate !== null}
@@ -167,7 +167,11 @@ export default function App() {
         open={formMode !== null}
         mode={formMode}
         onClose={() => setFormMode(null)}
-        onSave={handleSaveSchedule}
+        onSave={(schedule) => {
+          const exists = schedules.some((s) => s.id === schedule.id);
+          if (exists) updateSchedule(schedule);
+          else addSchedule(schedule);
+        }}
       />
     </div>
   );
