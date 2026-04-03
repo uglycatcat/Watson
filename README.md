@@ -14,6 +14,17 @@ React 18、TypeScript、Vite 5、Tailwind CSS 3、Zustand、dayjs。
 
 ## 使用方式
 
+根目录脚本会打开 `http://127.0.0.1:4173/`：
+
+- **完整**（`--full` / 选 1）：`npm install` → `npm run build` → `npx vite preview`
+- **快速**（`--quick` / 选 2）：**仅** `npx vite preview`（需已有 `dist/` 与 `node_modules/`，否则请先完整一次）
+
+**Ubuntu / Linux**：`chmod +x start.sh` 后 `./start.sh`，或 `./start.sh --full` / `--quick`；`--help`；停止用 **Ctrl+C**。
+
+**Windows**：`start.bat`（12 秒内未选默认 **快速**），或 `start.bat --full` / `--quick`；关闭 **Watson Preview** 窗口即停止。
+
+也可手动：
+
 ```bash
 npm install
 npm run preview
