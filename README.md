@@ -16,9 +16,8 @@
 
 ## 约定
 
-- 代码风格与协作红线见 `coding_style.md`（Cursor 通过 `.cursor/rules/coding-style.mdc` 自动加载）。
 - 密钥 / Token / 服务地址放入 `config.yaml` 或 `.env`，**不纳入版本控制**（见 `.gitignore`），并提供脱敏的 `config.example.*`。
-- `.cursor/` 已加入 `.gitignore`（可能含凭证），仅 `.cursor/rules/` 手动纳入以共享风格规则。
+- `.cursor/` 已加入 `.gitignore`（可能含凭证）。
 
 ## 环境
 

@@ -7,9 +7,7 @@ config.yaml
 !.env.example
 
 # === Cursor agent folder (may store credentials/tokens — Spec Kit advisory) ===
-# 整个 .cursor/ 默认忽略，但保留 rules/（共享代码风格规则，无凭证）
-.cursor/*
-!.cursor/rules/
+.cursor/
 
 # === OS / editor ===
 .DS_Store
