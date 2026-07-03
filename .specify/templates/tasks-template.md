@@ -61,14 +61,16 @@ description: "Task list template for feature implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-Examples of foundational tasks (adjust based on your project):
+Examples of foundational tasks (Watson constitution — adjust per feature plan):
 
 - [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T005 [P] Implement single-user authentication and session middleware (Principle I)
+- [ ] T006 [P] Setup API routing with auth guards on all protected routes
+- [ ] T007 Create Schedule Card base model (time nature, importance, urgency) (Principle IV)
+- [ ] T008 [P] Setup environment/config loading; add config.example.* with redacted secrets (Principle II)
+- [ ] T009 [P] Implement pluggable LLM provider abstraction (Principle III)
+- [ ] T010 Configure error handling and logging (no secret leakage in logs)
+- [ ] T011 [P] Setup responsive web shell (Cursor-style layout, light/dark theme) (Principle V)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

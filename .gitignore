@@ -33,6 +33,13 @@ node_modules/
 npm-debug.log*
 yarn-error.log*
 .pnpm-store/
+dist/
+frontend/dist/
+data/
+*.tsbuildinfo
+
+# === Watson runtime ===
+config.yaml
 
 # === Logs / temp ===
 *.log

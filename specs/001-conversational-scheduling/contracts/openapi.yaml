@@ -1,0 +1,417 @@
+openapi: 3.1.0
+info:
+  title: Watson API
+  version: 0.1.0
+  description: |
+    单用户对话式日程管理 API。
+    认证：登录后 HttpOnly session cookie（除 `/api/auth/login`、`/api/health`）。
+servers:
+  - url: /
+    description: Same-origin (Fastify serves API + static)
+
+tags:
+  - name: auth
+  - name: schedule
+  - name: chat
+  - name: preferences
+  - name: sync
+
+paths:
+  /api/health:
+    get:
+      tags: [auth]
+      summary: 健康检查（无需认证）
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: 访问令牌交换会话
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: 部署时生成的 WATSON_ACCESS_TOKEN
+      responses:
+        '200':
+          description: 认证成功，Set-Cookie session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthOk'
+        '401':
+          description: 令牌无效
+        '429':
+          description: 速率限制
+
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: 登出，清除 session
+      security: [{ sessionCookie: [] }]
+      responses:
+        '204':
+          description: 已登出
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: 当前会话状态
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthOk'
+        '401':
+          description: 未认证
+
+  /api/cards:
+    get:
+      tags: [schedule]
+      summary: 列表/范围查询
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: view
+          in: query
+          schema: { type: string, enum: [day, week, month, all] }
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+          description: 锚定日期（day/week/month）
+        - name: categoryId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: importance
+          in: query
+          schema: { $ref: '#/components/schemas/PriorityLevel' }
+        - name: urgency
+          in: query
+          schema: { $ref: '#/components/schemas/PriorityLevel' }
+        - name: timeNature
+          in: query
+          schema: { $ref: '#/components/schemas/TimeNature' }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [time, priority] }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ScheduleCard' }
+    post:
+      tags: [schedule]
+      summary: 直接创建卡片（供内部/tool；前端优先走 chat）
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleCardInput' }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleCard' }
+
+  /api/cards/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [schedule]
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleCard' }
+        '404':
+          description: 不存在
+    patch:
+      tags: [schedule]
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleCardPatch' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleCard' }
+    delete:
+      tags: [schedule]
+      security: [{ sessionCookie: [] }]
+      responses:
+        '204':
+          description: 已删除
+
+  /api/categories:
+    get:
+      tags: [schedule]
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+    post:
+      tags: [schedule]
+      summary: 新增分类
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 32 }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '409':
+          description: 分类已存在（CI）
+
+  /api/chat/sessions:
+    post:
+      tags: [chat]
+      summary: 创建聊天会话
+      security: [{ sessionCookie: [] }]
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatSession' }
+
+  /api/chat/sessions/{sessionId}/messages:
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [chat]
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChatMessage' }
+    post:
+      tags: [chat]
+      summary: 发送用户消息，触发 LLM 编排
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, maxLength: 4000 }
+      responses:
+        '200':
+          description: 助手回复 + 可能的卡片变更
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatResponse' }
+        '503':
+          description: LLM 未配置或不可用
+
+  /api/preferences:
+    get:
+      tags: [preferences]
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnerPreferences' }
+    patch:
+      tags: [preferences]
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OwnerPreferencesPatch' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OwnerPreferences' }
+
+  /api/sync:
+    get:
+      tags: [sync]
+      summary: 标签页激活时增量同步
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - name: since
+          in: query
+          schema: { type: string, format: date-time }
+          description: 上次同步时间；省略则全量
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncPayload' }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: watson_session
+
+  schemas:
+    PriorityLevel:
+      type: string
+      enum: [high, medium, low]
+    TimeNature:
+      type: string
+      enum: [duration, deadline]
+
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        isPreset: { type: boolean }
+
+    ScheduleCard:
+      type: object
+      required: [id, title, timeNature, importance, urgency, categoryId, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        timeNature: { $ref: '#/components/schemas/TimeNature' }
+        startAt: { type: string, format: date-time, nullable: true }
+        endAt: { type: string, format: date-time, nullable: true }
+        deadlineAt: { type: string, format: date-time, nullable: true }
+        importance: { $ref: '#/components/schemas/PriorityLevel' }
+        urgency: { $ref: '#/components/schemas/PriorityLevel' }
+        categoryId: { type: string, format: uuid }
+        categoryName: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    ScheduleCardInput:
+      type: object
+      required: [title, timeNature, categoryId]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        timeNature: { $ref: '#/components/schemas/TimeNature' }
+        startAt: { type: string, format: date-time }
+        endAt: { type: string, format: date-time }
+        deadlineAt: { type: string, format: date-time }
+        importance: { $ref: '#/components/schemas/PriorityLevel' }
+        urgency: { $ref: '#/components/schemas/PriorityLevel' }
+        categoryId: { type: string, format: uuid }
+
+    ScheduleCardPatch:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        timeNature: { $ref: '#/components/schemas/TimeNature' }
+        startAt: { type: string, format: date-time, nullable: true }
+        endAt: { type: string, format: date-time, nullable: true }
+        deadlineAt: { type: string, format: date-time, nullable: true }
+        importance: { $ref: '#/components/schemas/PriorityLevel' }
+        urgency: { $ref: '#/components/schemas/PriorityLevel' }
+        categoryId: { type: string, format: uuid }
+
+    OwnerPreferences:
+      type: object
+      properties:
+        dueSoonDays: { type: integer, minimum: 1, maximum: 90, default: 7 }
+        theme: { type: string, enum: [light, dark, system] }
+        timezone: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    OwnerPreferencesPatch:
+      type: object
+      properties:
+        dueSoonDays: { type: integer, minimum: 1, maximum: 90 }
+        theme: { type: string, enum: [light, dark, system] }
+        timezone: { type: string }
+
+    ChatSession:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [user, assistant, system] }
+        content: { type: string }
+        relatedCardId: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    ChatResponse:
+      type: object
+      properties:
+        message: { $ref: '#/components/schemas/ChatMessage' }
+        affectedCards:
+          type: array
+          items: { $ref: '#/components/schemas/ScheduleCard' }
+        pendingConfirmation:
+          type: boolean
+          description: true 当等待删除确认
+
+    SyncPayload:
+      type: object
+      properties:
+        serverTime: { type: string, format: date-time }
+        cards:
+          type: array
+          items: { $ref: '#/components/schemas/ScheduleCard' }
+        preferences: { $ref: '#/components/schemas/OwnerPreferences', nullable: true }
+        categories:
+          type: array
+          items: { $ref: '#/components/schemas/Category' }
+
+    AuthOk:
+      type: object
+      properties:
+        authenticated: { type: boolean, example: true }
