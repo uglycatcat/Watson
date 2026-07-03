@@ -1,0 +1,42 @@
+# === Secrets / config (never commit — see coding_style.md 三、结构) ===
+config.yaml
+.env
+.env.*
+*.local
+!config.example.yaml
+!.env.example
+
+# === Cursor agent folder (may store credentials/tokens — Spec Kit advisory) ===
+# 整个 .cursor/ 默认忽略，但保留 rules/（共享代码风格规则，无凭证）
+.cursor/*
+!.cursor/rules/
+
+# === OS / editor ===
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# === Python ===
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# === Node ===
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# === Logs / temp ===
+*.log
+tmp/
+.tmp/
