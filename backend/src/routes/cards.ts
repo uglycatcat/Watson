@@ -5,6 +5,8 @@ import type { PriorityLevel, TimeNature } from "../types.js";
 export async function cardsRoutes(app: FastifyInstance, scheduleService: ScheduleService) {
   app.get("/api/cards", async (request) => {
     const q = request.query as Record<string, string | undefined>;
+    const hasTime =
+      q.hasTime === "true" ? true : q.hasTime === "false" ? false : undefined;
     const items = scheduleService.listAll({
       view: q.view as "day" | "week" | "month" | "all" | undefined,
       date: q.date,
@@ -12,7 +14,8 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       importance: q.importance as PriorityLevel | undefined,
       urgency: q.urgency as PriorityLevel | undefined,
       timeNature: q.timeNature as TimeNature | undefined,
-      sort: q.sort as "time" | "priority" | undefined,
+      hasTime,
+      sort: q.sort as "time" | "priority" | "title" | "createdAt" | undefined,
     });
     return { items };
   });
@@ -27,10 +30,14 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
   app.post("/api/cards", async (request, reply) => {
     const body = request.body as Record<string, unknown>;
     try {
+      const timeNature =
+        body.timeNature === null || body.timeNature === undefined
+          ? null
+          : (body.timeNature as TimeNature);
       const card = scheduleService.create({
-        title: String(body.title),
+        title: String(body.title ?? ""),
         description: body.description ? String(body.description) : null,
-        timeNature: body.timeNature as TimeNature,
+        timeNature,
         startAt: body.startAt ? String(body.startAt) : null,
         endAt: body.endAt ? String(body.endAt) : null,
         deadlineAt: body.deadlineAt ? String(body.deadlineAt) : null,
@@ -50,18 +57,24 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
     const { id } = request.params as { id: string };
     const body = request.body as Record<string, unknown>;
     try {
-      const card = scheduleService.update(id, {
-        title: body.title ? String(body.title) : undefined,
-        description: body.description !== undefined ? String(body.description) : undefined,
-        timeNature: body.timeNature as TimeNature | undefined,
-        startAt: body.startAt !== undefined ? String(body.startAt) : undefined,
-        endAt: body.endAt !== undefined ? String(body.endAt) : undefined,
-        deadlineAt: body.deadlineAt !== undefined ? String(body.deadlineAt) : undefined,
-        importance: body.importance as PriorityLevel | undefined,
-        urgency: body.urgency as PriorityLevel | undefined,
-        categoryId: body.categoryId ? String(body.categoryId) : undefined,
-        categoryName: body.categoryName ? String(body.categoryName) : undefined,
-      });
+      const patch: Parameters<ScheduleService["update"]>[1] = {};
+      if (body.title !== undefined) patch.title = String(body.title);
+      if (body.description !== undefined) patch.description = String(body.description);
+      if ("timeNature" in body) {
+        patch.timeNature =
+          body.timeNature === null ? null : (body.timeNature as TimeNature);
+      }
+      if (body.startAt !== undefined) patch.startAt = body.startAt ? String(body.startAt) : null;
+      if (body.endAt !== undefined) patch.endAt = body.endAt ? String(body.endAt) : null;
+      if (body.deadlineAt !== undefined) {
+        patch.deadlineAt = body.deadlineAt ? String(body.deadlineAt) : null;
+      }
+      if (body.importance !== undefined) patch.importance = body.importance as PriorityLevel;
+      if (body.urgency !== undefined) patch.urgency = body.urgency as PriorityLevel;
+      if (body.categoryId !== undefined) patch.categoryId = String(body.categoryId);
+      if (body.categoryName !== undefined) patch.categoryName = String(body.categoryName);
+
+      const card = scheduleService.update(id, patch);
       if (!card) return reply.status(404).send({ error: "Not found" });
       return card;
     } catch (e) {

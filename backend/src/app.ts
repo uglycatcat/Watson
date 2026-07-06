@@ -55,7 +55,7 @@ export async function buildApp() {
 
   const categoryService = new CategoryService(db);
   const scheduleService = new ScheduleService(db, categoryService);
-  const chatService = new ChatService(db, config, scheduleService, categoryService);
+  const chatService = new ChatService(db, config);
   const syncService = new SyncService(db, scheduleService, categoryService);
 
   const app = Fastify({ logger: process.env.NODE_ENV === "production" });

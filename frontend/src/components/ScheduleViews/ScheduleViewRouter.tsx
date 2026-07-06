@@ -1,18 +1,34 @@
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../lib/api";
 import { DayView } from "./DayView";
 import { WeekView } from "./WeekView";
 import { MonthView } from "./MonthView";
 import { AllView } from "./AllView";
-import { format } from "date-fns";
+import { todayInTz, DEFAULT_TIMEZONE } from "../calendar/tz";
+import type { ScheduleCard } from "../../lib/api";
 
 export type ViewMode = "day" | "week" | "month" | "all";
 
-export function ScheduleViewRouter({ view, anchorDate }: { view: ViewMode; anchorDate: string }) {
-  if (view === "day") return <DayView date={anchorDate} />;
-  if (view === "week") return <WeekView date={anchorDate} />;
-  if (view === "month") return <MonthView date={anchorDate} />;
-  return <AllView />;
+interface ScheduleViewRouterProps {
+  view: ViewMode;
+  anchorDate: string;
+  onDateChange?: (d: string) => void;
+  onCardClick: (card: ScheduleCard) => void;
+}
+
+export function ScheduleViewRouter({ view, anchorDate, onDateChange, onCardClick }: ScheduleViewRouterProps) {
+  if (view === "day") return <DayView date={anchorDate} onCardClick={onCardClick} />;
+  if (view === "week")
+    return <WeekView date={anchorDate} onDateChange={onDateChange ?? (() => {})} onCardClick={onCardClick} />;
+  if (view === "month") return <MonthView date={anchorDate} onCardClick={onCardClick} />;
+  return <AllView onCardClick={onCardClick} />;
 }
 
 export function todayStr() {
-  return format(new Date(), "yyyy-MM-dd");
+  return todayInTz(DEFAULT_TIMEZONE);
+}
+
+export function useTodayStr() {
+  const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
+  return todayInTz(prefs?.timezone ?? DEFAULT_TIMEZONE);
 }

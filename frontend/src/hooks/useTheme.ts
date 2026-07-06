@@ -1,6 +1,12 @@
-import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { api } from "../lib/api";
+
+export type Theme = "light" | "dark";
+
+function normalizeTheme(raw?: string): Theme {
+  return raw === "dark" ? "dark" : "light";
+}
 
 export function useTheme() {
   const qc = useQueryClient();
@@ -9,26 +15,20 @@ export function useTheme() {
     queryFn: api.getPreferences,
   });
 
+  const theme = normalizeTheme(prefs?.theme);
+
   const mutation = useMutation({
-    mutationFn: (theme: "light" | "dark" | "system") => api.patchPreferences({ theme }),
+    mutationFn: (next: Theme) => api.patchPreferences({ theme: next }),
     onSuccess: (data) => qc.setQueryData(["preferences"], data),
   });
 
   useEffect(() => {
-    const theme = prefs?.theme ?? "system";
-    const root = document.documentElement;
-    const dark =
-      theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    root.classList.toggle("dark", dark);
-  }, [prefs?.theme]);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
-  const cycleTheme = () => {
-    const order: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
-    const current = prefs?.theme ?? "system";
-    const next = order[(order.indexOf(current) + 1) % order.length];
-    mutation.mutate(next);
+  const toggleTheme = () => {
+    mutation.mutate(theme === "light" ? "dark" : "light");
   };
 
-  return { theme: prefs?.theme ?? "system", cycleTheme };
+  return { theme, toggleTheme };
 }

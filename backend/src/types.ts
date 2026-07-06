@@ -5,7 +5,7 @@ export interface ScheduleCardDto {
   id: string;
   title: string;
   description: string | null;
-  timeNature: TimeNature;
+  timeNature: TimeNature | null;
   startAt: string | null;
   endAt: string | null;
   deadlineAt: string | null;

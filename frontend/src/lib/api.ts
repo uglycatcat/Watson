@@ -5,7 +5,7 @@ export interface ScheduleCard {
   id: string;
   title: string;
   description: string | null;
-  timeNature: TimeNature;
+  timeNature: TimeNature | null;
   startAt: string | null;
   endAt: string | null;
   deadlineAt: string | null;
@@ -32,11 +32,42 @@ export interface OwnerPreferences {
   updatedAt: string;
 }
 
+export interface ScheduleCardInput {
+  title: string;
+  description?: string | null;
+  timeNature?: TimeNature | null;
+  startAt?: string | null;
+  endAt?: string | null;
+  deadlineAt?: string | null;
+  importance?: PriorityLevel;
+  urgency?: PriorityLevel;
+  categoryId?: string;
+  categoryName?: string;
+}
+
+export type CardSort = "time" | "priority" | "title" | "createdAt";
+
+export interface CardQueryParams {
+  view?: "day" | "week" | "month" | "all";
+  date?: string;
+  categoryId?: string;
+  importance?: PriorityLevel;
+  urgency?: PriorityLevel;
+  timeNature?: TimeNature;
+  hasTime?: "true" | "false";
+  sort?: CardSort;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  const hasBody = init?.body != null && init.body !== "";
+  if (hasBody && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
   const res = await fetch(path, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
     ...init,
+    headers,
   });
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => ({}));
@@ -53,10 +84,16 @@ export const api = {
     }),
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<{ authenticated: boolean }>("/api/auth/me"),
-  getCards: (params?: Record<string, string>) => {
-    const q = new URLSearchParams(params).toString();
+  getCards: (params?: CardQueryParams | Record<string, string>) => {
+    const q = new URLSearchParams(params as Record<string, string>).toString();
     return request<{ items: ScheduleCard[] }>(`/api/cards${q ? `?${q}` : ""}`);
   },
+  getCardById: (id: string) => request<ScheduleCard>(`/api/cards/${id}`),
+  createCard: (body: ScheduleCardInput) =>
+    request<ScheduleCard>("/api/cards", { method: "POST", body: JSON.stringify(body) }),
+  updateCard: (id: string, body: Partial<ScheduleCardInput>) =>
+    request<ScheduleCard>(`/api/cards/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteCard: (id: string) => request<void>(`/api/cards/${id}`, { method: "DELETE" }),
   getCategories: () => request<{ items: { id: string; name: string; isPreset: boolean }[] }>("/api/categories"),
   getPreferences: () => request<OwnerPreferences>("/api/preferences"),
   patchPreferences: (body: Partial<OwnerPreferences>) =>

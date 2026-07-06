@@ -13,8 +13,9 @@ export const scheduleCards = sqliteTable(
   {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
+    titleLower: text("title_lower").notNull().unique(),
     description: text("description"),
-    timeNature: text("time_nature", { enum: ["duration", "deadline"] }).notNull(),
+    timeNature: text("time_nature", { enum: ["duration", "deadline"] }),
     startAt: text("start_at"),
     endAt: text("end_at"),
     deadlineAt: text("deadline_at"),
