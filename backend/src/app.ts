@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
-import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { loadConfig } from "./config/index.js";
 import { getDb, runMigrations } from "./db/index.js";
@@ -75,7 +74,7 @@ export async function buildApp() {
       httpOnly: true,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
-      maxAge: config.session.ttl_days * 86400,
+      // 会话 cookie：关闭浏览器后失效，与前端 sessionStorage 验证码门禁一致
     });
     return this;
   });
@@ -85,12 +84,9 @@ export async function buildApp() {
     return this;
   });
 
-  registerAuthHook(app, config);
+  registerAuthHook(app);
 
-  await app.register(async (scope) => {
-    await scope.register(rateLimit, { max: 5, timeWindow: "1 minute" });
-    await authRoutes(scope, config);
-  });
+  await authRoutes(app);
 
   await cardsRoutes(app, scheduleService);
   await categoriesRoutes(app, categoryService);

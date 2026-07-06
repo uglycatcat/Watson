@@ -1,26 +1,37 @@
 import type { FastifyInstance } from "fastify";
-import type { AppConfig } from "../config/index.js";
+import rateLimit from "@fastify/rate-limit";
+import { verifyAccessCode } from "../auth/access-code.js";
 
-export async function authRoutes(app: FastifyInstance, config: AppConfig) {
+export async function authRoutes(app: FastifyInstance) {
+  await app.register(rateLimit, {
+    global: false,
+  });
+
   app.get("/api/health", async () => ({ status: "ok" }));
 
-  app.post("/api/auth/login", async (request, reply) => {
-    const body = request.body as { token?: string };
-    if (!body.token) {
-      return reply.status(400).send({ error: "Token required" });
+  app.post(
+    "/api/auth/login",
+    {
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+    const body = request.body as { code?: string };
+    if (!body.code?.trim()) {
+      return reply.status(400).send({ error: "Code required" });
     }
-    if (!config.accessTokenHash) {
-      return reply.status(503).send({ error: "Server not initialized. Run npm run watson:init" });
-    }
-    const bcrypt = await import("bcrypt");
-    const valid = await bcrypt.default.compare(body.token, config.accessTokenHash);
-    if (!valid) {
-      return reply.status(401).send({ error: "Invalid token" });
+    if (!verifyAccessCode(body.code)) {
+      return reply.status(401).send({ error: "Invalid code" });
     }
     request.session = { authenticated: true, authenticatedAt: new Date().toISOString() };
     reply.setSessionCookie(request.session);
     return { authenticated: true };
-  });
+    },
+  );
 
   app.post("/api/auth/logout", async (request, reply) => {
     request.session = {};

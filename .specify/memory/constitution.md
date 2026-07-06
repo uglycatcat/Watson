@@ -1,20 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: (unfilled template) → 1.0.0
-- Modified principles: N/A (initial ratification)
-- Added sections:
-  - Core Principles (5)
-  - Technology & Scope Constraints
-  - Spec-Driven Development Workflow
-  - Governance
-- Removed sections: Template placeholders
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - I. 单用户安全第一 — 鉴权方案由「访问令牌 + watson:init」改为「四字符验证码 + HttpOnly 会话」
+  - II. 密钥外置 — 明确 LLM 等第三方密钥外置；访问验证码可通过 WATSON_ACCESS_CODE 环境变量覆盖（默认 ANNA）
+- Added sections: none
+- Removed sections: none (Technology & Scope 中 AI 交互范围仍待后续修正案与 003 对齐)
 - Templates requiring updates:
-  - ✅ updated: .specify/templates/plan-template.md (Constitution Check gates)
-  - ✅ updated: .specify/templates/tasks-template.md (foundational task examples)
-  - ✅ no change needed: .specify/templates/spec-template.md (generic structure remains valid)
-  - N/A: .specify/templates/commands/ (directory does not exist)
-  - ✅ no change needed: README.md, setup.md (already aligned with principles)
-- Follow-up TODOs: none
+  - ✅ updated: .specify/memory/constitution.md (this file)
+  - ✅ updated: README.md, setup.md, .env.example
+  - ⚠ historical: specs/001-* 仍描述旧令牌方案，以本宪法与当前实现为准
+- Follow-up TODOs: 可选 MINOR 修正案同步 AI 交互范围（003 纯聊天）
 -->
 
 # Watson Constitution
@@ -28,19 +24,20 @@ Watson 部署在公网，但 MUST 确保**只有项目所有者本人**能访问
 - 鉴权与会话是一等公民需求，NOT 附加项；任何功能设计 MUST 在受保护会话下运行。
 - 未授权访问（含仅凭 URL 即可读写数据）MUST 视为**严重缺陷**，优先级高于功能交付。
 - 多设备（手机 / 平板 / PC）登录 MUST 归属于同一所有者，NOT 多用户或协作场景。
-- 具体鉴权方案（强密码 + 会话、单用户凭证、设备白名单、双因素等）在 spec / plan 阶段确定，
-  但安全目标不可妥协。
+- **鉴权方案（当前）**：登录页输入 **四字符验证码**（默认 `ANNA`，可通过 `WATSON_ACCESS_CODE` 环境变量覆盖）；校验通过后签发 **HttpOnly + SameSite=Strict** 会话 cookie；所有 `/api/*`（除 login/health）MUST 经会话中间件保护；login 端点 SHOULD 限流防暴力尝试。
+- **已废弃**：`watson:init` / `WATSON_ACCESS_TOKEN_HASH` / 长随机访问令牌方案 MUST NOT 在新功能或文档中重新引入，除非经宪法 MAJOR 修订明确恢复。
 
 **Rationale**：Watson 是个人私有日程中枢，公网可达性与数据私密性必须同时成立；安全失败即产品失败。
 
 ### II. 密钥外置
 
-所有 API Key、Token、服务地址（含 LLM `BASE_URL`）MUST 通过配置文件或环境变量注入。
+所有 **第三方** API Key、Token、服务地址（含 LLM `BASE_URL`）MUST 通过配置文件或环境变量注入。
 
-- 代码中 MUST NOT 硬编码密钥、Token 或服务端点。
+- 代码中 MUST NOT 硬编码 LLM 密钥、Token 或服务端点。
 - 密钥文件（如 `config.yaml`、`.env`）MUST NOT 纳入版本控制；`.gitignore` MUST 覆盖它们。
 - 仓库 MUST 提供脱敏的示例配置（如 `config.example.yaml`、`.env.example`），便于部署与 onboarding。
 - 日志、错误信息、前端资源 MUST NOT 泄露密钥或完整凭证。
+- 单用户访问验证码默认值为 `ANNA`；生产环境 SHOULD 通过 `WATSON_ACCESS_CODE` 覆盖默认值。
 
 **Rationale**：密钥外置是可审计、可轮换、可部署的基本前提；泄露一次即永久损害单用户系统的信任。
 
@@ -66,7 +63,7 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 - **紧急程度**：分级（如 高 / 中 / 低），与重要程度构成优先级（如四象限）
 - **内容字段**：标题、描述、分类等（具体字段在 data model 中定义）
 
-视图（日 / 周 / 月 / 全部）、筛选、排序与 AI 操作 MUST 读写同一份卡片模型；AI MUST NOT 绕过卡片结构直接篡改存储。
+视图（日 / 周 / 月 / 全部）、筛选、排序 MUST 读写同一份卡片模型；日程增删改查 MUST 经 UI/API 结构化路径，AI MUST NOT 绕过卡片结构直接篡改存储。
 
 **Rationale**：结构化卡片是自然语言交互与多视图一致性的共同基础；重要度 × 紧急度支撑智能排序而非仅按时间排列。
 
@@ -85,9 +82,9 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 
 - **技术栈**：Node.js 全栈（Web 前端 + 后端）；浏览器直接访问，v1 不含原生 App。
 - **用户模型**：严格单用户；v1 明确排除多用户、协作、共享、第三方日历同步。
-- **UI**：控件排布仿照 Cursor（顶部控制栏 + 主视觉区 + 侧边 AI 聊天栏）；支持明 / 暗主题。
-- **AI 交互范围（v1）**：「你说 AI 做」——自然语言完成日程增删改查；排除主动智能（自动排期、冲突检测、习惯学习）。
-- **部署**：公网服务器单实例部署；安全与密钥原则 MUST 在部署文档中可验证。
+- **UI**：控件排布仿照 Cursor（顶部控制栏 + 主视觉区 + 侧边 AI 聊天栏）；支持明 / 暗主题；登录页为独立全屏验证码体验。
+- **AI 交互范围（当前实现）**：侧边 AI 为**纯文本对话**，不执行日程 CRUD；日程操作经 UI 与 REST API。
+- **部署**：公网服务器单实例部署；安全与会话原则 MUST 在部署文档中可验证。
 
 ## Spec-Driven Development Workflow
 
@@ -113,4 +110,4 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 - **合规审查**：每个 feature 的 plan Phase 0 前与 Phase 1 设计后 MUST 复核 Constitution Check；tasks 中 Foundational 阶段 MUST 覆盖安全、配置外置与卡片模型后再开展用户故事。
 - **运行时指引**：开发约定与环境见 `README.md` §六、§七 及 `setup.md`。
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-03
+**Version**: 1.1.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-06

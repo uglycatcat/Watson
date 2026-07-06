@@ -77,10 +77,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<{ status: string }>("/api/health"),
-  login: (token: string) =>
+  login: (code: string) =>
     request<{ authenticated: boolean }>("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ code }),
     }),
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<{ authenticated: boolean }>("/api/auth/me"),

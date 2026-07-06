@@ -40,7 +40,6 @@ const ConfigSchema = z.object({
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema> & {
-  accessTokenHash: string;
   sessionSecret: string;
 };
 
@@ -56,7 +55,6 @@ function loadYamlConfig(): z.infer<typeof ConfigSchema> {
 
 export function loadConfig(): AppConfig {
   const yaml = loadYamlConfig();
-  const accessTokenHash = process.env.WATSON_ACCESS_TOKEN_HASH ?? "";
   const sessionSecret = process.env.SESSION_SECRET ?? "";
   if (!sessionSecret || sessionSecret.length < 16) {
     if (process.env.NODE_ENV === "production") {
@@ -72,7 +70,6 @@ export function loadConfig(): AppConfig {
       base_url: process.env.LLM_BASE_URL ?? yaml.llm.base_url,
       model: process.env.LLM_MODEL ?? yaml.llm.model,
     },
-    accessTokenHash,
     sessionSecret: sessionSecret || "dev-only-insecure-secret",
     session: {
       ttl_days: Number(process.env.SESSION_TTL_DAYS ?? yaml.session.ttl_days),
