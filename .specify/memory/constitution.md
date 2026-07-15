@@ -1,20 +1,17 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 1.2.0
+- Version change: 1.2.0 → 1.3.0
 - Modified principles:
-  - I. 单用户安全第一 — 收口为「唯一登录方式：四字符验证码 + HttpOnly 会话」；明确排除密码 / 长令牌 / Bearer / 2FA / IP 白名单；清理 watson:init、WATSON_ACCESS_TOKEN_HASH、长随机访问令牌等历史残留（不再以「已废弃」形式保留）
-  - III. AI 能力可插拔 — 正式收敛「AI 能做什么」：侧边 AI 为纯文本对话，MUST NOT 执行日程 CRUD 或触发日程刷新/联动（provider 可插拔机制不变）
-  - IV. 数据以「日程卡片」为核心 — 措辞校正：日程增删改查一律经 UI/API；AI 对话不写入日程存储（避免暗示 AI 仍有写数据通路）
+  - IV. 数据以「日程卡片」为核心 — 取消「时间性质 / 截止型」与「高/中/低」必选表述；改为：时间状态「已安排（有起始时间，结束时间可选）/ 未安排」；重要度与紧急度为 0~10 整数；生命周期（活跃 / 垃圾箱）由 feature 定义。写入路径仍仅 UI/API，AI MUST NOT 写日程。
 - Added sections: none
-- Removed sections: none（Technology & Scope「AI 交互范围」与原则 III 对齐为正式约束，不再是待办）
+- Removed sections: none
 - Templates requiring updates:
   - ✅ updated: .specify/memory/constitution.md (this file)
-  - ⚠ pending (人工同步): README.md（产品愿景仍写 AI 增删改查日程；登录描述基本已对齐，AI 作用需改）
-  - ⚠ pending (人工同步): setup.md（上手叙述与历史 prompt 中「AI 管日程」表述）
-  - ⚠ pending (人工同步): .env.example（若登录/AI 相关注释与 1.2.0 不完全一致则对齐）
-  - ⚠ pending: .specify/templates/plan-template.md、spec-template.md、tasks-template.md（原则引用无需大改；Constitution Check 措辞可顺带核对）
-  - ⚠ historical: specs/001-* 仍描述旧令牌与 AI 操作日程；specs/003-* 已收敛 AI 纯聊天——以本宪法与当前实现为准
-- Follow-up TODOs: none（原「可选 MINOR 修正案同步 AI 交互范围（003 纯聊天）」已由本版完成）
+  - ✅ aligned: specs/004-priority-trash-coordinate（analyze 修复；plan Complexity / T050 修宪项可关闭）
+  - ⚠ pending: .specify/templates/plan-template.md Constitution Check 表「时间性质、高/中/低」字样
+  - ⚠ pending (人工同步): README.md、setup.md（若仍写旧时间性质/三档优先级）
+  - ⚠ historical: specs/001–003 仍可能描述旧模型——以本宪法与 004 为准
+- Follow-up TODOs: none
 -->
 
 # Watson Constitution
@@ -61,16 +58,17 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等 OpenAI 兼容接口）�
 
 所有日程 MUST 以**结构化日程卡片（Schedule Card）**为唯一数据核心，NOT 自由文本或非结构化记录。
 
-每张卡片 MUST 具备以下属性：
+每张卡片 MUST 具备以下属性（字段细则在各 feature 的 data model 中定义）：
 
-- **时间性质**（二选一）：持续型（开始时间 + 结束时间）或截止型（单一 deadline）
-- **重要程度**：分级（如 高 / 中 / 低），用于排序与视觉标识
-- **紧急程度**：分级（如 高 / 中 / 低），与重要程度构成优先级（如四象限）
-- **内容字段**：标题、描述、分类等（具体字段在 data model 中定义）
+- **时间状态**（由时间字段推导，NOT 独立「时间性质」枚举）：**已安排**（所有者填写了起始时间；结束时间可选，形成区间）或 **未安排**（未填写任何时间字段，系统 MUST NOT 代填起始时间）。未安排卡片 MUST 不进入日 / 周 / 月视图，MAY 出现在全部等非日历视图。
+- **重要程度**：整数 **0～10**（含端点），用于排序、视觉标识与坐标/优先级分析
+- **紧急程度**：整数 **0～10**（含端点），与重要程度共同构成优先级（如二维坐标）
+- **内容字段**：标题、描述、分类等
+- **生命周期**（若产品启用垃圾箱）：活跃与归档态（如已完成 / 已删除）MUST 语义统一；常规视图默认只展示活跃卡片
 
-视图（日 / 周 / 月 / 全部）、筛选、排序 MUST 读写同一份卡片模型；日程增删改查 MUST 一律经 UI/API 结构化路径；AI 对话 MUST NOT 写入日程存储。
+视图（日 / 周 / 月 / 全部 / 其他约定视图）、筛选、排序 MUST 读写同一份卡片模型；日程增删改查（含完成、软删、恢复、永久删除）MUST 一律经 UI/API 结构化路径；AI 对话 MUST NOT 写入日程存储。
 
-**Rationale**：结构化卡片是多视图一致性的共同基础；重要度 × 紧急度支撑智能排序而非仅按时间排列。日程写入路径唯一，避免非结构化旁路。
+**Rationale**：结构化卡片是多视图一致性的共同基础；重要度 × 紧急度的数值刻度支撑排序与空间化分析。日程写入路径唯一，避免非结构化旁路。
 
 ### V. 多设备一致体验
 
@@ -115,4 +113,4 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等 OpenAI 兼容接口）�
 - **合规审查**：每个 feature 的 plan Phase 0 前与 Phase 1 设计后 MUST 复核 Constitution Check；tasks 中 Foundational 阶段 MUST 覆盖安全、配置外置与卡片模型后再开展用户故事。
 - **运行时指引**：开发约定与环境见 `README.md` §六、§七 及 `setup.md`。
 
-**Version**: 1.2.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-15
+**Version**: 1.3.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-15

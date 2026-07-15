@@ -1,8 +1,15 @@
-import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 import type { ViewMode } from "../ScheduleViews/ScheduleViewRouter";
 import { GlobalSearch } from "../search/GlobalSearch";
 import type { ScheduleCard } from "../../lib/api";
+
+const NAV_VIEWS = ["day", "week", "month", "all"] as const;
+const VIEW_LABELS: Record<(typeof NAV_VIEWS)[number], string> = {
+  day: "日",
+  week: "周",
+  month: "月",
+  all: "全部",
+};
 
 interface TopBarProps {
   view?: ViewMode;
@@ -35,7 +42,6 @@ export function TopBar({
   searchCards = [],
   onSearchSelect,
 }: TopBarProps) {
-  const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -67,7 +73,7 @@ export function TopBar({
       )}
       {onViewChange && (
         <nav className="flex gap-1 text-sm shrink-0">
-          {(["day", "week", "month", "all"] as ViewMode[]).map((v) => (
+          {NAV_VIEWS.map((v) => (
             <button
               key={v}
               type="button"
@@ -78,12 +84,12 @@ export function TopBar({
                 color: view === v ? "#fff" : "var(--fg)",
               }}
             >
-              {{ day: "日", week: "周", month: "月", all: "全部" }[v]}
+              {VIEW_LABELS[v]}
             </button>
           ))}
         </nav>
       )}
-      {anchorDate && onDateChange && view !== "all" && (
+      {anchorDate && onDateChange && view !== "all" && view !== "trash" && (
         <input
           type="date"
           value={anchorDate}
@@ -93,17 +99,42 @@ export function TopBar({
         />
       )}
       <div className="flex-1" />
-      <button type="button" onClick={toggleTheme} className="text-sm px-2 py-1 rounded border shrink-0" style={{ borderColor: "var(--border)" }}>
-        主题: {theme === "dark" ? "深色" : "浅色"}
+      <button
+        type="button"
+        onClick={() => onViewChange?.("trash")}
+        className="text-sm w-8 h-8 rounded border shrink-0 flex items-center justify-center"
+        style={{
+          borderColor: "var(--border)",
+          background: view === "trash" ? "var(--accent)" : "transparent",
+          color: view === "trash" ? "#fff" : "var(--fg)",
+        }}
+        title="垃圾箱"
+        aria-label="垃圾箱"
+      >
+        🗑
+      </button>
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="text-sm px-2 py-1 rounded border shrink-0"
+        style={{ borderColor: "var(--border)" }}
+      >
+        {theme === "dark" ? "深色" : "浅色"}
       </button>
       {onToggleChat && (
-        <button type="button" onClick={onToggleChat} className="text-sm px-2 py-1 rounded border shrink-0" style={{ borderColor: "var(--border)" }}>
-          {chatOpen ? "隐藏助手" : "显示助手"}
+        <button
+          type="button"
+          onClick={onToggleChat}
+          className="text-sm px-2 py-1 rounded border shrink-0"
+          style={{
+            borderColor: "var(--border)",
+            background: chatOpen ? "var(--accent)" : "var(--bg)",
+            color: chatOpen ? "#fff" : "var(--fg)",
+          }}
+        >
+          AI
         </button>
       )}
-      <button type="button" onClick={() => logout()} className="text-sm px-2 py-1 rounded border shrink-0" style={{ borderColor: "var(--border)" }}>
-        登出
-      </button>
     </header>
   );
 }

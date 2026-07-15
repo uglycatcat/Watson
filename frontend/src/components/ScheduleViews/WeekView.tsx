@@ -8,7 +8,7 @@ import {
   isMultiDay,
   singleDayCardsForCell,
 } from "../calendar/cardPlacement";
-import { SpanBar } from "../calendar/SpanBar";
+import { LANE_HEIGHT, SpanBar } from "../calendar/SpanBar";
 import {
   buildWeekDays,
   DEFAULT_TIMEZONE,
@@ -23,6 +23,9 @@ interface WeekViewProps {
   onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
 }
+
+/** Room for day label + margin inside each cell (keep in sync with label styles) */
+const DAY_HEADER_OFFSET = 36;
 
 export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
@@ -42,10 +45,13 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   const multiDayIds = useMemo(() => new Set(cards.filter((c) => isMultiDay(c, tz)).map((c) => c.id)), [cards, tz]);
   const drawerCards = drawerDate ? cardsForDay(cards, drawerDate, tz) : [];
 
+  const maxLane = segments.reduce((m, s) => Math.max(m, s.lane), -1);
+  const spanBand = maxLane >= 0 ? (maxLane + 1) * LANE_HEIGHT + 4 : 0;
+
   if (isLoading) return <p>加载中…</p>;
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <div className="h-full flex flex-col min-h-0 px-1">
       <div className="flex items-center gap-2 mb-3 shrink-0">
         <h2 className="text-lg font-medium flex-1">周视图</h2>
         <button
@@ -73,37 +79,30 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
           下一周
         </button>
       </div>
-      <div className="flex-1 min-h-0 flex flex-col gap-2">
-      <div className="grid grid-cols-7 gap-2 relative shrink-0 min-h-[28px]">
-        {segments.map((s) => (
-          <SpanBar
-            key={`${s.card.id}-${s.startCol}-${s.endCol}`}
-            card={s.card}
-            startCol={s.startCol}
-            endCol={s.endCol}
-            lane={s.lane}
-            onClick={onCardClick}
-          />
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-2 flex-1 min-h-0">
+      <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 overflow-hidden">
         {days.map((cell) => {
           const chipCards = singleDayCardsForCell(cards, cell.date, tz, multiDayIds);
           const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
           const extra = chipCards.length - visible.length;
+          const hasSpan = segments.some((s) => cardDayInSegment(s, cell.date, days));
           return (
             <div
               key={cell.date}
-              className="min-h-0 h-full border rounded-lg p-2 flex flex-col"
+              className="min-h-0 h-full border rounded-lg px-2.5 pt-3 pb-2 flex flex-col overflow-hidden"
               style={{
                 background: "var(--panel)",
                 borderColor: "var(--border)",
                 outline: cell.isToday ? "2px solid var(--accent)" : undefined,
               }}
             >
-              <div className="text-xs font-medium mb-2 shrink-0">{weekDayLabel(cell.date, tz)}</div>
-              <div className="space-y-1 flex-1 min-h-0 overflow-y-auto">
-                {visible.length === 0 && !segments.some((s) => cardDayInSegment(s, cell.date, days, tz)) ? (
+              <div className="text-sm font-semibold mb-2.5 shrink-0 leading-5">
+                {weekDayLabel(cell.date, tz)}
+              </div>
+              <div
+                className="space-y-1 flex-1 min-h-0 overflow-y-auto"
+                style={{ paddingTop: spanBand }}
+              >
+                {visible.length === 0 && !hasSpan ? (
                   <p className="text-[10px]" style={{ color: "var(--muted)" }}>
                     无安排
                   </p>
@@ -133,7 +132,17 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
             </div>
           );
         })}
-      </div>
+        {segments.map((s) => (
+          <SpanBar
+            key={`${s.card.id}-${s.startCol}-${s.endCol}`}
+            card={s.card}
+            startCol={s.startCol}
+            endCol={s.endCol}
+            lane={s.lane}
+            topOffset={DAY_HEADER_OFFSET + 12}
+            onClick={onCardClick}
+          />
+        ))}
       </div>
       <DayScheduleDrawer
         date={drawerDate}
@@ -149,7 +158,6 @@ function cardDayInSegment(
   s: { startCol: number; endCol: number },
   date: string,
   days: { date: string }[],
-  _tz: string,
 ): boolean {
   const col = days.findIndex((d) => d.date === date);
   return col >= s.startCol && col <= s.endCol;

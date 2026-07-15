@@ -28,7 +28,7 @@ export function CreateCardModal({ open, onClose }: CreateCardModalProps) {
   const [errors, setErrors] = useState<string[]>([]);
   const composingRef = useRef(false);
   const titleRef = useRef<HTMLInputElement>(null);
-  const { createCard } = useCardMutations();
+  const { createCard, isCreating } = useCardMutations();
 
   useEffect(() => {
     if (open && categories.length) {
@@ -80,6 +80,17 @@ export function CreateCardModal({ open, onClose }: CreateCardModalProps) {
           composingRef.current = false;
         }}
       />
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={() => void submit()}
+          disabled={isCreating}
+          className="text-sm px-4 py-1.5 rounded text-white"
+          style={{ background: "var(--accent)" }}
+        >
+          {isCreating ? "创建中…" : "确认"}
+        </button>
+      </div>
     </Modal>
   );
 }

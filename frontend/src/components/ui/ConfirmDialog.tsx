@@ -9,6 +9,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
+  className?: string;
 }
 
 export function ConfirmDialog({
@@ -20,9 +21,10 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   loading,
+  className = "",
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={onCancel} title={title}>
+    <Modal open={open} onClose={onCancel} title={title} className={`max-w-xs ${className}`}>
       <p className="mb-4 text-sm">{message}</p>
       <div className="flex justify-end gap-2">
         <button

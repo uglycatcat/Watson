@@ -1,14 +1,13 @@
 import type { RefObject, KeyboardEvent } from "react";
-import type { PriorityLevel, ScheduleCard, TimeNature } from "../../lib/api";
+import type { ScheduleCard } from "../../lib/api";
+import { PriorityField } from "./PriorityPicker";
 
 export interface CardFormValues {
   title: string;
-  timeNature: TimeNature | null;
   startAt: string;
   endAt: string;
-  deadlineAt: string;
-  importance: PriorityLevel;
-  urgency: PriorityLevel;
+  importance: number;
+  urgency: number;
   categoryId: string;
   description: string;
 }
@@ -18,6 +17,7 @@ interface CardFormFieldsProps {
   onChange: (patch: Partial<CardFormValues>) => void;
   categories: { id: string; name: string }[];
   errors?: string[];
+  readOnly?: boolean;
   titleInputRef?: RefObject<HTMLInputElement | null>;
   onTitleKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   onTitleCompositionStart?: () => void;
@@ -32,13 +32,12 @@ export function CardFormFields({
   onChange,
   categories,
   errors,
+  readOnly,
   titleInputRef,
   onTitleKeyDown,
   onTitleCompositionStart,
   onTitleCompositionEnd,
 }: CardFormFieldsProps) {
-  const hasTime = values.timeNature != null;
-
   return (
     <div className="space-y-3 text-sm">
       {errors?.length ? (
@@ -59,104 +58,47 @@ export function CardFormFields({
           onKeyDown={onTitleKeyDown}
           onCompositionStart={onTitleCompositionStart}
           onCompositionEnd={onTitleCompositionEnd}
+          readOnly={readOnly}
+          disabled={readOnly}
         />
       </label>
-      <fieldset>
-        <legend className="text-[var(--muted)] mb-1">时间</legend>
-        <label className="mr-4">
-          <input
-            type="radio"
-            checked={!hasTime}
-            onChange={() =>
-              onChange({
-                timeNature: null,
-                startAt: "",
-                endAt: "",
-                deadlineAt: "",
-              })
-            }
-          />{" "}
-          无时间
-        </label>
-        <label className="mr-4">
-          <input
-            type="radio"
-            checked={values.timeNature === "duration"}
-            onChange={() => onChange({ timeNature: "duration" })}
-          />{" "}
-          持续型
-        </label>
-        <label>
-          <input
-            type="radio"
-            checked={values.timeNature === "deadline"}
-            onChange={() => onChange({ timeNature: "deadline" })}
-          />{" "}
-          截止型
-        </label>
-      </fieldset>
-      {values.timeNature === "duration" ? (
-        <>
-          <label className="block">
-            <span className="text-[var(--muted)]">开始时间 *</span>
-            <input
-              type="datetime-local"
-              className={inputClass}
-              style={inputStyle}
-              value={values.startAt}
-              onChange={(e) => onChange({ startAt: e.target.value })}
-            />
-          </label>
-          <label className="block">
-            <span className="text-[var(--muted)]">结束时间</span>
-            <input
-              type="datetime-local"
-              className={inputClass}
-              style={inputStyle}
-              value={values.endAt}
-              onChange={(e) => onChange({ endAt: e.target.value })}
-            />
-          </label>
-        </>
-      ) : values.timeNature === "deadline" ? (
+      <fieldset disabled={readOnly}>
+        <legend className="text-[var(--muted)] mb-1">时间（可选）</legend>
         <label className="block">
-          <span className="text-[var(--muted)]">Deadline *</span>
+          <span className="text-[var(--muted)]">开始时间</span>
           <input
             type="datetime-local"
             className={inputClass}
             style={inputStyle}
-            value={values.deadlineAt}
-            onChange={(e) => onChange({ deadlineAt: e.target.value })}
+            value={values.startAt}
+            onChange={(e) => onChange({ startAt: e.target.value })}
           />
         </label>
-      ) : null}
+        <label className="block mt-2">
+          <span className="text-[var(--muted)]">结束时间</span>
+          <input
+            type="datetime-local"
+            className={inputClass}
+            style={inputStyle}
+            value={values.endAt}
+            onChange={(e) => onChange({ endAt: e.target.value })}
+            disabled={!values.startAt}
+          />
+        </label>
+      </fieldset>
       <div className="grid grid-cols-2 gap-2">
-        <label className="block">
-          <span className="text-[var(--muted)]">重要程度</span>
-          <select
-            className={inputClass}
-            style={inputStyle}
-            value={values.importance}
-            onChange={(e) => onChange({ importance: e.target.value as PriorityLevel })}
-          >
-            <option value="high">高</option>
-            <option value="medium">中</option>
-            <option value="low">低</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-[var(--muted)]">紧急程度</span>
-          <select
-            className={inputClass}
-            style={inputStyle}
-            value={values.urgency}
-            onChange={(e) => onChange({ urgency: e.target.value as PriorityLevel })}
-          >
-            <option value="high">高</option>
-            <option value="medium">中</option>
-            <option value="low">低</option>
-          </select>
-        </label>
+        <PriorityField
+          label="重要程度"
+          value={values.importance}
+          onChange={(v) => onChange({ importance: v })}
+          disabled={readOnly}
+        />
+        <PriorityField
+          label="紧急程度"
+          value={values.urgency}
+          onChange={(v) => onChange({ urgency: v })}
+          disabled={readOnly}
+        />
       </div>
       <label className="block">
         <span className="text-[var(--muted)]">分类</span>
@@ -165,6 +107,7 @@ export function CardFormFields({
           style={inputStyle}
           value={values.categoryId}
           onChange={(e) => onChange({ categoryId: e.target.value })}
+          disabled={readOnly}
         >
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -181,6 +124,8 @@ export function CardFormFields({
           rows={2}
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
+          readOnly={readOnly}
+          disabled={readOnly}
         />
       </label>
     </div>
@@ -205,49 +150,24 @@ export function isoToLocalInput(iso: string | null): string {
 export function validateCardForm(values: CardFormValues): string[] {
   const errors: string[] = [];
   if (!values.title.trim()) errors.push("请填写标题");
-  if (values.timeNature === "duration") {
-    if (!values.startAt) errors.push("请填写开始时间");
+  if (values.endAt && !values.startAt) errors.push("填写结束时间需先有开始时间");
+  if (values.startAt && values.endAt) {
     const s = localInputToIso(values.startAt);
-    const e = values.endAt ? localInputToIso(values.endAt) : null;
-    if (s && e && new Date(e) <= new Date(s)) errors.push("结束时间必须晚于开始时间");
-  } else if (values.timeNature === "deadline" && !values.deadlineAt) {
-    errors.push("请填写 deadline");
+    const e = localInputToIso(values.endAt);
+    if (s && e && new Date(e) < new Date(s)) errors.push("结束时间不能早于开始时间");
   }
   return errors;
 }
 
 export function formValuesToInput(values: CardFormValues) {
-  const base = {
+  return {
     title: values.title.trim(),
     importance: values.importance,
     urgency: values.urgency,
     categoryId: values.categoryId || undefined,
     description: values.description.trim() || null,
-  };
-  if (values.timeNature == null) {
-    return {
-      ...base,
-      timeNature: null as null,
-      startAt: null,
-      endAt: null,
-      deadlineAt: null,
-    };
-  }
-  if (values.timeNature === "duration") {
-    return {
-      ...base,
-      timeNature: "duration" as const,
-      startAt: localInputToIso(values.startAt),
-      endAt: values.endAt ? localInputToIso(values.endAt) : null,
-      deadlineAt: null,
-    };
-  }
-  return {
-    ...base,
-    timeNature: "deadline" as const,
-    startAt: null,
-    endAt: null,
-    deadlineAt: localInputToIso(values.deadlineAt),
+    startAt: values.startAt ? localInputToIso(values.startAt) : null,
+    endAt: values.endAt ? localInputToIso(values.endAt) : null,
   };
 }
 
@@ -255,10 +175,8 @@ export function cardToFormValues(card: ScheduleCard, categories: { id: string; n
   const personal = categories.find((c) => c.name === "个人") ?? categories[0];
   return {
     title: card.title,
-    timeNature: card.timeNature,
     startAt: isoToLocalInput(card.startAt),
     endAt: isoToLocalInput(card.endAt),
-    deadlineAt: isoToLocalInput(card.deadlineAt),
     importance: card.importance,
     urgency: card.urgency,
     categoryId: card.categoryId || personal?.id || "",
@@ -270,12 +188,10 @@ export function emptyFormValues(categories: { id: string; name: string }[]): Car
   const personal = categories.find((c) => c.name === "个人") ?? categories[0];
   return {
     title: "",
-    timeNature: null,
     startAt: "",
     endAt: "",
-    deadlineAt: "",
-    importance: "medium",
-    urgency: "medium",
+    importance: 5,
+    urgency: 5,
     categoryId: personal?.id ?? "",
     description: "",
   };
@@ -283,4 +199,22 @@ export function emptyFormValues(categories: { id: string; name: string }[]): Car
 
 export function isTitleConflictError(err: unknown): boolean {
   return err instanceof Error && err.message === "Title already exists";
+}
+
+export function formatCardTimestamp(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+
+export function formValuesEqual(a: CardFormValues, b: CardFormValues): boolean {
+  return (
+    a.title === b.title &&
+    a.startAt === b.startAt &&
+    a.endAt === b.endAt &&
+    a.importance === b.importance &&
+    a.urgency === b.urgency &&
+    a.categoryId === b.categoryId &&
+    a.description === b.description
+  );
 }

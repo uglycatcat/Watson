@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { api, type ScheduleCard } from "../../lib/api";
+import { api, isTrashed, type ScheduleCard } from "../../lib/api";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { Modal } from "../ui/Modal";
+import { CompleteCheckbox } from "./CompleteCheckbox";
 import {
   CardFormFields,
   cardToFormValues,
+  formatCardTimestamp,
+  formValuesEqual,
   formValuesToInput,
   isTitleConflictError,
   validateCardForm,
@@ -25,37 +28,40 @@ function formatTime(iso: string | null) {
   return format(new Date(iso), "yyyy-MM-dd HH:mm");
 }
 
-function levelLabel(l: string) {
-  if (l === "high") return "高";
-  if (l === "low") return "低";
-  return "中";
-}
-
 export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalProps) {
   const { deleteCard, updateCard, isDeleting, isUpdating } = useCardMutations();
   const { data: catData } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
   const categories = catData?.items ?? [];
 
-  const [mode, setMode] = useState<"view" | "edit">("view");
   const [values, setValues] = useState<CardFormValues | null>(null);
+  const [snapshot, setSnapshot] = useState<CardFormValues | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
+  const cardIdRef = useRef<string | null>(null);
+
+  const readOnly = card ? isTrashed(card) : false;
+  const dirty = values && snapshot ? !formValuesEqual(values, snapshot) : false;
 
   useEffect(() => {
-    setMode("view");
-    setErrors([]);
-    setConfirmOpen(false);
-    setDeleteErrorMsg(null);
-    if (card && categories.length) {
-      setValues(cardToFormValues(card, categories));
-    } else {
+    if (!card || !categories.length) {
       setValues(null);
+      setSnapshot(null);
+      cardIdRef.current = null;
+      return;
     }
-  }, [card?.id, categories.length]);
+    const next = cardToFormValues(card, categories);
+    if (cardIdRef.current !== card.id) {
+      cardIdRef.current = card.id;
+      setValues(next);
+      setSnapshot(next);
+      setErrors([]);
+      setConfirmOpen(false);
+      setDeleteErrorMsg(null);
+    }
+  }, [card?.id, card?.updatedAt, categories.length]);
 
   const handleClose = () => {
-    setMode("view");
     setConfirmOpen(false);
     setDeleteErrorMsg(null);
     onClose();
@@ -75,7 +81,11 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
   };
 
   const handleSave = async () => {
-    if (!values) return;
+    if (!values || readOnly) return;
+    if (!dirty) {
+      onClose();
+      return;
+    }
     const v = validateCardForm(values);
     if (v.length) {
       setErrors(v);
@@ -85,7 +95,7 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
     try {
       const updated = await updateCard({ id: card.id, body: formValuesToInput(values) });
       onUpdated?.(updated);
-      setMode("view");
+      onClose();
     } catch (err) {
       if (isTitleConflictError(err)) {
         setErrors(["标题已存在，请使用其他标题"]);
@@ -95,103 +105,113 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
     }
   };
 
+  const handleReset = () => {
+    if (snapshot) {
+      setValues(snapshot);
+      setErrors([]);
+    }
+  };
+
   return (
     <>
-      <Modal open={!!card} onClose={handleClose} title={mode === "edit" ? "编辑日程" : card.title}>
-        {mode === "edit" && values ? (
-          <CardFormFields
-            values={values}
-            onChange={(patch) => setValues((prev) => (prev ? { ...prev, ...patch } : prev))}
-            categories={categories}
-            errors={errors}
-          />
-        ) : (
-          <dl className="space-y-2 text-sm">
-            <div>
-              <dt className="text-[var(--muted)]">时间</dt>
-              <dd>
-                {card.timeNature == null
-                  ? "无时间"
-                  : card.timeNature === "duration"
-                    ? `持续型 · ${formatTime(card.startAt)} – ${formatTime(card.endAt)}`
-                    : `截止型 · ${formatTime(card.deadlineAt)}`}
-              </dd>
+      <Modal
+        open={!!card}
+        onClose={handleClose}
+        title={card.title}
+        className="max-w-md"
+      >
+        <div className="relative">
+          {!readOnly && (
+            <div className="absolute top-0 right-0 -mt-1">
+              <CompleteCheckbox cardId={card.id} onComplete={onClose} />
             </div>
-            <div>
-              <dt className="text-[var(--muted)]">重要程度</dt>
-              <dd>{levelLabel(card.importance)}</dd>
+          )}
+          {readOnly && (
+            <div className="mb-3 flex gap-2 text-xs">
+              {card.status === "completed" && (
+                <span className="px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "#fff" }}>
+                  已完成
+                </span>
+              )}
+              {card.status === "deleted" && (
+                <span className="px-2 py-0.5 rounded bg-red-600 text-white">已删除</span>
+              )}
             </div>
-            <div>
-              <dt className="text-[var(--muted)]">紧急程度</dt>
-              <dd>{levelLabel(card.urgency)}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--muted)]">分类</dt>
-              <dd>{card.categoryName}</dd>
-            </div>
-            {card.description && (
+          )}
+          {values ? (
+            <CardFormFields
+              values={values}
+              onChange={(patch) => setValues((prev) => (prev ? { ...prev, ...patch } : prev))}
+              categories={categories}
+              errors={errors}
+              readOnly={readOnly}
+            />
+          ) : null}
+          {readOnly && (
+            <dl className="mt-2 space-y-1 text-xs" style={{ color: "var(--muted)" }}>
               <div>
-                <dt className="text-[var(--muted)]">描述</dt>
-                <dd className="whitespace-pre-wrap">{card.description}</dd>
+                时间：{card.startAt ? `${formatTime(card.startAt)}${card.endAt ? ` – ${formatTime(card.endAt)}` : ""}` : "未安排"}
               </div>
-            )}
-          </dl>
-        )}
-        <div className="mt-6 flex justify-between gap-2">
-          {mode === "view" ? (
+              {card.trashedAt && <div>移入垃圾箱：{formatCardTimestamp(card.trashedAt)}</div>}
+            </dl>
+          )}
+          <footer className="mt-4 pt-3 border-t text-[10px] space-y-0.5" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+            <div>创建时间：{formatCardTimestamp(card.createdAt)}</div>
+            <div>最后修改时间：{formatCardTimestamp(card.updatedAt)}</div>
+          </footer>
+        </div>
+        <div className="mt-4 flex justify-between gap-2">
+          {!readOnly ? (
             <>
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
-                className="text-sm px-3 py-1.5 rounded border text-red-600 border-red-300"
+                className="text-sm px-3 py-1.5 rounded border text-red-600"
+                style={{ borderColor: "var(--border)" }}
               >
-                删除该日程
+                删除
               </button>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setMode("edit")}
-                  className="text-sm px-3 py-1.5 rounded border"
+                  onClick={handleReset}
+                  disabled={!dirty}
+                  className="text-sm px-3 py-1.5 rounded border disabled:opacity-40"
                   style={{ borderColor: "var(--border)" }}
                 >
-                  编辑
+                  重置
                 </button>
-                <button type="button" onClick={handleClose} className="text-sm px-3 py-1.5 rounded border" style={{ borderColor: "var(--border)" }}>
-                  关闭
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={isUpdating}
+                  className="text-sm px-3 py-1.5 rounded text-white disabled:opacity-40"
+                  style={{ background: "var(--accent)" }}
+                >
+                  {isUpdating ? "保存中…" : "确认"}
                 </button>
               </div>
             </>
           ) : (
-            <>
+            <div className="flex-1 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  setMode("view");
-                  setErrors([]);
-                  if (categories.length) setValues(cardToFormValues(card, categories));
-                }}
+                onClick={handleClose}
                 className="text-sm px-3 py-1.5 rounded border"
                 style={{ borderColor: "var(--border)" }}
               >
-                取消
+                关闭
               </button>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={isUpdating}
-                className="text-sm px-3 py-1.5 rounded text-white"
-                style={{ background: "var(--accent)" }}
-              >
-                {isUpdating ? "保存中…" : "保存"}
-              </button>
-            </>
+            </div>
           )}
         </div>
       </Modal>
       <ConfirmDialog
         open={confirmOpen}
-        title="删除确认"
+        title="删除"
         message={`确定删除「${card.title}」吗？`}
+        confirmLabel="删除"
+        className="max-w-xs"
         onConfirm={handleDelete}
         onCancel={() => {
           setConfirmOpen(false);

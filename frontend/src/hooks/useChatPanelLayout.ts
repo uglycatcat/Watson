@@ -14,15 +14,14 @@ function clampWidth(w: number): number {
   return Math.max(MIN_WIDTH, Math.min(capped, upper));
 }
 
+/** Fresh load/refresh always starts closed (FR-018); width still persisted in localStorage. */
 function readChatOpen(): boolean {
   try {
-    const v = sessionStorage.getItem(CHAT_OPEN_KEY);
-    if (v === "0") return false;
-    if (v === "1") return true;
+    sessionStorage.removeItem(CHAT_OPEN_KEY);
   } catch {
     /* ignore */
   }
-  return true;
+  return false;
 }
 
 function readWidth(): number {

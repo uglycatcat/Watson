@@ -1,20 +1,24 @@
 import type { FastifyInstance } from "fastify";
 import type { ScheduleService } from "../services/schedule.service.js";
-import type { PriorityLevel, TimeNature } from "../types.js";
+
+function parseOptionalInt(value: string | undefined): number | undefined {
+  if (value == null || value === "") return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 export async function cardsRoutes(app: FastifyInstance, scheduleService: ScheduleService) {
   app.get("/api/cards", async (request) => {
     const q = request.query as Record<string, string | undefined>;
-    const hasTime =
-      q.hasTime === "true" ? true : q.hasTime === "false" ? false : undefined;
+    const scheduled =
+      q.scheduled === "true" ? true : q.scheduled === "false" ? false : undefined;
     const items = scheduleService.listAll({
-      view: q.view as "day" | "week" | "month" | "all" | undefined,
+      view: q.view as "day" | "week" | "month" | "all" | "trash" | undefined,
       date: q.date,
       categoryId: q.categoryId,
-      importance: q.importance as PriorityLevel | undefined,
-      urgency: q.urgency as PriorityLevel | undefined,
-      timeNature: q.timeNature as TimeNature | undefined,
-      hasTime,
+      importance: parseOptionalInt(q.importance),
+      urgency: parseOptionalInt(q.urgency),
+      scheduled,
       sort: q.sort as "time" | "priority" | "title" | "createdAt" | undefined,
     });
     return { items };
@@ -30,19 +34,13 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
   app.post("/api/cards", async (request, reply) => {
     const body = request.body as Record<string, unknown>;
     try {
-      const timeNature =
-        body.timeNature === null || body.timeNature === undefined
-          ? null
-          : (body.timeNature as TimeNature);
       const card = scheduleService.create({
         title: String(body.title ?? ""),
         description: body.description ? String(body.description) : null,
-        timeNature,
         startAt: body.startAt ? String(body.startAt) : null,
         endAt: body.endAt ? String(body.endAt) : null,
-        deadlineAt: body.deadlineAt ? String(body.deadlineAt) : null,
-        importance: body.importance as PriorityLevel | undefined,
-        urgency: body.urgency as PriorityLevel | undefined,
+        importance: body.importance != null ? Number(body.importance) : undefined,
+        urgency: body.urgency != null ? Number(body.urgency) : undefined,
         categoryId: body.categoryId ? String(body.categoryId) : undefined,
         categoryName: body.categoryName ? String(body.categoryName) : undefined,
       });
@@ -60,17 +58,10 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       const patch: Parameters<ScheduleService["update"]>[1] = {};
       if (body.title !== undefined) patch.title = String(body.title);
       if (body.description !== undefined) patch.description = String(body.description);
-      if ("timeNature" in body) {
-        patch.timeNature =
-          body.timeNature === null ? null : (body.timeNature as TimeNature);
-      }
       if (body.startAt !== undefined) patch.startAt = body.startAt ? String(body.startAt) : null;
       if (body.endAt !== undefined) patch.endAt = body.endAt ? String(body.endAt) : null;
-      if (body.deadlineAt !== undefined) {
-        patch.deadlineAt = body.deadlineAt ? String(body.deadlineAt) : null;
-      }
-      if (body.importance !== undefined) patch.importance = body.importance as PriorityLevel;
-      if (body.urgency !== undefined) patch.urgency = body.urgency as PriorityLevel;
+      if (body.importance !== undefined) patch.importance = Number(body.importance);
+      if (body.urgency !== undefined) patch.urgency = Number(body.urgency);
       if (body.categoryId !== undefined) patch.categoryId = String(body.categoryId);
       if (body.categoryName !== undefined) patch.categoryName = String(body.categoryName);
 
@@ -83,10 +74,51 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
     }
   });
 
+  app.post("/api/cards/:id/complete", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const card = scheduleService.complete(id);
+      if (!card) return reply.status(404).send({ error: "Not found" });
+      return card;
+    } catch (e) {
+      const err = e as { statusCode?: number; message?: string };
+      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+    }
+  });
+
+  app.post("/api/cards/:id/restore", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const card = scheduleService.restore(id);
+      if (!card) return reply.status(404).send({ error: "Not found" });
+      return card;
+    } catch (e) {
+      const err = e as { statusCode?: number; message?: string };
+      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+    }
+  });
+
+  app.delete("/api/cards/:id/permanent", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const ok = scheduleService.permanentDelete(id);
+      if (!ok) return reply.status(404).send({ error: "Not found" });
+      return reply.status(204).send();
+    } catch (e) {
+      const err = e as { statusCode?: number; message?: string };
+      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+    }
+  });
+
   app.delete("/api/cards/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const ok = scheduleService.delete(id);
-    if (!ok) return reply.status(404).send({ error: "Not found" });
-    return reply.status(204).send();
+    try {
+      const card = scheduleService.delete(id);
+      if (!card) return reply.status(404).send({ error: "Not found" });
+      return card;
+    } catch (e) {
+      const err = e as { statusCode?: number; message?: string };
+      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+    }
   });
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { ScheduleCard } from "../../lib/api";
-import { hasMoreResults, searchTitles } from "./titleSearch";
+import { hasMoreResults, searchTitles, trashStatusLabel } from "./titleSearch";
 
 interface GlobalSearchProps {
   query: string;
@@ -60,23 +60,31 @@ export function GlobalSearch({
             </li>
           ) : (
             <>
-              {results.map(({ card }) => (
-                <li key={card.id}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:opacity-90"
-                    style={{ color: "var(--fg)" }}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      onSelect(card);
-                      onQueryChange("");
-                      onFocusChange?.(false);
-                    }}
-                  >
-                    {card.title}
-                  </button>
-                </li>
-              ))}
+              {results.map(({ card }) => {
+                const label = trashStatusLabel(card);
+                return (
+                  <li key={card.id}>
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:opacity-90 flex items-center gap-2"
+                      style={{ color: "var(--fg)" }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        onSelect(card);
+                        onQueryChange("");
+                        onFocusChange?.(false);
+                      }}
+                    >
+                      <span className="truncate flex-1">{card.title}</span>
+                      {label && (
+                        <span className="text-[10px] shrink-0 px-1 rounded" style={{ color: "var(--muted)" }}>
+                          {label}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
               {more && (
                 <li className="px-3 py-1.5 text-xs border-t" style={{ color: "var(--muted)", borderColor: "var(--border)" }}>
                   继续输入以收窄结果

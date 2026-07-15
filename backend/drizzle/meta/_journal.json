@@ -15,6 +15,27 @@
       "when": 1738368000000,
       "tag": "0001_title_unique_untimed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1740000000000,
+      "tag": "0002_priority_numeric",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1740086400000,
+      "tag": "0003_time_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1740172800000,
+      "tag": "0004_card_lifecycle",
+      "breakpoints": true
     }
   ]
 }

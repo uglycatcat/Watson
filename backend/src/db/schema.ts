@@ -13,21 +13,21 @@ export const scheduleCards = sqliteTable(
   {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
-    titleLower: text("title_lower").notNull().unique(),
+    titleLower: text("title_lower").notNull(),
     description: text("description"),
-    timeNature: text("time_nature", { enum: ["duration", "deadline"] }),
+    timeNature: text("time_nature"),
     startAt: text("start_at"),
     endAt: text("end_at"),
     deadlineAt: text("deadline_at"),
-    importance: text("importance", { enum: ["high", "medium", "low"] })
-      .notNull()
-      .default("medium"),
-    urgency: text("urgency", { enum: ["high", "medium", "low"] })
-      .notNull()
-      .default("medium"),
+    importance: integer("importance").notNull().default(5),
+    urgency: integer("urgency").notNull().default(5),
     categoryId: text("category_id")
       .notNull()
       .references(() => categories.id),
+    status: text("status", { enum: ["active", "completed", "deleted"] })
+      .notNull()
+      .default("active"),
+    trashedAt: text("trashed_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },

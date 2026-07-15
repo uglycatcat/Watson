@@ -14,6 +14,12 @@ function formatTime(iso: string | null) {
   return format(new Date(iso), "MM-dd HH:mm");
 }
 
+function timeLabel(c: ScheduleCard): string {
+  if (!c.startAt) return "未安排";
+  const start = formatTime(c.startAt);
+  return c.endAt ? `${start} – ${formatTime(c.endAt)}` : start;
+}
+
 export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DayScheduleDrawerProps) {
   return (
     <Drawer open={!!date} onClose={onClose} side="left" title={date ? `${date} 全部日程` : undefined}>
@@ -30,11 +36,7 @@ export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DaySche
                 style={{ background: "var(--bg)", borderColor: "var(--border)" }}
               >
                 <div className="font-medium">{c.title}</div>
-                <div style={{ color: "var(--muted)" }}>
-                  {c.timeNature === "duration"
-                    ? `${formatTime(c.startAt)} – ${formatTime(c.endAt)}`
-                    : `截止 ${formatTime(c.deadlineAt)}`}
-                </div>
+                <div style={{ color: "var(--muted)" }}>{timeLabel(c)}</div>
               </button>
             </li>
           ))}

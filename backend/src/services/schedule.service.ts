@@ -1,32 +1,29 @@
 import { randomUUID } from "node:crypto";
-import { asc, eq, gte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, ne } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { categories, ownerPreferences, scheduleCards } from "../db/schema.js";
-import type { PriorityLevel, ScheduleCardDto, TimeNature } from "../types.js";
+import type { CardStatus, ScheduleCardDto } from "../types.js";
 import { nowIso, priorityScore } from "../types.js";
 import type { CategoryService } from "./category.service.js";
 
 export interface CreateCardInput {
   title: string;
   description?: string | null;
-  timeNature?: TimeNature | null;
   startAt?: string | null;
   endAt?: string | null;
-  deadlineAt?: string | null;
-  importance?: PriorityLevel;
-  urgency?: PriorityLevel;
+  importance?: number;
+  urgency?: number;
   categoryId?: string;
   categoryName?: string;
 }
 
 export interface CardQueryFilters {
-  view?: "day" | "week" | "month" | "all";
+  view?: "day" | "week" | "month" | "all" | "trash";
   date?: string;
   categoryId?: string;
-  importance?: PriorityLevel;
-  urgency?: PriorityLevel;
-  timeNature?: TimeNature;
-  hasTime?: boolean;
+  importance?: number;
+  urgency?: number;
+  scheduled?: boolean;
   sort?: "time" | "priority" | "title" | "createdAt";
 }
 
@@ -35,41 +32,30 @@ function normalizeTitle(title: string): { title: string; titleLower: string } {
   return { title: trimmed, titleLower: trimmed.toLowerCase() };
 }
 
-function resolveTimeFields(input: {
-  timeNature?: TimeNature | null;
+function clampPriority(value?: number): number {
+  if (value == null || Number.isNaN(value)) return 5;
+  return Math.round(Math.max(0, Math.min(10, value)));
+}
+
+function resolveTime(input: {
   startAt?: string | null;
   endAt?: string | null;
-  deadlineAt?: string | null;
-}): {
-  timeNature: TimeNature | null;
-  startAt: string | null;
-  endAt: string | null;
-  deadlineAt: string | null;
-} {
-  const nature = input.timeNature ?? null;
-  if (nature == null) {
-    if (input.startAt || input.endAt || input.deadlineAt) {
-      throw Object.assign(new Error("Clear time fields for untimed cards"), { statusCode: 400 });
+}): { startAt: string | null; endAt: string | null } {
+  const startAt = input.startAt ?? null;
+  const endAt = input.endAt ?? null;
+
+  if (!startAt) {
+    if (endAt) {
+      throw Object.assign(new Error("endAt requires startAt"), { statusCode: 400 });
     }
-    return { timeNature: null, startAt: null, endAt: null, deadlineAt: null };
+    return { startAt: null, endAt: null };
   }
-  if (nature === "duration") {
-    const startAt = input.startAt ?? null;
-    if (!startAt) {
-      throw Object.assign(new Error("startAt required for duration"), { statusCode: 400 });
-    }
-    let endAt = input.endAt ?? null;
-    if (!endAt) endAt = new Date(new Date(startAt).getTime() + 3600_000).toISOString();
-    if (new Date(endAt) <= new Date(startAt)) {
-      throw Object.assign(new Error("endAt must be after startAt"), { statusCode: 400 });
-    }
-    return { timeNature: "duration", startAt, endAt, deadlineAt: null };
+
+  if (endAt && new Date(endAt) < new Date(startAt)) {
+    throw Object.assign(new Error("endAt must be on or after startAt"), { statusCode: 400 });
   }
-  const deadlineAt = input.deadlineAt ?? null;
-  if (!deadlineAt) {
-    throw Object.assign(new Error("deadlineAt required for deadline"), { statusCode: 400 });
-  }
-  return { timeNature: "deadline", startAt: null, endAt: null, deadlineAt };
+
+  return { startAt, endAt };
 }
 
 export class ScheduleService {
@@ -83,14 +69,14 @@ export class ScheduleService {
       id: row.id,
       title: row.title,
       description: row.description,
-      timeNature: row.timeNature as TimeNature | null,
       startAt: row.startAt,
       endAt: row.endAt,
-      deadlineAt: row.deadlineAt,
-      importance: row.importance as PriorityLevel,
-      urgency: row.urgency as PriorityLevel,
+      importance: row.importance,
+      urgency: row.urgency,
       categoryId: row.categoryId,
       categoryName,
+      status: row.status as CardStatus,
+      trashedAt: row.trashedAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
@@ -107,8 +93,12 @@ export class ScheduleService {
       .from(scheduleCards)
       .where(
         excludeId
-          ? sql`${scheduleCards.titleLower} = ${titleLower} AND ${scheduleCards.id} != ${excludeId}`
-          : eq(scheduleCards.titleLower, titleLower),
+          ? and(
+              eq(scheduleCards.titleLower, titleLower),
+              eq(scheduleCards.status, "active"),
+              ne(scheduleCards.id, excludeId),
+            )
+          : and(eq(scheduleCards.titleLower, titleLower), eq(scheduleCards.status, "active")),
       )
       .get();
     if (existing) {
@@ -131,7 +121,8 @@ export class ScheduleService {
       const cat = this.categoryService.findOrCreate(input.categoryName ?? "个人");
       categoryId = cat.id;
     }
-    const times = resolveTimeFields(input);
+
+    const times = resolveTime(input);
     const now = nowIso();
 
     const row = {
@@ -139,10 +130,15 @@ export class ScheduleService {
       title,
       titleLower,
       description: input.description ?? null,
-      ...times,
-      importance: input.importance ?? "medium",
-      urgency: input.urgency ?? "medium",
+      timeNature: null,
+      startAt: times.startAt,
+      endAt: times.endAt,
+      deadlineAt: null,
+      importance: clampPriority(input.importance),
+      urgency: clampPriority(input.urgency),
       categoryId,
+      status: "active" as const,
+      trashedAt: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -153,6 +149,9 @@ export class ScheduleService {
   update(id: string, patch: Partial<CreateCardInput>): ScheduleCardDto | null {
     const existing = this.db.select().from(scheduleCards).where(eq(scheduleCards.id, id)).get();
     if (!existing) return null;
+    if (existing.status !== "active") {
+      throw Object.assign(new Error("Card is not active"), { statusCode: 409 });
+    }
 
     let categoryId = existing.categoryId;
     if (patch.categoryName) {
@@ -169,22 +168,19 @@ export class ScheduleService {
       }
     }
 
-    const mergedNature =
-      patch.timeNature !== undefined ? patch.timeNature : (existing.timeNature as TimeNature | null);
-    const times = resolveTimeFields({
-      timeNature: mergedNature,
+    const times = resolveTime({
       startAt: patch.startAt !== undefined ? patch.startAt : existing.startAt,
       endAt: patch.endAt !== undefined ? patch.endAt : existing.endAt,
-      deadlineAt: patch.deadlineAt !== undefined ? patch.deadlineAt : existing.deadlineAt,
     });
 
     const updated = {
       title: titlePatch?.title ?? existing.title,
       titleLower: titlePatch?.titleLower ?? existing.titleLower,
       description: patch.description !== undefined ? patch.description : existing.description,
-      ...times,
-      importance: patch.importance ?? existing.importance,
-      urgency: patch.urgency ?? existing.urgency,
+      startAt: times.startAt,
+      endAt: times.endAt,
+      importance: patch.importance !== undefined ? clampPriority(patch.importance) : existing.importance,
+      urgency: patch.urgency !== undefined ? clampPriority(patch.urgency) : existing.urgency,
       categoryId,
       updatedAt: nowIso(),
     };
@@ -192,7 +188,67 @@ export class ScheduleService {
     return this.getById(id);
   }
 
-  delete(id: string): boolean {
+  complete(id: string): ScheduleCardDto | null {
+    const existing = this.db.select().from(scheduleCards).where(eq(scheduleCards.id, id)).get();
+    if (!existing) return null;
+    if (existing.status === "completed") return this.joinCategory(existing);
+    if (existing.status !== "active") {
+      throw Object.assign(new Error("Card is not active"), { statusCode: 409 });
+    }
+
+    const now = nowIso();
+    this.db
+      .update(scheduleCards)
+      .set({ status: "completed", trashedAt: now, updatedAt: now })
+      .where(eq(scheduleCards.id, id))
+      .run();
+    return this.getById(id);
+  }
+
+  delete(id: string): ScheduleCardDto | null {
+    const existing = this.db.select().from(scheduleCards).where(eq(scheduleCards.id, id)).get();
+    if (!existing) return null;
+    if (existing.status === "deleted") return this.joinCategory(existing);
+    if (existing.status !== "active") {
+      throw Object.assign(new Error("Card is not active"), { statusCode: 409 });
+    }
+
+    const now = nowIso();
+    this.db
+      .update(scheduleCards)
+      .set({ status: "deleted", trashedAt: now, updatedAt: now })
+      .where(eq(scheduleCards.id, id))
+      .run();
+    return this.getById(id);
+  }
+
+  restore(id: string): ScheduleCardDto | null {
+    const existing = this.db.select().from(scheduleCards).where(eq(scheduleCards.id, id)).get();
+    if (!existing) return null;
+    if (existing.status === "active") return this.joinCategory(existing);
+    if (existing.status !== "completed" && existing.status !== "deleted") {
+      throw Object.assign(new Error("Card cannot be restored"), { statusCode: 409 });
+    }
+
+    this.assertTitleUnique(existing.titleLower);
+
+    const now = nowIso();
+    this.db
+      .update(scheduleCards)
+      .set({ status: "active", trashedAt: null, updatedAt: now })
+      .where(eq(scheduleCards.id, id))
+      .run();
+    return this.getById(id);
+  }
+
+  permanentDelete(id: string): boolean {
+    const existing = this.db.select().from(scheduleCards).where(eq(scheduleCards.id, id)).get();
+    if (!existing) return false;
+    if (existing.status !== "completed" && existing.status !== "deleted") {
+      throw Object.assign(new Error("Only completed or deleted cards can be permanently deleted"), {
+        statusCode: 409,
+      });
+    }
     const result = this.db.delete(scheduleCards).where(eq(scheduleCards.id, id)).run();
     return result.changes > 0;
   }
@@ -200,16 +256,23 @@ export class ScheduleService {
   listAll(filters: CardQueryFilters = {}): ScheduleCardDto[] {
     let rows = this.db.select().from(scheduleCards).all();
 
+    if (filters.view === "trash") {
+      rows = rows.filter((r) => r.status === "completed" || r.status === "deleted");
+      const dtos = rows.map((r) => this.joinCategory(r));
+      return dtos.sort((a, b) => (b.trashedAt ?? "").localeCompare(a.trashedAt ?? ""));
+    }
+
+    rows = rows.filter((r) => r.status === "active");
+
     if (filters.date && filters.view && filters.view !== "all") {
       const { start, end } = rangeForView(filters.view, filters.date);
       rows = rows.filter((r) => cardInRange(r, start, end));
     }
     if (filters.categoryId) rows = rows.filter((r) => r.categoryId === filters.categoryId);
-    if (filters.importance) rows = rows.filter((r) => r.importance === filters.importance);
-    if (filters.urgency) rows = rows.filter((r) => r.urgency === filters.urgency);
-    if (filters.timeNature) rows = rows.filter((r) => r.timeNature === filters.timeNature);
-    if (filters.hasTime === true) rows = rows.filter((r) => r.timeNature != null);
-    if (filters.hasTime === false) rows = rows.filter((r) => r.timeNature == null);
+    if (filters.importance != null) rows = rows.filter((r) => r.importance === filters.importance);
+    if (filters.urgency != null) rows = rows.filter((r) => r.urgency === filters.urgency);
+    if (filters.scheduled === true) rows = rows.filter((r) => r.startAt != null);
+    if (filters.scheduled === false) rows = rows.filter((r) => r.startAt == null);
 
     const dtos = rows.map((r) => this.joinCategory(r));
 
@@ -225,11 +288,11 @@ export class ScheduleService {
       return dtos.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     }
     if (filters.sort === "time") {
-      const timed = dtos.filter((c) => c.timeNature != null);
-      const untimed = dtos.filter((c) => c.timeNature == null);
-      timed.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
-      untimed.sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
-      return [...timed, ...untimed];
+      const scheduled = dtos.filter((c) => c.startAt != null);
+      const unscheduled = dtos.filter((c) => c.startAt == null);
+      scheduled.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+      unscheduled.sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
+      return [...scheduled, ...unscheduled];
     }
     return dtos.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
   }
@@ -241,6 +304,7 @@ export class ScheduleService {
       .select()
       .from(scheduleCards)
       .all()
+      .filter((r) => r.status === "active")
       .filter((r) => cardInRange(r, start, end))
       .map((r) => this.joinCategory(r));
   }
@@ -252,6 +316,7 @@ export class ScheduleService {
       .select()
       .from(scheduleCards)
       .all()
+      .filter((r) => r.status === "active")
       .filter((r) => cardInRange(r, start, end))
       .map((r) => this.joinCategory(r));
   }
@@ -260,21 +325,21 @@ export class ScheduleService {
     const prefs = this.db.select().from(ownerPreferences).where(eq(ownerPreferences.id, 1)).get();
     const days = prefs?.dueSoonDays ?? 7;
     const now = new Date();
-    const end = new Date(now);
-    end.setDate(end.getDate() + days);
-    end.setHours(23, 59, 59, 999);
+    const windowEnd = new Date(now);
+    windowEnd.setDate(windowEnd.getDate() + days);
+    windowEnd.setHours(23, 59, 59, 999);
 
     return this.db
       .select()
       .from(scheduleCards)
-      .where(eq(scheduleCards.timeNature, "deadline"))
       .all()
+      .filter((r) => r.status === "active" && r.startAt != null)
       .filter((r) => {
-        if (!r.deadlineAt) return false;
-        const d = new Date(r.deadlineAt);
-        return d >= now && d <= end;
+        const s = new Date(r.startAt!);
+        const e = r.endAt ? new Date(r.endAt) : s;
+        return s <= windowEnd && e >= now;
       })
-      .sort((a, b) => (a.deadlineAt ?? "").localeCompare(b.deadlineAt ?? ""))
+      .sort((a, b) => (a.startAt ?? "").localeCompare(b.startAt ?? ""))
       .map((r) => this.joinCategory(r));
   }
 
@@ -284,6 +349,7 @@ export class ScheduleService {
       .select()
       .from(scheduleCards)
       .all()
+      .filter((r) => r.status === "active")
       .filter((r) => r.title.toLowerCase().includes(q))
       .slice(0, limit)
       .map((r) => this.joinCategory(r));
@@ -301,23 +367,14 @@ export class ScheduleService {
 }
 
 function sortKey(c: ScheduleCardDto): string {
-  if (c.timeNature == null) return c.updatedAt;
-  if (c.timeNature === "deadline") return c.deadlineAt ?? c.updatedAt;
   return c.startAt ?? c.updatedAt;
 }
 
 function cardInRange(row: typeof scheduleCards.$inferSelect, start: Date, end: Date): boolean {
-  if (row.timeNature == null) return false;
-  if (row.timeNature === "duration" && row.startAt) {
-    const s = new Date(row.startAt);
-    const e = row.endAt ? new Date(row.endAt) : s;
-    return s <= end && e >= start;
-  }
-  if (row.timeNature === "deadline" && row.deadlineAt) {
-    const d = new Date(row.deadlineAt);
-    return d >= start && d <= end;
-  }
-  return false;
+  if (!row.startAt) return false;
+  const s = new Date(row.startAt);
+  const e = row.endAt ? new Date(row.endAt) : s;
+  return s <= end && e >= start;
 }
 
 function rangeForView(view: "day" | "week" | "month", dateStr: string) {

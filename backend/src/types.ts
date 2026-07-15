@@ -1,25 +1,23 @@
-export type PriorityLevel = "high" | "medium" | "low";
-export type TimeNature = "duration" | "deadline";
+export type CardStatus = "active" | "completed" | "deleted";
 
 export interface ScheduleCardDto {
   id: string;
   title: string;
   description: string | null;
-  timeNature: TimeNature | null;
   startAt: string | null;
   endAt: string | null;
-  deadlineAt: string | null;
-  importance: PriorityLevel;
-  urgency: PriorityLevel;
+  importance: number;
+  urgency: number;
   categoryId: string;
   categoryName: string;
+  status: CardStatus;
+  trashedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export function priorityScore(importance: PriorityLevel, urgency: PriorityLevel): number {
-  const w = { high: 3, medium: 2, low: 1 };
-  return w[importance] * 3 + w[urgency];
+export function priorityScore(importance: number, urgency: number): number {
+  return importance * 11 + urgency;
 }
 
 export function nowIso(): string {

@@ -23,13 +23,11 @@ export function CardList({ cards, onCardClick, emptyMessage = "暂无日程" }: 
           >
             <div className="font-medium">{c.title}</div>
             <div style={{ color: "var(--muted)" }}>
-              {c.timeNature == null
-                ? "无时间"
-                : c.timeNature === "duration"
-                  ? `${formatTime(c.startAt)} – ${formatTime(c.endAt)}`
-                  : `截止 ${formatTime(c.deadlineAt)}`}
+              {c.startAt
+                ? `${formatTime(c.startAt)}${c.endAt ? ` – ${formatTime(c.endAt)}` : ""}`
+                : "未安排"}
               {" · "}
-              {c.categoryName} · 重要{c.importance === "high" ? "高" : c.importance === "low" ? "低" : "中"}
+              {c.categoryName} · 重要{c.importance} 紧急{c.urgency}
             </div>
           </button>
         </li>
@@ -43,6 +41,6 @@ function formatTime(iso: string | null) {
   return format(new Date(iso), "MM-dd HH:mm");
 }
 
-export function priorityBadge(importance: string, urgency: string) {
+export function priorityBadge(importance: number, urgency: number) {
   return `${importance}/${urgency}`;
 }

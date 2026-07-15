@@ -23,10 +23,14 @@ export function AppShell() {
   const [searchFocused, setSearchFocused] = useState(false);
 
   const { data: allCardsData } = useQuery({
-    queryKey: ["cards", "all", { view: "all", sort: "title" }],
-    queryFn: () => api.getCards({ view: "all", sort: "title" }),
+    queryKey: ["cards", "all", { view: "all" }],
+    queryFn: () => api.getCards({ view: "all" }),
   });
-  const searchCards = allCardsData?.items ?? [];
+  const { data: trashCardsData } = useQuery({
+    queryKey: ["cards", "trash"],
+    queryFn: () => api.getCards({ view: "trash" }),
+  });
+  const searchCards = [...(allCardsData?.items ?? []), ...(trashCardsData?.items ?? [])];
 
   useEffect(() => {
     if (anchorDate === prevTodayRef.current) {

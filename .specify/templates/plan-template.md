@@ -47,7 +47,7 @@ Reference: `.specify/memory/constitution.md` (Watson v1.0.0)
 | I. 单用户安全第一 | Auth design | 所有端点与页面均在鉴权保护下；未授权访问无数据泄露路径 |
 | II. 密钥外置 | Secrets handling | 无硬编码密钥；配置经 env / 配置文件注入；示例配置已脱敏 |
 | III. AI 可插拔 | LLM abstraction | Provider 可切换；至少一个 OpenAI 兼容路径；业务逻辑不绑定单一模型 |
-| IV. 日程卡片核心 | Data model | 功能读写 Schedule Card；含时间性质、重要度、紧急度 |
+| IV. 日程卡片核心 | Data model | 功能读写 Schedule Card；含时间状态（已安排/未安排）、重要度与紧急度（0~10） |
 | V. 多设备一致 | Client strategy | 浏览器响应式；同数据源/API；无仅单端可用的核心能力 |
 
 - [ ] All gates pass — proceed to Phase 0

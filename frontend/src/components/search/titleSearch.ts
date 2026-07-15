@@ -39,6 +39,12 @@ export interface SearchResult {
   score: number;
 }
 
+export function trashStatusLabel(card: ScheduleCard): string | null {
+  if (card.status === "completed") return "已完成";
+  if (card.status === "deleted") return "已删除";
+  return null;
+}
+
 export function searchTitles(cards: ScheduleCard[], query: string): SearchResult[] {
   const q = query.trim();
   if (!q) return [];

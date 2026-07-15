@@ -4,10 +4,11 @@ import { DayView } from "./DayView";
 import { WeekView } from "./WeekView";
 import { MonthView } from "./MonthView";
 import { AllView } from "./AllView";
+import { TrashView } from "./TrashView";
 import { todayInTz, DEFAULT_TIMEZONE } from "../calendar/tz";
 import type { ScheduleCard } from "../../lib/api";
 
-export type ViewMode = "day" | "week" | "month" | "all";
+export type ViewMode = "day" | "week" | "month" | "all" | "trash";
 
 interface ScheduleViewRouterProps {
   view: ViewMode;
@@ -17,6 +18,7 @@ interface ScheduleViewRouterProps {
 }
 
 export function ScheduleViewRouter({ view, anchorDate, onDateChange, onCardClick }: ScheduleViewRouterProps) {
+  if (view === "trash") return <TrashView onCardClick={onCardClick} />;
   if (view === "day") return <DayView date={anchorDate} onCardClick={onCardClick} />;
   if (view === "week")
     return <WeekView date={anchorDate} onDateChange={onDateChange ?? (() => {})} onCardClick={onCardClick} />;

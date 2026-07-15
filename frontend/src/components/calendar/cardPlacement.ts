@@ -1,37 +1,26 @@
-import type { PriorityLevel, ScheduleCard } from "../../lib/api";
+import type { ScheduleCard } from "../../lib/api";
+import { priorityScore } from "../../lib/api";
 import { addDayInTz, formatDayInTz } from "./tz";
 
-const WEIGHT: Record<PriorityLevel, number> = { high: 3, medium: 2, low: 1 };
-
-export function priorityScore(importance: PriorityLevel, urgency: PriorityLevel): number {
-  return WEIGHT[importance] * 3 + WEIGHT[urgency];
-}
-
 export function compareCards(a: ScheduleCard, b: ScheduleCard): number {
-  return priorityScore(b.importance, b.urgency) - priorityScore(a.importance, b.urgency);
+  return priorityScore(b.importance, b.urgency) - priorityScore(a.importance, a.urgency);
 }
 
 export function cardDayKeys(card: ScheduleCard, tz: string): string[] {
-  if (card.timeNature === "deadline" && card.deadlineAt) {
-    return [formatDayInTz(card.deadlineAt, tz)];
+  if (!card.startAt) return [];
+  const end = card.endAt ?? card.startAt;
+  const days: string[] = [];
+  let cur = formatDayInTz(card.startAt, tz);
+  const endDay = formatDayInTz(end, tz);
+  while (cur <= endDay) {
+    days.push(cur);
+    cur = addDayInTz(cur, 1, tz);
   }
-  if (card.timeNature === "duration" && card.startAt) {
-    const end = card.endAt ?? card.startAt;
-    const days: string[] = [];
-    let cur = formatDayInTz(card.startAt, tz);
-    const endDay = formatDayInTz(end, tz);
-    while (cur <= endDay) {
-      days.push(cur);
-      cur = addDayInTz(cur, 1, tz);
-    }
-    return days;
-  }
-  return [];
+  return days;
 }
 
 export function isMultiDay(card: ScheduleCard, tz: string): boolean {
-  const days = cardDayKeys(card, tz);
-  return card.timeNature === "duration" && days.length > 1;
+  return cardDayKeys(card, tz).length > 1;
 }
 
 export function cardsForDay(cards: ScheduleCard[], day: string, tz: string): ScheduleCard[] {
@@ -137,5 +126,15 @@ export function singleDayCardsForCell(
 ): ScheduleCard[] {
   return cards
     .filter((c) => !multiDayIds.has(c.id) && cardDayKeys(c, tz).includes(day))
+    .sort(compareCards);
+}
+
+export function allCardsForCell(
+  cards: ScheduleCard[],
+  day: string,
+  tz: string,
+): ScheduleCard[] {
+  return cards
+    .filter((c) => cardDayKeys(c, tz).includes(day))
     .sort(compareCards);
 }

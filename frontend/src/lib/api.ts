@@ -1,18 +1,17 @@
-export type PriorityLevel = "high" | "medium" | "low";
-export type TimeNature = "duration" | "deadline";
+export type CardStatus = "active" | "completed" | "deleted";
 
 export interface ScheduleCard {
   id: string;
   title: string;
   description: string | null;
-  timeNature: TimeNature | null;
   startAt: string | null;
   endAt: string | null;
-  deadlineAt: string | null;
-  importance: PriorityLevel;
-  urgency: PriorityLevel;
+  importance: number;
+  urgency: number;
   categoryId: string;
   categoryName: string;
+  status: CardStatus;
+  trashedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,12 +34,10 @@ export interface OwnerPreferences {
 export interface ScheduleCardInput {
   title: string;
   description?: string | null;
-  timeNature?: TimeNature | null;
   startAt?: string | null;
   endAt?: string | null;
-  deadlineAt?: string | null;
-  importance?: PriorityLevel;
-  urgency?: PriorityLevel;
+  importance?: number;
+  urgency?: number;
   categoryId?: string;
   categoryName?: string;
 }
@@ -48,14 +45,25 @@ export interface ScheduleCardInput {
 export type CardSort = "time" | "priority" | "title" | "createdAt";
 
 export interface CardQueryParams {
-  view?: "day" | "week" | "month" | "all";
+  view?: "day" | "week" | "month" | "all" | "trash";
   date?: string;
   categoryId?: string;
-  importance?: PriorityLevel;
-  urgency?: PriorityLevel;
-  timeNature?: TimeNature;
-  hasTime?: "true" | "false";
+  importance?: string | number;
+  urgency?: string | number;
+  scheduled?: "true" | "false";
   sort?: CardSort;
+}
+
+export function priorityScore(importance: number, urgency: number): number {
+  return importance * 11 + urgency;
+}
+
+export function isScheduled(card: ScheduleCard): boolean {
+  return card.startAt != null;
+}
+
+export function isTrashed(card: ScheduleCard): boolean {
+  return card.status === "completed" || card.status === "deleted";
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -93,7 +101,10 @@ export const api = {
     request<ScheduleCard>("/api/cards", { method: "POST", body: JSON.stringify(body) }),
   updateCard: (id: string, body: Partial<ScheduleCardInput>) =>
     request<ScheduleCard>(`/api/cards/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
-  deleteCard: (id: string) => request<void>(`/api/cards/${id}`, { method: "DELETE" }),
+  deleteCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}`, { method: "DELETE" }),
+  completeCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/complete`, { method: "POST" }),
+  restoreCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/restore`, { method: "POST" }),
+  permanentDeleteCard: (id: string) => request<void>(`/api/cards/${id}/permanent`, { method: "DELETE" }),
   getCategories: () => request<{ items: { id: string; name: string; isPreset: boolean }[] }>("/api/categories"),
   getPreferences: () => request<OwnerPreferences>("/api/preferences"),
   patchPreferences: (body: Partial<OwnerPreferences>) =>
