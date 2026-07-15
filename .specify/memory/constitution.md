@@ -1,16 +1,20 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
+- Version change: 1.1.0 → 1.2.0
 - Modified principles:
-  - I. 单用户安全第一 — 鉴权方案由「访问令牌 + watson:init」改为「四字符验证码 + HttpOnly 会话」
-  - II. 密钥外置 — 明确 LLM 等第三方密钥外置；访问验证码可通过 WATSON_ACCESS_CODE 环境变量覆盖（默认 ANNA）
+  - I. 单用户安全第一 — 收口为「唯一登录方式：四字符验证码 + HttpOnly 会话」；明确排除密码 / 长令牌 / Bearer / 2FA / IP 白名单；清理 watson:init、WATSON_ACCESS_TOKEN_HASH、长随机访问令牌等历史残留（不再以「已废弃」形式保留）
+  - III. AI 能力可插拔 — 正式收敛「AI 能做什么」：侧边 AI 为纯文本对话，MUST NOT 执行日程 CRUD 或触发日程刷新/联动（provider 可插拔机制不变）
+  - IV. 数据以「日程卡片」为核心 — 措辞校正：日程增删改查一律经 UI/API；AI 对话不写入日程存储（避免暗示 AI 仍有写数据通路）
 - Added sections: none
-- Removed sections: none (Technology & Scope 中 AI 交互范围仍待后续修正案与 003 对齐)
+- Removed sections: none（Technology & Scope「AI 交互范围」与原则 III 对齐为正式约束，不再是待办）
 - Templates requiring updates:
   - ✅ updated: .specify/memory/constitution.md (this file)
-  - ✅ updated: README.md, setup.md, .env.example
-  - ⚠ historical: specs/001-* 仍描述旧令牌方案，以本宪法与当前实现为准
-- Follow-up TODOs: 可选 MINOR 修正案同步 AI 交互范围（003 纯聊天）
+  - ⚠ pending (人工同步): README.md（产品愿景仍写 AI 增删改查日程；登录描述基本已对齐，AI 作用需改）
+  - ⚠ pending (人工同步): setup.md（上手叙述与历史 prompt 中「AI 管日程」表述）
+  - ⚠ pending (人工同步): .env.example（若登录/AI 相关注释与 1.2.0 不完全一致则对齐）
+  - ⚠ pending: .specify/templates/plan-template.md、spec-template.md、tasks-template.md（原则引用无需大改；Constitution Check 措辞可顺带核对）
+  - ⚠ historical: specs/001-* 仍描述旧令牌与 AI 操作日程；specs/003-* 已收敛 AI 纯聊天——以本宪法与当前实现为准
+- Follow-up TODOs: none（原「可选 MINOR 修正案同步 AI 交互范围（003 纯聊天）」已由本版完成）
 -->
 
 # Watson Constitution
@@ -24,8 +28,8 @@ Watson 部署在公网，但 MUST 确保**只有项目所有者本人**能访问
 - 鉴权与会话是一等公民需求，NOT 附加项；任何功能设计 MUST 在受保护会话下运行。
 - 未授权访问（含仅凭 URL 即可读写数据）MUST 视为**严重缺陷**，优先级高于功能交付。
 - 多设备（手机 / 平板 / PC）登录 MUST 归属于同一所有者，NOT 多用户或协作场景。
-- **鉴权方案（当前）**：登录页输入 **四字符验证码**（默认 `ANNA`，可通过 `WATSON_ACCESS_CODE` 环境变量覆盖）；校验通过后签发 **HttpOnly + SameSite=Strict** 会话 cookie；所有 `/api/*`（除 login/health）MUST 经会话中间件保护；login 端点 SHOULD 限流防暴力尝试。
-- **已废弃**：`watson:init` / `WATSON_ACCESS_TOKEN_HASH` / 长随机访问令牌方案 MUST NOT 在新功能或文档中重新引入，除非经宪法 MAJOR 修订明确恢复。
+- **唯一登录方式**：所有者在登录页输入 **四字符验证码**（默认 `ANNA`，可通过环境变量 `WATSON_ACCESS_CODE` 覆盖）；校验通过后签发 **HttpOnly + SameSite=Strict** 会话 cookie；除 login / health 外，所有 `/api/*` MUST 经会话中间件保护；login 端点 SHOULD 限流防暴力尝试。
+- **明确排除**其它任何鉴权方式：MUST NOT 引入用户名密码、长随机访问令牌、Bearer Token、2FA、IP 白名单等；上述均视为超出单用户产品范围。
 
 **Rationale**：Watson 是个人私有日程中枢，公网可达性与数据私密性必须同时成立；安全失败即产品失败。
 
@@ -43,14 +47,15 @@ Watson 部署在公网，但 MUST 确保**只有项目所有者本人**能访问
 
 ### III. AI 能力可插拔
 
-LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用时自行配置**，代码 MUST NOT 绑定任何单一模型或中转服务。
+LLM provider（OpenAI、Anthropic Claude、DeepSeek 等 OpenAI 兼容接口）由**用户在使用时自行配置**，代码 MUST NOT 绑定任何单一模型或中转服务。
 
 - AI 集成 MUST 通过可切换的 provider 抽象层实现（统一接口，provider 可替换）。
 - 配置项（如 `PROVIDER`、`API_KEY`、`BASE_URL`、`MODEL`）MUST 遵循原则 II（外置注入）。
 - 新增 provider SHOULD 仅扩展配置与适配器，NOT 改写核心业务逻辑。
 - v1 MUST 至少跑通一个 OpenAI 兼容接口；其余 provider 通过同一抽象扩展。
+- **AI 交互范围（当前阶段产品决策）**：侧边 AI 是**纯文本对话板块**，只与所有者自由对话；MUST NOT 执行任何日程的增删改查，也 MUST NOT 触发日程数据的刷新或联动。所有日程操作 MUST 只经 UI 与 REST API 的结构化路径完成。若未来要恢复 AI 直接操作日程，属于重新定义原则范围，MUST 走 MAJOR 修订。
 
-**Rationale**：模型与供应商迭代快，可插拔设计避免 vendor lock-in，并匹配「用户自带 Key」的产品模式。
+**Rationale**：模型与供应商迭代快，可插拔设计避免 vendor lock-in，并匹配「用户自带 Key」的产品模式。当前收敛 AI 写日程能力，是阶段性产品边界，而非取消对话或改动接入机制。
 
 ### IV. 数据以「日程卡片」为核心
 
@@ -63,9 +68,9 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 - **紧急程度**：分级（如 高 / 中 / 低），与重要程度构成优先级（如四象限）
 - **内容字段**：标题、描述、分类等（具体字段在 data model 中定义）
 
-视图（日 / 周 / 月 / 全部）、筛选、排序 MUST 读写同一份卡片模型；日程增删改查 MUST 经 UI/API 结构化路径，AI MUST NOT 绕过卡片结构直接篡改存储。
+视图（日 / 周 / 月 / 全部）、筛选、排序 MUST 读写同一份卡片模型；日程增删改查 MUST 一律经 UI/API 结构化路径；AI 对话 MUST NOT 写入日程存储。
 
-**Rationale**：结构化卡片是自然语言交互与多视图一致性的共同基础；重要度 × 紧急度支撑智能排序而非仅按时间排列。
+**Rationale**：结构化卡片是多视图一致性的共同基础；重要度 × 紧急度支撑智能排序而非仅按时间排列。日程写入路径唯一，避免非结构化旁路。
 
 ### V. 多设备一致体验
 
@@ -83,7 +88,7 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 - **技术栈**：Node.js 全栈（Web 前端 + 后端）；浏览器直接访问，v1 不含原生 App。
 - **用户模型**：严格单用户；v1 明确排除多用户、协作、共享、第三方日历同步。
 - **UI**：控件排布仿照 Cursor（顶部控制栏 + 主视觉区 + 侧边 AI 聊天栏）；支持明 / 暗主题；登录页为独立全屏验证码体验。
-- **AI 交互范围（当前实现）**：侧边 AI 为**纯文本对话**，不执行日程 CRUD；日程操作经 UI 与 REST API。
+- **AI 交互范围**：侧边 AI 为**纯文本对话板块**，只与所有者自由对话；MUST NOT 执行日程增删改查，也 MUST NOT 触发日程刷新或联动。所有日程操作只经 UI 与 REST API。此为当前阶段产品决策；恢复 AI 直接操作日程须 MAJOR 修订。
 - **部署**：公网服务器单实例部署；安全与会话原则 MUST 在部署文档中可验证。
 
 ## Spec-Driven Development Workflow
@@ -106,8 +111,8 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等）由**用户在使用�
 - **版本策略**（语义化）：
   - **MAJOR**：删除或重新定义原则，或向后不兼容的治理变更
   - **MINOR**：新增原则或章节，或实质性扩展指导
-  - **PATCH**：措辞澄清、 typo、非语义修订
+  - **PATCH**：措辞澄清、typo、非语义修订
 - **合规审查**：每个 feature 的 plan Phase 0 前与 Phase 1 设计后 MUST 复核 Constitution Check；tasks 中 Foundational 阶段 MUST 覆盖安全、配置外置与卡片模型后再开展用户故事。
 - **运行时指引**：开发约定与环境见 `README.md` §六、§七 及 `setup.md`。
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-06
+**Version**: 1.2.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-15
