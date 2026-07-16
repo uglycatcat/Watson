@@ -117,7 +117,7 @@ export function TopBar({
             onChange={(id) => onViewChange(id as ViewMode)}
           />
         )}
-        {anchorDate && onDateChange && view !== "trash" && (
+        {anchorDate && onDateChange && (
           <AnchorDateControl value={anchorDate} onChange={onDateChange} />
         )}
       </div>

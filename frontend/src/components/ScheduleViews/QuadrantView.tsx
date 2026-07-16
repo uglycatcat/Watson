@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ScheduleCard } from "../../lib/api";
 import { PriorityMeter } from "../cards/PriorityMeter";
 
@@ -197,10 +198,11 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
 
   if (embedded) return plot;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 modal-backdrop-enter" aria-hidden />
       {plot}
-    </div>
+    </div>,
+    document.body,
   );
 }

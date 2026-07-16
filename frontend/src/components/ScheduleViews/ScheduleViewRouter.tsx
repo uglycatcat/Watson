@@ -10,6 +10,8 @@ import type { ScheduleCard } from "../../lib/api";
 
 export type ViewMode = "day" | "week" | "month" | "all" | "trash";
 
+const VIEW_ORDER: ViewMode[] = ["day", "week", "month", "all", "trash"];
+
 interface ScheduleViewRouterProps {
   view: ViewMode;
   anchorDate: string;
@@ -28,16 +30,37 @@ export function ScheduleViewRouter({
   onLeaveTrash,
 }: ScheduleViewRouterProps) {
   const setDate = onDateChange ?? (() => {});
-  if (view === "trash") return <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />;
-  if (view === "day")
-    return (
-      <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
-    );
-  if (view === "week")
-    return <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
-  if (view === "month")
-    return <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
-  return <AllView onCardClick={onCardClick} onCreateClick={onCreateClick} />;
+  const activeIndex = VIEW_ORDER.indexOf(view);
+
+  return (
+    <div className="h-full w-full overflow-hidden">
+      <div
+        className="h-full flex transition-transform"
+        style={{
+          width: `${VIEW_ORDER.length * 100}%`,
+          transform: `translateX(-${activeIndex * (100 / VIEW_ORDER.length)}%)`,
+          transitionDuration: "var(--duration-normal)",
+          transitionTimingFunction: "var(--ease-standard)",
+        }}
+      >
+        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+          <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
+        </div>
+        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+          <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
+        </div>
+        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+          <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
+        </div>
+        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+          <AllView onCardClick={onCardClick} onCreateClick={onCreateClick} />
+        </div>
+        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+          <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function todayStr() {

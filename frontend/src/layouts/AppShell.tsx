@@ -69,7 +69,7 @@ export function AppShell() {
           className="relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden"
           style={{ background: "var(--bg)", padding: "var(--space-4)" }}
         >
-          <div className="relative flex-1 min-h-0 overflow-auto">
+          <div className="relative flex-1 min-h-0 overflow-hidden">
             <ScheduleViewRouter
               view={view}
               anchorDate={anchorDate}
