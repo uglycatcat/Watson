@@ -78,7 +78,13 @@ export function AllView({ onCardClick }: AllViewProps) {
         {isLoading ? (
           <p>加载中…</p>
         ) : (
-          <CardGrid cards={cards} onCardClick={onCardClick} emptyMessage="暂无日程" showComplete />
+          <CardGrid
+            cards={cards}
+            onCardClick={onCardClick}
+            emptyMessage="暂无日程"
+            showComplete
+            draggableCards
+          />
         )}
       </div>
       {quadrantOpen && <QuadrantView cards={cards} onClose={() => setQuadrantOpen(false)} />}

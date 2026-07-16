@@ -9,15 +9,18 @@ import {
 } from "../calendar/cardPlacement";
 import { buildMonthGrid, DEFAULT_TIMEZONE, monthLabel, todayInTz } from "../calendar/tz";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
+import { ViewTimeNav } from "./ViewTimeNav";
+import { setDragCardId } from "../dnd/dragTrash";
 
 interface MonthViewProps {
   date: string;
+  onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
 }
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
-export function MonthView({ date, onCardClick }: MonthViewProps) {
+export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
@@ -37,8 +40,11 @@ export function MonthView({ date, onCardClick }: MonthViewProps) {
   if (isLoading) return <p>加载中…</p>;
 
   return (
-    <div className="h-full flex flex-col min-h-0 px-1">
-      <h2 className="text-lg font-medium mb-3 shrink-0">{monthLabel(date, tz)}</h2>
+    <div className="h-full flex flex-col min-h-0 px-1 pb-8">
+      <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
+        <h2 className="text-lg font-medium flex-1">{monthLabel(date, tz)}</h2>
+        <ViewTimeNav grain="month" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
+      </div>
       <div className="grid grid-cols-7 gap-px text-xs mb-1 shrink-0 px-0.5" style={{ color: "var(--muted)" }}>
         {WEEKDAYS.map((d) => (
           <div key={d} className="text-center py-1">
@@ -46,7 +52,7 @@ export function MonthView({ date, onCardClick }: MonthViewProps) {
           </div>
         ))}
       </div>
-      <div className="flex-1 min-h-0 flex flex-col gap-1 px-0.5">
+      <div className="flex-1 min-h-0 flex flex-col gap-1 px-0.5 pb-2">
         {weeks.map((week, wi) => (
           <div key={wi} className="grid grid-cols-7 gap-px flex-1 min-h-0">
             {week.days.map((cell) => {
@@ -76,6 +82,8 @@ export function MonthView({ date, onCardClick }: MonthViewProps) {
                         <button
                           key={c.id}
                           type="button"
+                          draggable
+                          onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
                           onClick={(e) => {
                             e.stopPropagation();
                             onCardClick(c);
@@ -89,6 +97,7 @@ export function MonthView({ date, onCardClick }: MonthViewProps) {
                             marginLeft: multi ? -2 : 0,
                             marginRight: multi ? -2 : 0,
                             width: multi ? "calc(100% + 4px)" : "100%",
+                            cursor: "grab",
                           }}
                         >
                           {c.title}

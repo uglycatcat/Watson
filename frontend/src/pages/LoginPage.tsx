@@ -68,6 +68,27 @@ export function LoginPage() {
         />
       </div>
 
+      <footer
+        className="relative z-10 mt-auto w-full max-w-lg pb-6 pt-10 flex flex-col items-center justify-end min-h-[72px]"
+        aria-label="备案信息预留"
+      >
+        <div
+          className="w-full h-12 rounded border border-dashed flex items-center justify-center gap-3 px-3"
+          style={{
+            borderColor: "rgba(255,255,255,0.22)",
+            color: "rgba(255,255,255,0.45)",
+            background: "rgba(255,255,255,0.03)",
+          }}
+        >
+          <span
+            className="inline-block w-7 h-7 rounded shrink-0"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}
+            aria-hidden
+          />
+          <span className="text-xs tracking-wide">备案信息预留</span>
+        </div>
+      </footer>
+
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

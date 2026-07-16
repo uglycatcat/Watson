@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { format } from "date-fns";
 import type { ScheduleCard } from "../../lib/api";
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
+import { setDragCardId } from "../dnd/dragTrash";
 
 export type CardGridSortMode = "createdAtDesc" | "preserve";
 
@@ -13,6 +14,8 @@ interface CardGridProps {
   /** Default createdAt DESC; use "preserve" when caller already ordered (e.g. trash trashedAt) */
   sortMode?: CardGridSortMode;
   renderCardChrome?: (card: ScheduleCard) => ReactNode;
+  /** Enable HTML5 drag-to-trash for active cards */
+  draggableCards?: boolean;
 }
 
 function cardSubtitle(c: ScheduleCard): string {
@@ -35,6 +38,7 @@ export function CardGrid({
   showComplete = false,
   sortMode = "createdAtDesc",
   renderCardChrome,
+  draggableCards = false,
 }: CardGridProps) {
   const sorted = useMemo(() => {
     if (sortMode === "preserve") return cards;
@@ -50,39 +54,45 @@ export function CardGrid({
       className="grid gap-3"
       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
     >
-      {sorted.map((c) => (
-        <div key={c.id} className="relative">
-          <div
-            role={onCardClick ? "button" : undefined}
-            tabIndex={onCardClick ? 0 : undefined}
-            onClick={() => onCardClick?.(c)}
-            onKeyDown={(e) => {
-              if (!onCardClick) return;
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onCardClick(c);
-              }
-            }}
-            className="w-full text-left p-3 rounded-lg border text-sm transition-opacity hover:opacity-90 min-h-[72px] flex gap-2"
-            style={{
-              background: "var(--panel)",
-              borderColor: "var(--border)",
-              cursor: onCardClick ? "pointer" : "default",
-            }}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="font-medium line-clamp-2">{c.title}</div>
-              <div className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted)" }}>
-                {cardSubtitle(c)} · {c.categoryName} · 重要{c.importance} 紧急{c.urgency}
+      {sorted.map((c) => {
+        const canDrag = draggableCards && c.status === "active";
+        return (
+          <div key={c.id} className="relative">
+            <div
+              role={onCardClick ? "button" : undefined}
+              tabIndex={onCardClick ? 0 : undefined}
+              draggable={canDrag}
+              onDragStart={(e) => {
+                if (!canDrag) return;
+                setDragCardId(e.dataTransfer, c.id);
+              }}
+              onClick={() => onCardClick?.(c)}
+              onKeyDown={(e) => {
+                if (!onCardClick) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onCardClick(c);
+                }
+              }}
+              className="w-full text-left p-3 rounded-lg border text-sm transition-opacity hover:opacity-90 min-h-[72px] flex gap-2"
+              style={{
+                background: "var(--panel)",
+                borderColor: "var(--border)",
+                cursor: canDrag ? "grab" : onCardClick ? "pointer" : "default",
+              }}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="font-medium line-clamp-2">{c.title}</div>
+                <div className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted)" }}>
+                  {cardSubtitle(c)} · {c.categoryName} · 重要{c.importance} 紧急{c.urgency}
+                </div>
               </div>
+              {showComplete && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
             </div>
-            {showComplete && (
-              <CompleteCheckbox cardId={c.id} className="mt-0.5" />
-            )}
+            {renderCardChrome?.(c)}
           </div>
-          {renderCardChrome?.(c)}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

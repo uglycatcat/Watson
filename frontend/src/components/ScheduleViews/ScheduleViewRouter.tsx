@@ -18,11 +18,11 @@ interface ScheduleViewRouterProps {
 }
 
 export function ScheduleViewRouter({ view, anchorDate, onDateChange, onCardClick }: ScheduleViewRouterProps) {
+  const setDate = onDateChange ?? (() => {});
   if (view === "trash") return <TrashView onCardClick={onCardClick} />;
-  if (view === "day") return <DayView date={anchorDate} onCardClick={onCardClick} />;
-  if (view === "week")
-    return <WeekView date={anchorDate} onDateChange={onDateChange ?? (() => {})} onCardClick={onCardClick} />;
-  if (view === "month") return <MonthView date={anchorDate} onCardClick={onCardClick} />;
+  if (view === "day") return <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
+  if (view === "week") return <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
+  if (view === "month") return <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
   return <AllView onCardClick={onCardClick} />;
 }
 

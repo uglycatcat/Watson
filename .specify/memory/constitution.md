@@ -1,16 +1,16 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 1.3.0
+- Version change: 1.3.0 → 1.3.1
 - Modified principles:
-  - IV. 数据以「日程卡片」为核心 — 取消「时间性质 / 截止型」与「高/中/低」必选表述；改为：时间状态「已安排（有起始时间，结束时间可选）/ 未安排」；重要度与紧急度为 0~10 整数；生命周期（活跃 / 垃圾箱）由 feature 定义。写入路径仍仅 UI/API，AI MUST NOT 写日程。
+  - IV. 数据以「日程卡片」为核心 — 已安排收紧为「起始与结束皆有」；未安排仍为起止皆空；禁止持久化「仅开始无结束」。与 specs/005-view-nav-drag-time 对齐。
 - Added sections: none
 - Removed sections: none
 - Templates requiring updates:
   - ✅ updated: .specify/memory/constitution.md (this file)
-  - ✅ aligned: specs/004-priority-trash-coordinate（analyze 修复；plan Complexity / T050 修宪项可关闭）
-  - ⚠ pending: .specify/templates/plan-template.md Constitution Check 表「时间性质、高/中/低」字样
-  - ⚠ pending (人工同步): README.md、setup.md（若仍写旧时间性质/三档优先级）
-  - ⚠ historical: specs/001–003 仍可能描述旧模型——以本宪法与 004 为准
+  - ✅ aligned: specs/005-view-nav-drag-time（analyze C1 修复）
+  - ⚠ pending: .specify/templates/plan-template.md 若仍写「结束可选」
+  - ⚠ pending (人工同步): README.md、setup.md（若仍写结束可选）
+  - ⚠ historical: specs/001–004 可能仍写「结束可选」——以本宪法与 005 为准
 - Follow-up TODOs: none
 -->
 
@@ -60,7 +60,7 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等 OpenAI 兼容接口）�
 
 每张卡片 MUST 具备以下属性（字段细则在各 feature 的 data model 中定义）：
 
-- **时间状态**（由时间字段推导，NOT 独立「时间性质」枚举）：**已安排**（所有者填写了起始时间；结束时间可选，形成区间）或 **未安排**（未填写任何时间字段，系统 MUST NOT 代填起始时间）。未安排卡片 MUST 不进入日 / 周 / 月视图，MAY 出现在全部等非日历视图。
+- **时间状态**（由时间字段推导，NOT 独立「时间性质」枚举）：**已安排**（起始时间与结束时间皆有，且结束 ≥ 开始，形成区间）或 **未安排**（起止皆空；系统 MUST NOT 在未安排路径代填起始时间）。MUST NOT 将「仅有开始、无结束」作为合法持久状态。未安排卡片 MUST 不进入日 / 周 / 月视图，MAY 出现在全部等非日历视图。
 - **重要程度**：整数 **0～10**（含端点），用于排序、视觉标识与坐标/优先级分析
 - **紧急程度**：整数 **0～10**（含端点），与重要程度共同构成优先级（如二维坐标）
 - **内容字段**：标题、描述、分类等
@@ -113,4 +113,4 @@ LLM provider（OpenAI、Anthropic Claude、DeepSeek 等 OpenAI 兼容接口）�
 - **合规审查**：每个 feature 的 plan Phase 0 前与 Phase 1 设计后 MUST 复核 Constitution Check；tasks 中 Foundational 阶段 MUST 覆盖安全、配置外置与卡片模型后再开展用户故事。
 - **运行时指引**：开发约定与环境见 `README.md` §六、§七 及 `setup.md`。
 
-**Version**: 1.3.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-15
+**Version**: 1.3.1 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-16

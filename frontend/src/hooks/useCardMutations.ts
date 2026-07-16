@@ -20,6 +20,10 @@ export function useCardMutations() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteCard(id),
     onSuccess: invalidate,
+    onError: () => {
+      // Ensure lists stay consistent if optimistic UI is added later
+      void invalidate();
+    },
   });
 
   const completeMutation = useMutation({

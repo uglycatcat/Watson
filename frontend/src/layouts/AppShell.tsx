@@ -51,7 +51,9 @@ export function AppShell() {
           setView(v);
         }}
         anchorDate={anchorDate}
-        onDateChange={setAnchorDate}
+        onDateChange={(d) => {
+          if (d) setAnchorDate(d);
+        }}
         onToggleChat={toggleChat}
         chatOpen={chatOpen}
         onCreateClick={() => setCreateOpen(true)}
@@ -68,7 +70,9 @@ export function AppShell() {
             <ScheduleViewRouter
               view={view}
               anchorDate={anchorDate}
-              onDateChange={setAnchorDate}
+              onDateChange={(d) => {
+                if (d) setAnchorDate(d);
+              }}
               onCardClick={setSelectedCard}
             />
           </div>

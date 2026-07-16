@@ -27,6 +27,12 @@ interface CardFormFieldsProps {
 const inputClass = "w-full px-2 py-1.5 rounded border text-sm";
 const inputStyle = { borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" };
 
+function endLocalPlus24h(startLocal: string): string {
+  const startIso = localInputToIso(startLocal);
+  if (!startIso) return "";
+  return isoToLocalInput(new Date(new Date(startIso).getTime() + 24 * 60 * 60 * 1000).toISOString());
+}
+
 export function CardFormFields({
   values,
   onChange,
@@ -38,6 +44,17 @@ export function CardFormFields({
   onTitleCompositionStart,
   onTitleCompositionEnd,
 }: CardFormFieldsProps) {
+  const onStartChange = (startAt: string) => {
+    const patch: Partial<CardFormValues> = { startAt };
+    if (startAt) {
+      const startIso = localInputToIso(startAt);
+      const endIso = values.endAt ? localInputToIso(values.endAt) : null;
+      const needRefill = !values.endAt || !endIso || !startIso || new Date(endIso) < new Date(startIso);
+      if (needRefill) patch.endAt = endLocalPlus24h(startAt);
+    }
+    onChange(patch);
+  };
+
   return (
     <div className="space-y-3 text-sm">
       {errors?.length ? (
@@ -71,7 +88,7 @@ export function CardFormFields({
             className={inputClass}
             style={inputStyle}
             value={values.startAt}
-            onChange={(e) => onChange({ startAt: e.target.value })}
+            onChange={(e) => onStartChange(e.target.value)}
           />
         </label>
         <label className="block mt-2">
@@ -82,7 +99,6 @@ export function CardFormFields({
             style={inputStyle}
             value={values.endAt}
             onChange={(e) => onChange({ endAt: e.target.value })}
-            disabled={!values.startAt}
           />
         </label>
       </fieldset>
@@ -150,7 +166,7 @@ export function isoToLocalInput(iso: string | null): string {
 export function validateCardForm(values: CardFormValues): string[] {
   const errors: string[] = [];
   if (!values.title.trim()) errors.push("请填写标题");
-  if (values.endAt && !values.startAt) errors.push("填写结束时间需先有开始时间");
+  if (values.startAt && !values.endAt) errors.push("已安排卡片必须填写结束时间");
   if (values.startAt && values.endAt) {
     const s = localInputToIso(values.startAt);
     const e = localInputToIso(values.endAt);

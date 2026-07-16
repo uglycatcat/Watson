@@ -37,21 +37,36 @@ function clampPriority(value?: number): number {
   return Math.round(Math.max(0, Math.min(10, value)));
 }
 
+function add24hIso(iso: string): string {
+  return new Date(new Date(iso).getTime() + 24 * 60 * 60 * 1000).toISOString();
+}
+
+/** Three mutually exclusive time states; `fallbackStartAt` used when only end is provided. */
 function resolveTime(input: {
   startAt?: string | null;
   endAt?: string | null;
+  fallbackStartAt?: string | null;
 }): { startAt: string | null; endAt: string | null } {
-  const startAt = input.startAt ?? null;
-  const endAt = input.endAt ?? null;
+  let startAt = input.startAt ?? null;
+  let endAt = input.endAt ?? null;
 
-  if (!startAt) {
-    if (endAt) {
-      throw Object.assign(new Error("endAt requires startAt"), { statusCode: 400 });
-    }
+  if (!startAt && !endAt) {
     return { startAt: null, endAt: null };
   }
 
-  if (endAt && new Date(endAt) < new Date(startAt)) {
+  if (!startAt && endAt) {
+    const fallback = input.fallbackStartAt ?? null;
+    if (!fallback) {
+      throw Object.assign(new Error("endAt requires startAt"), { statusCode: 400 });
+    }
+    startAt = fallback;
+  }
+
+  if (startAt && !endAt) {
+    endAt = add24hIso(startAt);
+  }
+
+  if (startAt && endAt && new Date(endAt) < new Date(startAt)) {
     throw Object.assign(new Error("endAt must be on or after startAt"), { statusCode: 400 });
   }
 
@@ -122,8 +137,8 @@ export class ScheduleService {
       categoryId = cat.id;
     }
 
-    const times = resolveTime(input);
     const now = nowIso();
+    const times = resolveTime({ ...input, fallbackStartAt: now });
 
     const row = {
       id: randomUUID(),
@@ -171,6 +186,7 @@ export class ScheduleService {
     const times = resolveTime({
       startAt: patch.startAt !== undefined ? patch.startAt : existing.startAt,
       endAt: patch.endAt !== undefined ? patch.endAt : existing.endAt,
+      fallbackStartAt: existing.createdAt,
     });
 
     const updated = {
@@ -271,8 +287,8 @@ export class ScheduleService {
     if (filters.categoryId) rows = rows.filter((r) => r.categoryId === filters.categoryId);
     if (filters.importance != null) rows = rows.filter((r) => r.importance === filters.importance);
     if (filters.urgency != null) rows = rows.filter((r) => r.urgency === filters.urgency);
-    if (filters.scheduled === true) rows = rows.filter((r) => r.startAt != null);
-    if (filters.scheduled === false) rows = rows.filter((r) => r.startAt == null);
+    if (filters.scheduled === true) rows = rows.filter((r) => r.startAt != null && r.endAt != null);
+    if (filters.scheduled === false) rows = rows.filter((r) => r.startAt == null && r.endAt == null);
 
     const dtos = rows.map((r) => this.joinCategory(r));
 
@@ -371,9 +387,9 @@ function sortKey(c: ScheduleCardDto): string {
 }
 
 function cardInRange(row: typeof scheduleCards.$inferSelect, start: Date, end: Date): boolean {
-  if (!row.startAt) return false;
+  if (!row.startAt || !row.endAt) return false;
   const s = new Date(row.startAt);
-  const e = row.endAt ? new Date(row.endAt) : s;
+  const e = new Date(row.endAt);
   return s <= end && e >= start;
 }
 

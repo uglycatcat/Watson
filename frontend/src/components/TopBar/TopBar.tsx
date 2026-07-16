@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { useTheme } from "../../hooks/useTheme";
+import { useCardMutations } from "../../hooks/useCardMutations";
 import type { ViewMode } from "../ScheduleViews/ScheduleViewRouter";
 import { GlobalSearch } from "../search/GlobalSearch";
 import type { ScheduleCard } from "../../lib/api";
+import { AnchorDateControl } from "./AnchorDateControl";
+import { getDragCardId, isCardDrag } from "../dnd/dragTrash";
 
 const NAV_VIEWS = ["day", "week", "month", "all"] as const;
 const VIEW_LABELS: Record<(typeof NAV_VIEWS)[number], string> = {
@@ -43,6 +47,9 @@ export function TopBar({
   onSearchSelect,
 }: TopBarProps) {
   const { theme, toggleTheme } = useTheme();
+  const { deleteCard } = useCardMutations();
+  const [dragOverTrash, setDragOverTrash] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
 
   return (
     <header
@@ -89,26 +96,52 @@ export function TopBar({
           ))}
         </nav>
       )}
-      {anchorDate && onDateChange && view !== "all" && view !== "trash" && (
-        <input
-          type="date"
-          value={anchorDate}
-          onChange={(e) => onDateChange(e.target.value)}
-          className="text-sm px-2 py-1 rounded border shrink-0"
-          style={{ borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" }}
-        />
+      {anchorDate && onDateChange && view !== "trash" && (
+        <AnchorDateControl value={anchorDate} onChange={onDateChange} />
       )}
       <div className="flex-1" />
+      {dropError && (
+        <span className="text-xs text-red-600 shrink-0 max-w-[160px] truncate" title={dropError}>
+          {dropError}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => onViewChange?.("trash")}
-        className="text-sm w-8 h-8 rounded border shrink-0 flex items-center justify-center"
-        style={{
-          borderColor: "var(--border)",
-          background: view === "trash" ? "var(--accent)" : "transparent",
-          color: view === "trash" ? "#fff" : "var(--fg)",
+        onDragEnter={(e) => {
+          if (!isCardDrag(e.dataTransfer)) return;
+          e.preventDefault();
+          setDragOverTrash(true);
         }}
-        title="垃圾箱"
+        onDragOver={(e) => {
+          if (!isCardDrag(e.dataTransfer)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDragOverTrash(true);
+        }}
+        onDragLeave={() => setDragOverTrash(false)}
+        onDrop={async (e) => {
+          e.preventDefault();
+          setDragOverTrash(false);
+          const id = getDragCardId(e.dataTransfer);
+          if (!id) return;
+          setDropError(null);
+          try {
+            await deleteCard(id);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "删除失败";
+            setDropError(msg);
+            window.setTimeout(() => setDropError(null), 4000);
+          }
+        }}
+        className="text-sm w-10 h-10 -m-1 p-1 rounded border shrink-0 flex items-center justify-center"
+        style={{
+          borderColor: dragOverTrash ? "var(--accent)" : "var(--border)",
+          background: view === "trash" ? "var(--accent)" : dragOverTrash ? "color-mix(in srgb, var(--accent) 25%, transparent)" : "transparent",
+          color: view === "trash" ? "#fff" : "var(--fg)",
+          outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
+        }}
+        title="垃圾箱（桌面可拖入删除）"
         aria-label="垃圾箱"
       >
         🗑

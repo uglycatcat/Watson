@@ -9,14 +9,10 @@ import {
   singleDayCardsForCell,
 } from "../calendar/cardPlacement";
 import { LANE_HEIGHT, SpanBar } from "../calendar/SpanBar";
-import {
-  buildWeekDays,
-  DEFAULT_TIMEZONE,
-  shiftWeek,
-  todayInTz,
-  weekDayLabel,
-} from "../calendar/weekGrid";
+import { buildWeekDays, DEFAULT_TIMEZONE, todayInTz, weekDayLabel } from "../calendar/weekGrid";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
+import { ViewTimeNav } from "./ViewTimeNav";
+import { setDragCardId } from "../dnd/dragTrash";
 
 interface WeekViewProps {
   date: string;
@@ -25,7 +21,7 @@ interface WeekViewProps {
 }
 
 /** Room for day label + margin inside each cell (keep in sync with label styles) */
-const DAY_HEADER_OFFSET = 36;
+const DAY_HEADER_OFFSET = 40;
 
 export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
@@ -51,35 +47,12 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   if (isLoading) return <p>加载中…</p>;
 
   return (
-    <div className="h-full flex flex-col min-h-0 px-1">
-      <div className="flex items-center gap-2 mb-3 shrink-0">
+    <div className="h-full flex flex-col min-h-0 px-1 pb-8">
+      <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
         <h2 className="text-lg font-medium flex-1">周视图</h2>
-        <button
-          type="button"
-          className="text-sm px-2 py-1 rounded border"
-          style={{ borderColor: "var(--border)" }}
-          onClick={() => onDateChange(shiftWeek(date, -1, tz))}
-        >
-          上一周
-        </button>
-        <button
-          type="button"
-          className="text-sm px-2 py-1 rounded border"
-          style={{ borderColor: "var(--border)" }}
-          onClick={() => onDateChange(today)}
-        >
-          本周
-        </button>
-        <button
-          type="button"
-          className="text-sm px-2 py-1 rounded border"
-          style={{ borderColor: "var(--border)" }}
-          onClick={() => onDateChange(shiftWeek(date, 1, tz))}
-        >
-          下一周
-        </button>
+        <ViewTimeNav grain="week" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
-      <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 overflow-hidden">
+      <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 pb-2 overflow-hidden">
         {days.map((cell) => {
           const chipCards = singleDayCardsForCell(cards, cell.date, tz, multiDayIds);
           const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
@@ -88,7 +61,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
           return (
             <div
               key={cell.date}
-              className="min-h-0 h-full border rounded-lg px-2.5 pt-3 pb-2 flex flex-col overflow-hidden"
+              className="min-h-0 h-full border rounded-lg px-2.5 pt-3 pb-3 flex flex-col overflow-hidden"
               style={{
                 background: "var(--panel)",
                 borderColor: "var(--border)",
@@ -111,9 +84,11 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                     <button
                       key={c.id}
                       type="button"
+                      draggable
+                      onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
                       onClick={() => onCardClick(c)}
                       className="relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px]"
-                      style={{ background: "var(--accent)", color: "#fff" }}
+                      style={{ background: "var(--accent)", color: "#fff", cursor: "grab" }}
                     >
                       {c.title}
                     </button>
@@ -139,7 +114,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
             startCol={s.startCol}
             endCol={s.endCol}
             lane={s.lane}
-            topOffset={DAY_HEADER_OFFSET + 12}
+            topOffset={DAY_HEADER_OFFSET + 16}
             onClick={onCardClick}
           />
         ))}

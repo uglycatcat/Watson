@@ -13,7 +13,7 @@ function TrashBadge({ card }: { card: ScheduleCard }) {
   if (card.status === "completed") {
     return (
       <span
-        className="absolute top-2 left-2 w-4 h-4 flex items-center justify-center rounded text-[10px] text-white"
+        className="absolute top-2 right-2 w-4 h-4 flex items-center justify-center rounded text-[10px] text-white"
         style={{ background: "var(--accent)" }}
         title="已完成"
       >
@@ -24,7 +24,7 @@ function TrashBadge({ card }: { card: ScheduleCard }) {
   if (card.status === "deleted") {
     return (
       <span
-        className="absolute top-2 left-2 w-3 h-3 rounded-full bg-red-600"
+        className="absolute top-2 right-2 w-3 h-3 rounded-full bg-red-600"
         title="已删除"
       />
     );
