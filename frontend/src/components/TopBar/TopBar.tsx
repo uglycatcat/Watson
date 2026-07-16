@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTheme } from "../../hooks/useTheme";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import type { ViewMode } from "../ScheduleViews/ScheduleViewRouter";
@@ -6,6 +6,10 @@ import { GlobalSearch } from "../search/GlobalSearch";
 import type { ScheduleCard } from "../../lib/api";
 import { AnchorDateControl } from "./AnchorDateControl";
 import { getDragCardId, isCardDrag } from "../dnd/dragTrash";
+
+/** Shared height with 浅色 / AI; trash uses same height as a square */
+const TOOL_BTN =
+  "text-sm h-8 rounded border shrink-0 inline-flex items-center justify-center";
 
 const NAV_VIEWS = ["day", "week", "month", "all"] as const;
 const VIEW_LABELS: Record<(typeof NAV_VIEWS)[number], string> = {
@@ -50,6 +54,17 @@ export function TopBar({
   const { deleteCard } = useCardMutations();
   const [dragOverTrash, setDragOverTrash] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
+  const viewBeforeTrash = useRef<Exclude<ViewMode, "trash">>("day");
+
+  const toggleTrash = () => {
+    if (!onViewChange) return;
+    if (view === "trash") {
+      onViewChange(viewBeforeTrash.current);
+      return;
+    }
+    viewBeforeTrash.current = view;
+    onViewChange("trash");
+  };
 
   return (
     <header
@@ -96,7 +111,7 @@ export function TopBar({
           ))}
         </nav>
       )}
-      {anchorDate && onDateChange && view !== "trash" && (
+      {anchorDate && onDateChange && (
         <AnchorDateControl value={anchorDate} onChange={onDateChange} />
       )}
       <div className="flex-1" />
@@ -107,7 +122,7 @@ export function TopBar({
       )}
       <button
         type="button"
-        onClick={() => onViewChange?.("trash")}
+        onClick={toggleTrash}
         onDragEnter={(e) => {
           if (!isCardDrag(e.dataTransfer)) return;
           e.preventDefault();
@@ -134,22 +149,28 @@ export function TopBar({
             window.setTimeout(() => setDropError(null), 4000);
           }
         }}
-        className="text-sm w-10 h-10 -m-1 p-1 rounded border shrink-0 flex items-center justify-center"
+        className={`${TOOL_BTN} w-8`}
         style={{
           borderColor: dragOverTrash ? "var(--accent)" : "var(--border)",
-          background: view === "trash" ? "var(--accent)" : dragOverTrash ? "color-mix(in srgb, var(--accent) 25%, transparent)" : "transparent",
+          background:
+            view === "trash"
+              ? "var(--accent)"
+              : dragOverTrash
+                ? "color-mix(in srgb, var(--accent) 25%, transparent)"
+                : "transparent",
           color: view === "trash" ? "#fff" : "var(--fg)",
           outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
         }}
-        title="垃圾箱（桌面可拖入删除）"
+        title="垃圾箱（桌面可拖入删除；再点退出）"
         aria-label="垃圾箱"
+        aria-pressed={view === "trash"}
       >
         🗑
       </button>
       <button
         type="button"
         onClick={toggleTheme}
-        className="text-sm px-2 py-1 rounded border shrink-0"
+        className={`${TOOL_BTN} px-2`}
         style={{ borderColor: "var(--border)" }}
       >
         {theme === "dark" ? "深色" : "浅色"}
@@ -158,7 +179,7 @@ export function TopBar({
         <button
           type="button"
           onClick={onToggleChat}
-          className="text-sm px-2 py-1 rounded border shrink-0"
+          className={`${TOOL_BTN} px-2`}
           style={{
             borderColor: "var(--border)",
             background: chatOpen ? "var(--accent)" : "var(--bg)",

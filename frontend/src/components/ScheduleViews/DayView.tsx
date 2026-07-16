@@ -26,7 +26,7 @@ export function DayView({ date, onDateChange, onCardClick }: DayViewProps) {
         <h2 className="text-lg font-medium flex-1 min-w-[8rem]">日视图 — {date}</h2>
         <ViewTimeNav grain="day" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 items-stretch">
         <div className="flex-1 min-w-0 min-h-0 overflow-auto">
           {isLoading ? (
             <p>加载中…</p>
@@ -40,8 +40,9 @@ export function DayView({ date, onDateChange, onCardClick }: DayViewProps) {
             />
           )}
         </div>
+        {/* Square scales with available day-view height (desktop) / width (narrow) */}
         <div
-          className="shrink-0 w-full md:w-[min(320px,40%)] min-h-[200px] aspect-square max-h-[min(100%,420px)] rounded-xl overflow-hidden"
+          className="shrink-0 rounded-xl overflow-hidden w-full max-w-[min(100%,66.666%)] mx-auto aspect-square md:mx-0 md:w-auto md:h-2/3 md:max-w-[min(100%,33.333%)] md:aspect-square md:self-center"
           style={{
             background: "var(--bg)",
             boxShadow: "inset 0 2px 8px color-mix(in srgb, var(--fg) 12%, transparent)",
