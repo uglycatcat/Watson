@@ -14,8 +14,8 @@ interface Bucket {
   cards: ScheduleCard[];
 }
 
-const SIZE = 400;
-const PAD = 40;
+const SIZE = 560;
+const PAD = 44;
 const PLOT = SIZE - PAD * 2;
 const MAX_RADIUS = 18;
 const MIN_RADIUS = 6;
@@ -65,7 +65,6 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
 
   const originX = xPos(5);
   const originY = yPos(5);
-  const sparse = cards.length <= 1;
 
   const plot = (
     <div
@@ -103,7 +102,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
           height={embedded ? "100%" : SIZE}
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className={embedded ? "flex-1 min-h-0 w-full h-full" : undefined}
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio={embedded ? "none" : "xMidYMid meet"}
           style={{ color: "var(--fg)" }}
         >
           {/* Quadrant backgrounds: Q1 top-right 立即做, Q2 top-left 计划做, Q3 bottom-left 减少做, Q4 bottom-right 授权做 */}
@@ -113,16 +112,16 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
           <rect x={originX} y={originY} width={SIZE - PAD - originX} height={SIZE - PAD - originY} fill="var(--quadrant-q4)" />
 
           {/* Quadrant labels */}
-          <text x={originX + (SIZE - PAD - originX) / 2} y={PAD + 14} textAnchor="middle" fontSize={9} fill="var(--muted)">
+          <text x={originX + (SIZE - PAD - originX) / 2} y={PAD + 16} textAnchor="middle" fontSize={13} fill="var(--muted)">
             立即做
           </text>
-          <text x={PAD + (originX - PAD) / 2} y={PAD + 14} textAnchor="middle" fontSize={9} fill="var(--muted)">
+          <text x={PAD + (originX - PAD) / 2} y={PAD + 16} textAnchor="middle" fontSize={13} fill="var(--muted)">
             计划做
           </text>
-          <text x={PAD + (originX - PAD) / 2} y={SIZE - PAD - 6} textAnchor="middle" fontSize={9} fill="var(--muted)">
+          <text x={PAD + (originX - PAD) / 2} y={SIZE - PAD - 8} textAnchor="middle" fontSize={13} fill="var(--muted)">
             减少做
           </text>
-          <text x={originX + (SIZE - PAD - originX) / 2} y={SIZE - PAD - 6} textAnchor="middle" fontSize={9} fill="var(--muted)">
+          <text x={originX + (SIZE - PAD - originX) / 2} y={SIZE - PAD - 8} textAnchor="middle" fontSize={13} fill="var(--muted)">
             授权做
           </text>
 
@@ -130,16 +129,16 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
           <line x1={PAD} y1={originY} x2={SIZE - PAD} y2={originY} stroke="var(--fg)" strokeWidth={2} opacity={0.35} />
           <line x1={originX} y1={PAD} x2={originX} y2={SIZE - PAD} stroke="var(--fg)" strokeWidth={2} opacity={0.35} />
 
-          <text x={SIZE - PAD} y={originY + 14} textAnchor="end" fontSize={10} fill="var(--muted)">
+          <text x={SIZE - PAD} y={originY + 18} textAnchor="end" fontSize={14} fill="var(--muted)">
             紧急度 →
           </text>
-          <text x={originX + 6} y={PAD + 12} fontSize={10} fill="var(--muted)">
+          <text x={originX + 8} y={PAD + 16} fontSize={14} fill="var(--muted)">
             ↑ 重要度
           </text>
 
           {/* Origin (5,5) */}
           <circle cx={originX} cy={originY} r={4} fill="var(--accent)" opacity={0.9} />
-          <text x={originX + 6} y={originY - 4} fontSize={8} fill="var(--muted)">
+          <text x={originX + 8} y={originY - 5} fontSize={11} fill="var(--muted)">
             (5,5)
           </text>
 
@@ -167,19 +166,6 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
             );
           })}
         </svg>
-
-        {sparse && (
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none px-8 text-center"
-            style={{ color: "var(--muted)" }}
-          >
-            <p className="text-xs leading-relaxed">
-              {cards.length === 0
-                ? "当前没有可展示的日程。创建日程后，将按重要度与紧急度分布在此图中。"
-                : "仅有一个任务时也会显示在此。继续添加日程以观察分布。"}
-            </p>
-          </div>
-        )}
       </div>
 
       {hover && (

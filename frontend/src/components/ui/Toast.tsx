@@ -14,9 +14,9 @@ export function Toast({ toast }: ToastProps) {
 
   return createPortal(
     <div
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 text-sm text-white pointer-events-none transition-interactive"
+      className="fixed bottom-1/4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 text-sm text-white pointer-events-none transition-interactive"
       style={{
-        background: "var(--fg-strong)",
+        background: "#27272a",
         borderRadius: "var(--radius-md)",
         boxShadow: "var(--shadow-md)",
         animation: "toast-in var(--duration-normal) var(--ease-standard)",

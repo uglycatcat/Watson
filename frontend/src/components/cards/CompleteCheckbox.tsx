@@ -15,24 +15,26 @@ export function CompleteCheckbox({ cardId, onComplete, className = "" }: Complet
   return (
     <button
       type="button"
-      title="标记完成"
       disabled={isCompleting || checked}
       onClick={(e) => {
         e.stopPropagation();
         if (checked) return;
         setChecked(true);
         setAnimating(true);
-        window.setTimeout(() => setAnimating(false), 150);
-        void completeCard(cardId)
-          .then(() => onComplete?.())
-          .catch(() => setChecked(false));
+        // 先播放对勾动画，动画结束后再真正完成（让卡片带着对勾再消失）
+        window.setTimeout(() => {
+          setAnimating(false);
+          void completeCard(cardId)
+            .then(() => onComplete?.())
+            .catch(() => setChecked(false));
+        }, 280);
       }}
       className={`shrink-0 w-5 h-5 rounded-md border flex items-center justify-center text-xs transition-interactive ${className}`}
       style={{
         borderColor: checked ? "var(--accent)" : "var(--border)",
         background: checked ? "var(--accent)" : "var(--bg)",
         color: checked ? "#fff" : "transparent",
-        animation: animating ? "check-pop 150ms var(--ease-standard)" : undefined,
+        animation: animating ? "check-pop 280ms var(--ease-standard)" : undefined,
       }}
       onMouseEnter={(e) => {
         if (!checked) e.currentTarget.style.borderColor = "var(--accent-hover)";

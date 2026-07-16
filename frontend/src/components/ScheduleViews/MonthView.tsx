@@ -10,7 +10,6 @@ import {
 import { buildMonthGrid, DEFAULT_TIMEZONE, monthLabel, todayInTz } from "../calendar/tz";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
-import { EmptyState } from "../ui/EmptyState";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
 import { setDragCardId } from "../dnd/dragTrash";
 
@@ -18,12 +17,11 @@ interface MonthViewProps {
   date: string;
   onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
-  onCreateClick?: () => void;
 }
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
-export function MonthView({ date, onDateChange, onCardClick, onCreateClick }: MonthViewProps) {
+export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
@@ -38,7 +36,6 @@ export function MonthView({ date, onDateChange, onCardClick, onCreateClick }: Mo
   const weeks = useMemo(() => buildMonthGrid(date, tz, today), [date, tz, today]);
   const multiDayIds = useMemo(() => new Set(cards.filter((c) => isMultiDay(c, tz)).map((c) => c.id)), [cards, tz]);
   const drawerCards = drawerDate ? cardsForDay(cards, drawerDate, tz) : [];
-  const monthEmpty = !isLoading && cards.length === 0;
 
   return (
     <div className="h-full flex flex-col min-h-0 px-1 pb-8">
@@ -48,13 +45,6 @@ export function MonthView({ date, onDateChange, onCardClick, onCreateClick }: Mo
       </div>
       {isLoading ? (
         <SkeletonWeekMonth />
-      ) : monthEmpty ? (
-        <EmptyState
-          icon="🗓"
-          title="本月没有日程"
-          description="创建新日程或切换到其他月份查看"
-          action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
-        />
       ) : (
         <>
           <div className="grid grid-cols-7 gap-px text-xs mb-1 shrink-0 px-0.5" style={{ color: "var(--muted)" }}>

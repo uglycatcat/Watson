@@ -16,7 +16,7 @@ const LABELS: Record<TimeNavGrain, { prev: string; current: string; next: string
   month: { prev: "上一月", current: "本月", next: "下一月" },
 };
 
-const BTN_CLASS = "text-sm px-2 py-1 border transition-interactive shell-btn";
+const BTN_CLASS = "text-sm px-2 py-1 border transition-interactive nav-time-btn";
 const BTN_STYLE = {
   borderColor: "var(--border)",
   borderRadius: "var(--radius-md)",

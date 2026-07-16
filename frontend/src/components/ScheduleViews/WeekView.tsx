@@ -12,7 +12,6 @@ import { LANE_HEIGHT, SpanBar } from "../calendar/SpanBar";
 import { buildWeekDays, DEFAULT_TIMEZONE, todayInTz, weekDayLabel } from "../calendar/weekGrid";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
-import { EmptyState } from "../ui/EmptyState";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
 import { setDragCardId } from "../dnd/dragTrash";
 
@@ -20,12 +19,11 @@ interface WeekViewProps {
   date: string;
   onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
-  onCreateClick?: () => void;
 }
 
 const DAY_HEADER_OFFSET = 40;
 
-export function WeekView({ date, onDateChange, onCardClick, onCreateClick }: WeekViewProps) {
+export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
@@ -45,7 +43,6 @@ export function WeekView({ date, onDateChange, onCardClick, onCreateClick }: Wee
 
   const maxLane = segments.reduce((m, s) => Math.max(m, s.lane), -1);
   const spanBand = maxLane >= 0 ? (maxLane + 1) * LANE_HEIGHT + 4 : 0;
-  const weekEmpty = !isLoading && cards.length === 0;
 
   return (
     <div className="h-full flex flex-col min-h-0 px-1 pb-8">
@@ -55,13 +52,6 @@ export function WeekView({ date, onDateChange, onCardClick, onCreateClick }: Wee
       </div>
       {isLoading ? (
         <SkeletonWeekMonth />
-      ) : weekEmpty ? (
-        <EmptyState
-          icon="📆"
-          title="本周没有日程"
-          description="创建新日程或切换到其他周查看"
-          action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
-        />
       ) : (
         <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 pb-2 overflow-hidden">
           {days.map((cell) => {

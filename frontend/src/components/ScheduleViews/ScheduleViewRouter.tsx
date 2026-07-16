@@ -34,13 +34,9 @@ export function ScheduleViewRouter({
       <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
     );
   if (view === "week")
-    return (
-      <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
-    );
+    return <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
   if (view === "month")
-    return (
-      <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
-    );
+    return <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
   return <AllView onCardClick={onCardClick} onCreateClick={onCreateClick} />;
 }
 
