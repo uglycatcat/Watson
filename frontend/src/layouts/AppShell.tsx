@@ -65,7 +65,10 @@ export function AppShell() {
         onSearchSelect={setSelectedCard}
       />
       <div className={`flex flex-1 min-h-0 relative ${dragging ? "select-none" : ""}`}>
-        <main className="relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden p-4" style={{ background: "var(--bg)" }}>
+        <main
+          className="relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden"
+          style={{ background: "var(--bg)", padding: "var(--space-4)" }}
+        >
           <div className="relative flex-1 min-h-0 overflow-auto">
             <ScheduleViewRouter
               view={view}
@@ -74,32 +77,37 @@ export function AppShell() {
                 if (d) setAnchorDate(d);
               }}
               onCardClick={setSelectedCard}
+              onCreateClick={() => setCreateOpen(true)}
+              onLeaveTrash={() => setView("day")}
             />
           </div>
           {searchFocused && (
             <div
-              className="absolute inset-0 z-10 pointer-events-none transition-opacity"
+              className="absolute inset-0 z-10 pointer-events-none transition-interactive"
               style={{ background: "rgba(0,0,0,0.35)" }}
               aria-hidden
             />
           )}
         </main>
-        {chatOpen && (
-          <>
-            <ResizeHandle onPointerDown={onResizeStart} />
-            <aside
-              className="border-l flex flex-col shrink-0 max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-20 max-md:shadow-xl max-md:w-full"
-              style={{
-                width: width,
-                maxWidth: "100%",
-                background: "var(--panel)",
-                borderColor: "var(--border)",
-              }}
-            >
+        <aside
+          className="border-l flex flex-col shrink-0 max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-20 max-md:shadow-xl max-md:w-full transition-interactive overflow-hidden"
+          style={{
+            width: chatOpen ? width : 0,
+            maxWidth: chatOpen ? "100%" : 0,
+            opacity: chatOpen ? 1 : 0,
+            background: "var(--panel)",
+            borderColor: "var(--border)",
+            transitionDuration: "var(--duration-normal)",
+            pointerEvents: chatOpen ? "auto" : "none",
+          }}
+        >
+          {chatOpen && (
+            <>
+              <ResizeHandle onPointerDown={onResizeStart} />
               <ChatPanel />
-            </aside>
-          </>
-        )}
+            </>
+          )}
+        </aside>
       </div>
       <CardDetailModal
         card={selectedCard}

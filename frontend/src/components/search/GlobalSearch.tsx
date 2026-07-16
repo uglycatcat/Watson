@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ScheduleCard } from "../../lib/api";
 import { hasMoreResults, searchTitles, trashStatusLabel } from "./titleSearch";
+import { EmptyState } from "../ui/EmptyState";
 
 interface GlobalSearchProps {
   query: string;
@@ -37,7 +38,10 @@ export function GlobalSearch({
   }, [onQueryChange, onFocusChange]);
 
   return (
-    <div className="relative flex-1 max-w-md">
+    <div
+      className="relative shrink-0 transition-interactive w-[200px] focus-within:w-[min(100%,280px)]"
+      style={{ transitionProperty: "width" }}
+    >
       <input
         ref={inputRef}
         type="search"
@@ -46,17 +50,23 @@ export function GlobalSearch({
         onChange={(e) => onQueryChange(e.target.value)}
         onFocus={() => onFocusChange?.(true)}
         onBlur={() => setTimeout(() => onFocusChange?.(false), 150)}
-        className="w-full text-sm px-3 py-1.5 rounded border"
+        className="w-full text-sm px-3 py-1.5 rounded-md border transition-interactive"
         style={{ borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" }}
       />
       {showDropdown && (
         <ul
-          className="absolute z-50 left-0 right-0 mt-1 rounded border shadow-lg overflow-hidden"
-          style={{ background: "var(--panel)", borderColor: "var(--border)" }}
+          className="absolute z-50 left-0 right-0 mt-1 rounded-md border overflow-hidden"
+          style={{ background: "var(--panel)", borderColor: "var(--border)", boxShadow: "var(--shadow-md)" }}
         >
           {results.length === 0 ? (
-            <li className="px-3 py-2 text-sm" style={{ color: "var(--muted)" }}>
-              无匹配结果
+            <li>
+              <EmptyState
+                compact
+                icon="🔍"
+                title="没有匹配的日程"
+                description="试试其他关键词"
+                action={{ label: "清空搜索", onClick: () => onQueryChange("") }}
+              />
             </li>
           ) : (
             <>
@@ -66,7 +76,7 @@ export function GlobalSearch({
                   <li key={card.id}>
                     <button
                       type="button"
-                      className="w-full text-left px-3 py-2 text-sm hover:opacity-90 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm transition-interactive flex items-center gap-2 hover:bg-[var(--accent-subtle)]"
                       style={{ color: "var(--fg)" }}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {

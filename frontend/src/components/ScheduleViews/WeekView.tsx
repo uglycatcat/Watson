@@ -12,18 +12,20 @@ import { LANE_HEIGHT, SpanBar } from "../calendar/SpanBar";
 import { buildWeekDays, DEFAULT_TIMEZONE, todayInTz, weekDayLabel } from "../calendar/weekGrid";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
+import { EmptyState } from "../ui/EmptyState";
+import { SkeletonWeekMonth } from "../ui/Skeleton";
 import { setDragCardId } from "../dnd/dragTrash";
 
 interface WeekViewProps {
   date: string;
   onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
+  onCreateClick?: () => void;
 }
 
-/** Room for day label + margin inside each cell (keep in sync with label styles) */
 const DAY_HEADER_OFFSET = 40;
 
-export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
+export function WeekView({ date, onDateChange, onCardClick, onCreateClick }: WeekViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
@@ -43,82 +45,90 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
 
   const maxLane = segments.reduce((m, s) => Math.max(m, s.lane), -1);
   const spanBand = maxLane >= 0 ? (maxLane + 1) * LANE_HEIGHT + 4 : 0;
-
-  if (isLoading) return <p>加载中…</p>;
+  const weekEmpty = !isLoading && cards.length === 0;
 
   return (
     <div className="h-full flex flex-col min-h-0 px-1 pb-8">
       <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
-        <h2 className="text-lg font-medium flex-1">周视图</h2>
+        <h2 className="text-lg font-semibold flex-1">周视图</h2>
         <ViewTimeNav grain="week" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
-      <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 pb-2 overflow-hidden">
-        {days.map((cell) => {
-          const chipCards = singleDayCardsForCell(cards, cell.date, tz, multiDayIds);
-          const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
-          const extra = chipCards.length - visible.length;
-          const hasSpan = segments.some((s) => cardDayInSegment(s, cell.date, days));
-          return (
-            <div
-              key={cell.date}
-              className="min-h-0 h-full border rounded-lg px-2.5 pt-3 pb-3 flex flex-col overflow-hidden"
-              style={{
-                background: "var(--panel)",
-                borderColor: "var(--border)",
-                outline: cell.isToday ? "2px solid var(--accent)" : undefined,
-              }}
-            >
-              <div className="text-sm font-semibold mb-2.5 shrink-0 leading-5">
-                {weekDayLabel(cell.date, tz)}
-              </div>
+      {isLoading ? (
+        <SkeletonWeekMonth />
+      ) : weekEmpty ? (
+        <EmptyState
+          icon="📆"
+          title="本周没有日程"
+          description="创建新日程或切换到其他周查看"
+          action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
+        />
+      ) : (
+        <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 pb-2 overflow-hidden">
+          {days.map((cell) => {
+            const chipCards = singleDayCardsForCell(cards, cell.date, tz, multiDayIds);
+            const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
+            const extra = chipCards.length - visible.length;
+            const hasSpan = segments.some((s) => cardDayInSegment(s, cell.date, days));
+            return (
               <div
-                className="space-y-1 flex-1 min-h-0 overflow-y-auto"
-                style={{ paddingTop: spanBand }}
+                key={cell.date}
+                className="min-h-0 h-full border flex flex-col overflow-hidden"
+                style={{
+                  background: "var(--panel)",
+                  borderColor: "var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-sm)",
+                  outline: cell.isToday ? "2px solid var(--accent)" : undefined,
+                  padding: "var(--space-3) var(--space-2)",
+                }}
               >
-                {visible.length === 0 && !hasSpan ? (
-                  <p className="text-[10px]" style={{ color: "var(--muted)" }}>
-                    无安排
-                  </p>
-                ) : (
-                  visible.map((c) => (
+                <div className="text-sm font-semibold mb-2.5 shrink-0 leading-5">{weekDayLabel(cell.date, tz)}</div>
+                <div className="space-y-1 flex-1 min-h-0 overflow-y-auto" style={{ paddingTop: spanBand }}>
+                  {visible.length === 0 && !hasSpan ? (
+                    <p className="text-[10px]" style={{ color: "var(--muted)" }}>
+                      无安排
+                    </p>
+                  ) : (
+                    visible.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        draggable
+                        onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
+                        onClick={() => onCardClick(c)}
+                        className="relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive"
+                        style={{ background: "var(--accent)", color: "#fff", cursor: "grab", borderRadius: "var(--radius-sm)" }}
+                      >
+                        {c.title}
+                      </button>
+                    ))
+                  )}
+                  {extra > 0 && (
                     <button
-                      key={c.id}
                       type="button"
-                      draggable
-                      onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
-                      onClick={() => onCardClick(c)}
-                      className="relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px]"
-                      style={{ background: "var(--accent)", color: "#fff", cursor: "grab" }}
+                      className="relative z-10 text-[10px] text-[var(--accent)]"
+                      onClick={() => setDrawerDate(cell.date)}
                     >
-                      {c.title}
+                      +{extra} 更多
                     </button>
-                  ))
-                )}
-                {extra > 0 && (
-                  <button
-                    type="button"
-                    className="relative z-10 text-[10px] text-[var(--accent)]"
-                    onClick={() => setDrawerDate(cell.date)}
-                  >
-                    +{extra} 更多
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-        {segments.map((s) => (
-          <SpanBar
-            key={`${s.card.id}-${s.startCol}-${s.endCol}`}
-            card={s.card}
-            startCol={s.startCol}
-            endCol={s.endCol}
-            lane={s.lane}
-            topOffset={DAY_HEADER_OFFSET + 16}
-            onClick={onCardClick}
-          />
-        ))}
-      </div>
+            );
+          })}
+          {segments.map((s) => (
+            <SpanBar
+              key={`${s.card.id}-${s.startCol}-${s.endCol}`}
+              card={s.card}
+              startCol={s.startCol}
+              endCol={s.endCol}
+              lane={s.lane}
+              topOffset={DAY_HEADER_OFFSET + 16}
+              onClick={onCardClick}
+            />
+          ))}
+        </div>
+      )}
       <DayScheduleDrawer
         date={drawerDate}
         cards={drawerCards}

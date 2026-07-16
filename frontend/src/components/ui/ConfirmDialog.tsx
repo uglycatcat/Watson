@@ -25,13 +25,15 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal open={open} onClose={onCancel} title={title} className={`max-w-xs ${className}`}>
-      <p className="mb-4 text-sm">{message}</p>
+      <p className="mb-4 text-sm" style={{ color: "var(--muted)" }}>
+        {message}
+      </p>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="text-sm px-3 py-1.5 rounded border"
+          className="transition-interactive text-sm px-3 py-1.5 rounded-md border"
           style={{ borderColor: "var(--border)" }}
         >
           {cancelLabel}
@@ -40,7 +42,7 @@ export function ConfirmDialog({
           type="button"
           onClick={onConfirm}
           disabled={loading}
-          className="text-sm px-3 py-1.5 rounded text-white"
+          className="transition-interactive text-sm px-3 py-1.5 rounded-md text-white"
           style={{ background: "var(--accent)" }}
         >
           {loading ? "处理中…" : confirmLabel}

@@ -24,7 +24,7 @@ interface CardFormFieldsProps {
   onTitleCompositionEnd?: () => void;
 }
 
-const inputClass = "w-full px-2 py-1.5 rounded border text-sm";
+const inputClass = "w-full px-2 py-1.5 rounded-md border text-sm transition-interactive";
 const inputStyle = { borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" };
 
 function endLocalPlus24h(startLocal: string): string {

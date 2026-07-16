@@ -15,15 +15,33 @@ interface ScheduleViewRouterProps {
   anchorDate: string;
   onDateChange?: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
+  onCreateClick?: () => void;
+  onLeaveTrash?: () => void;
 }
 
-export function ScheduleViewRouter({ view, anchorDate, onDateChange, onCardClick }: ScheduleViewRouterProps) {
+export function ScheduleViewRouter({
+  view,
+  anchorDate,
+  onDateChange,
+  onCardClick,
+  onCreateClick,
+  onLeaveTrash,
+}: ScheduleViewRouterProps) {
   const setDate = onDateChange ?? (() => {});
-  if (view === "trash") return <TrashView onCardClick={onCardClick} />;
-  if (view === "day") return <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
-  if (view === "week") return <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
-  if (view === "month") return <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
-  return <AllView onCardClick={onCardClick} />;
+  if (view === "trash") return <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />;
+  if (view === "day")
+    return (
+      <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
+    );
+  if (view === "week")
+    return (
+      <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
+    );
+  if (view === "month")
+    return (
+      <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
+    );
+  return <AllView onCardClick={onCardClick} onCreateClick={onCreateClick} />;
 }
 
 export function todayStr() {

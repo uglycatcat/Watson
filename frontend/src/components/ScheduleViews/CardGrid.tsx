@@ -2,6 +2,8 @@ import { useMemo, type ReactNode } from "react";
 import { format } from "date-fns";
 import type { ScheduleCard } from "../../lib/api";
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
+import { PriorityMeter } from "../cards/PriorityMeter";
+import { getCategoryAccent } from "../../lib/categoryColor";
 import { setDragCardId } from "../dnd/dragTrash";
 
 export type CardGridSortMode = "createdAtDesc" | "preserve";
@@ -11,10 +13,8 @@ interface CardGridProps {
   onCardClick?: (card: ScheduleCard) => void;
   emptyMessage?: string;
   showComplete?: boolean;
-  /** Default createdAt DESC; use "preserve" when caller already ordered (e.g. trash trashedAt) */
   sortMode?: CardGridSortMode;
   renderCardChrome?: (card: ScheduleCard) => ReactNode;
-  /** Enable HTML5 drag-to-trash for active cards */
   draggableCards?: boolean;
 }
 
@@ -56,6 +56,7 @@ export function CardGrid({
     >
       {sorted.map((c) => {
         const canDrag = draggableCards && c.status === "active";
+        const accent = getCategoryAccent(c.categoryId);
         return (
           <div key={c.id} className="relative">
             <div
@@ -74,17 +75,29 @@ export function CardGrid({
                   onCardClick(c);
                 }
               }}
-              className="w-full text-left p-3 rounded-lg border text-sm transition-opacity hover:opacity-90 min-h-[72px] flex gap-2"
+              className="w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden"
               style={{
                 background: "var(--panel)",
-                borderColor: "var(--border)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-lg)",
+                boxShadow: "var(--shadow-sm)",
                 cursor: canDrag ? "grab" : onCardClick ? "pointer" : "default",
+                padding: "var(--space-3)",
+                borderLeftWidth: "4px",
+                borderLeftColor: accent,
               }}
             >
-              <div className="flex-1 min-w-0">
-                <div className="font-medium line-clamp-2">{c.title}</div>
-                <div className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted)" }}>
-                  {cardSubtitle(c)} · {c.categoryName} · 重要{c.importance} 紧急{c.urgency}
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                <div className="font-semibold line-clamp-2" style={{ fontSize: "var(--text-sm)" }}>
+                  {c.title}
+                </div>
+                <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>
+                  {cardSubtitle(c)}
+                  {c.categoryName ? ` · ${c.categoryName}` : ""}
+                </div>
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                  <PriorityMeter label="重要" value={c.importance} compact />
+                  <PriorityMeter label="紧急" value={c.urgency} compact />
                 </div>
               </div>
               {showComplete && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}

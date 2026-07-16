@@ -1,8 +1,6 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
-import YAML from "yaml";
 import { z } from "zod";
 
 function repoRoot(): string {
@@ -14,7 +12,7 @@ loadEnv({ path: path.join(repoRoot(), ".env") });
 const ConfigSchema = z.object({
   server: z
     .object({
-      port: z.number().default(3000),
+      port: z.number().default(3001),
       host: z.string().default("0.0.0.0"),
     })
     .default({}),
@@ -31,30 +29,14 @@ const ConfigSchema = z.object({
       model: z.string().default("gpt-4o-mini"),
     })
     .default({}),
-  preferences: z
-    .object({
-      timezone: z.string().default("Asia/Shanghai"),
-      due_soon_days: z.number().default(7),
-    })
-    .default({}),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema> & {
   sessionSecret: string;
 };
 
-function loadYamlConfig(): z.infer<typeof ConfigSchema> {
-  const configPath = process.env.CONFIG_PATH ?? path.join(repoRoot(), "config.yaml");
-  if (!fs.existsSync(configPath)) {
-    return ConfigSchema.parse({});
-  }
-  const raw = fs.readFileSync(configPath, "utf8");
-  const parsed = YAML.parse(raw) ?? {};
-  return ConfigSchema.parse(parsed);
-}
-
 export function loadConfig(): AppConfig {
-  const yaml = loadYamlConfig();
+  const base = ConfigSchema.parse({});
   const sessionSecret = process.env.SESSION_SECRET ?? "";
   if (!sessionSecret || sessionSecret.length < 16) {
     if (process.env.NODE_ENV === "production") {
@@ -62,21 +44,19 @@ export function loadConfig(): AppConfig {
     }
   }
   return {
-    ...yaml,
     llm: {
-      ...yaml.llm,
-      provider: (process.env.LLM_PROVIDER as AppConfig["llm"]["provider"]) ?? yaml.llm.provider,
-      api_key: process.env.LLM_API_KEY ?? yaml.llm.api_key,
-      base_url: process.env.LLM_BASE_URL ?? yaml.llm.base_url,
-      model: process.env.LLM_MODEL ?? yaml.llm.model,
+      provider: (process.env.LLM_PROVIDER as AppConfig["llm"]["provider"]) ?? base.llm.provider,
+      api_key: process.env.LLM_API_KEY ?? base.llm.api_key,
+      base_url: process.env.LLM_BASE_URL ?? base.llm.base_url,
+      model: process.env.LLM_MODEL ?? base.llm.model,
     },
     sessionSecret: sessionSecret || "dev-only-insecure-secret",
     session: {
-      ttl_days: Number(process.env.SESSION_TTL_DAYS ?? yaml.session.ttl_days),
+      ttl_days: Number(process.env.SESSION_TTL_DAYS ?? base.session.ttl_days),
     },
     server: {
-      port: Number(process.env.PORT ?? yaml.server.port),
-      host: process.env.HOST ?? yaml.server.host,
+      port: Number(process.env.PORT ?? base.server.port),
+      host: process.env.HOST ?? base.server.host,
     },
   };
 }

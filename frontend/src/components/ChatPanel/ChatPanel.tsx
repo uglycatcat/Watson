@@ -74,7 +74,10 @@ export function ChatPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b font-medium text-sm" style={{ borderColor: "var(--border)" }}>
+      <div
+        className="px-4 py-3 border-b font-medium text-sm"
+        style={{ borderColor: "var(--border)", fontWeight: "var(--font-medium)" }}
+      >
         AI 助手
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
@@ -85,7 +88,7 @@ export function ChatPanel() {
             <button
               type="button"
               onClick={() => void refetchSession()}
-              className="text-sm px-2 py-1 rounded border"
+              className="text-sm px-2 py-1 rounded-md border transition-interactive"
               style={{ borderColor: "var(--border)" }}
             >
               重试
@@ -95,11 +98,12 @@ export function ChatPanel() {
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`max-w-[90%] p-2 rounded ${m.role === "user" ? "ml-auto" : ""}`}
+            className={`max-w-[90%] p-2 transition-interactive ${m.role === "user" ? "ml-auto" : ""}`}
             style={{
               background: m.role === "user" ? "var(--accent)" : "var(--bg)",
               color: m.role === "user" ? "#fff" : "var(--fg)",
               opacity: m.id.startsWith("pending-") ? 0.75 : 1,
+              borderRadius: "var(--radius-md)",
             }}
           >
             {m.content}
@@ -116,14 +120,14 @@ export function ChatPanel() {
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), onSend())}
           placeholder="与 AI 自由对话…"
           disabled={!sessionId || sessionLoading}
-          className="flex-1 px-3 py-2 rounded border text-sm disabled:opacity-50"
+          className="flex-1 px-3 py-2 rounded-md border text-sm disabled:opacity-50 transition-interactive"
           style={{ borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" }}
         />
         <button
           type="button"
           onClick={onSend}
           disabled={send.isPending || !sessionId || sessionLoading}
-          className="px-3 py-2 rounded text-white text-sm disabled:opacity-50"
+          className="px-3 py-2 rounded-md text-white text-sm disabled:opacity-50 transition-interactive"
           style={{ background: "var(--accent)" }}
         >
           发送

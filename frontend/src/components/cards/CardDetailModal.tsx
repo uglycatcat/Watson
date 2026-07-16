@@ -112,6 +112,14 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
     }
   };
 
+  const actionBtnClass = "text-sm px-3 py-1.5 border transition-interactive shell-btn";
+  const actionBtnStyle = {
+    borderColor: "var(--border)",
+    borderRadius: "var(--radius-md)",
+    background: "var(--bg)",
+    color: "var(--fg)",
+  } as const;
+
   return (
     <>
       <Modal
@@ -166,8 +174,8 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
-                className="text-sm px-3 py-1.5 rounded border text-red-600"
-                style={{ borderColor: "var(--border)" }}
+                className={`${actionBtnClass} text-red-600`}
+                style={actionBtnStyle}
               >
                 删除
               </button>
@@ -176,8 +184,8 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
                   type="button"
                   onClick={handleReset}
                   disabled={!dirty}
-                  className="text-sm px-3 py-1.5 rounded border disabled:opacity-40"
-                  style={{ borderColor: "var(--border)" }}
+                  className={`${actionBtnClass} disabled:opacity-40`}
+                  style={actionBtnStyle}
                 >
                   重置
                 </button>
@@ -185,8 +193,8 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={isUpdating}
-                  className="text-sm px-3 py-1.5 rounded text-white disabled:opacity-40"
-                  style={{ background: "var(--accent)" }}
+                  className={`${actionBtnClass} btn-accent text-white disabled:opacity-40`}
+                  style={{ ...actionBtnStyle, background: "var(--accent)", borderColor: "var(--accent)" }}
                 >
                   {isUpdating ? "保存中…" : "确认"}
                 </button>
@@ -197,8 +205,8 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-sm px-3 py-1.5 rounded border"
-                style={{ borderColor: "var(--border)" }}
+                className={actionBtnClass}
+                style={actionBtnStyle}
               >
                 关闭
               </button>

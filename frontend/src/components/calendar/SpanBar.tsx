@@ -37,7 +37,7 @@ export function SpanBar({
         e.stopPropagation();
         onClick(card);
       }}
-      className="absolute rounded pointer-events-auto"
+      className="absolute pointer-events-auto transition-interactive"
       style={{
         top: topOffset + lane * LANE_HEIGHT,
         left: `calc(${(startCol / 7) * 100}% + 2px)`,
@@ -47,6 +47,8 @@ export function SpanBar({
         opacity: 0.9,
         zIndex: 2,
         cursor: draggable ? "grab" : "pointer",
+        borderRadius: "var(--radius-sm)",
+        boxShadow: "var(--shadow-sm)",
       }}
       title={card.title}
       aria-label={card.title}

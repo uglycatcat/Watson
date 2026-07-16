@@ -15,8 +15,13 @@ export function AnchorDateControl({ value, onChange }: AnchorDateControlProps) {
         onChange(next);
       }}
       required
-      className="text-sm px-2 py-1 rounded border shrink-0"
-      style={{ borderColor: "var(--border)", background: "var(--bg)", color: "var(--fg)" }}
+      className="text-sm px-2 py-1 border shrink-0 transition-interactive shell-btn"
+      style={{
+        borderColor: "var(--border)",
+        borderRadius: "var(--radius-md)",
+        background: "var(--bg)",
+        color: "var(--fg)",
+      }}
       aria-label="锚定日期"
     />
   );

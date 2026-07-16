@@ -85,7 +85,7 @@ export function CreateCardModal({ open, onClose }: CreateCardModalProps) {
           type="button"
           onClick={() => void submit()}
           disabled={isCreating}
-          className="text-sm px-4 py-1.5 rounded text-white"
+          className="text-sm px-4 py-1.5 rounded-md text-white transition-interactive"
           style={{ background: "var(--accent)" }}
         >
           {isCreating ? "创建中…" : "确认"}

@@ -3,12 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { api, type ScheduleCard } from "../../lib/api";
 import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
+import { EmptyState } from "../ui/EmptyState";
+import { SkeletonCardGrid } from "../ui/Skeleton";
 
 interface AllViewProps {
   onCardClick: (card: ScheduleCard) => void;
+  onCreateClick?: () => void;
 }
 
-export function AllView({ onCardClick }: AllViewProps) {
+export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   const [categoryId, setCategoryId] = useState("");
   const [importance, setImportance] = useState("");
   const [urgency, setUrgency] = useState("");
@@ -29,7 +32,7 @@ export function AllView({ onCardClick }: AllViewProps) {
   });
 
   const cards = data?.items ?? [];
-  const selectClass = "px-2 py-1 rounded border text-sm";
+  const selectClass = "px-2 py-1 rounded-md border text-sm transition-interactive";
   const selectStyle = { borderColor: "var(--border)", background: "var(--panel)", color: "var(--fg)" };
 
   const priorityOptions = Array.from({ length: 11 }, (_, i) => (
@@ -38,15 +41,17 @@ export function AllView({ onCardClick }: AllViewProps) {
     </option>
   ));
 
+  const filteredEmpty = !isLoading && cards.length === 0;
+
   return (
     <div className="h-full flex flex-col min-h-0">
       <div className="flex items-center gap-2 mb-3 shrink-0">
-        <h2 className="text-lg font-medium flex-1">全部视图</h2>
+        <h2 className="text-lg font-semibold flex-1">全部视图</h2>
         <button
           type="button"
           onClick={() => setQuadrantOpen(true)}
-          className="text-sm px-2 py-1 rounded border"
-          style={{ borderColor: "var(--border)" }}
+          className={`${selectClass}`}
+          style={selectStyle}
         >
           坐标视图
         </button>
@@ -76,15 +81,16 @@ export function AllView({ onCardClick }: AllViewProps) {
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
         {isLoading ? (
-          <p>加载中…</p>
-        ) : (
-          <CardGrid
-            cards={cards}
-            onCardClick={onCardClick}
-            emptyMessage="暂无日程"
-            showComplete
-            draggableCards
+          <SkeletonCardGrid />
+        ) : filteredEmpty ? (
+          <EmptyState
+            icon="📋"
+            title="还没有日程"
+            description="创建第一条日程，或调整上方筛选条件"
+            action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
           />
+        ) : (
+          <CardGrid cards={cards} onCardClick={onCardClick} showComplete draggableCards />
         )}
       </div>
       {quadrantOpen && <QuadrantView cards={cards} onClose={() => setQuadrantOpen(false)} />}

@@ -87,15 +87,15 @@ export function PinCodeInput({
     }
   };
 
-  const borderColor = failed ? "#ef4444" : "rgba(255,255,255,0.45)";
-  const glow = failed ? "0 0 12px rgba(239,68,68,0.55)" : "none";
+  const borderColor = failed ? "#ef4444" : "rgba(255,255,255,0.65)";
+  const glow = failed ? "0 0 12px rgba(239,68,68,0.55)" : "0 0 0 1px rgba(255,255,255,0.08)";
 
   return (
     <div
       className="relative flex gap-3 justify-center cursor-text"
       onClick={() => inputRef.current?.focus()}
       role="group"
-      aria-label="验证码"
+      aria-label="四字符验证码"
     >
       <input
         ref={inputRef}
@@ -114,14 +114,15 @@ export function PinCodeInput({
       {digits.map((d, i) => (
         <div
           key={i}
-          className={`relative z-10 w-14 h-16 flex items-center justify-center text-2xl font-bold tracking-widest transition-all duration-200 pointer-events-none ${
+          className={`relative z-10 w-14 h-16 flex items-center justify-center text-2xl font-bold tracking-widest transition-interactive pointer-events-none ${
             failed ? "animate-[shake_0.45s_ease-in-out]" : ""
           }`}
           style={{
             border: `2px solid ${borderColor}`,
             boxShadow: glow,
             color: "#fff",
-            background: failed ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.04)",
+            background: failed ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.08)",
+            borderRadius: "var(--radius-md)",
           }}
         >
           {d}

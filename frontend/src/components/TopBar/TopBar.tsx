@@ -5,11 +5,16 @@ import type { ViewMode } from "../ScheduleViews/ScheduleViewRouter";
 import { GlobalSearch } from "../search/GlobalSearch";
 import type { ScheduleCard } from "../../lib/api";
 import { AnchorDateControl } from "./AnchorDateControl";
+import { SegmentedControl } from "../ui/SegmentedControl";
 import { getDragCardId, isCardDrag } from "../dnd/dragTrash";
 
-/** Shared height with 浅色 / AI; trash uses same height as a square */
 const TOOL_BTN =
-  "text-sm h-8 rounded border shrink-0 inline-flex items-center justify-center";
+  "transition-interactive text-sm h-8 border shrink-0 inline-flex items-center justify-center shell-btn";
+
+const TOOL_BTN_STYLE = {
+  borderRadius: "var(--radius-md)",
+  background: "var(--bg)",
+} as const;
 
 const NAV_VIEWS = ["day", "week", "month", "all"] as const;
 const VIEW_LABELS: Record<(typeof NAV_VIEWS)[number], string> = {
@@ -18,6 +23,8 @@ const VIEW_LABELS: Record<(typeof NAV_VIEWS)[number], string> = {
   month: "月",
   all: "全部",
 };
+
+const SEGMENT_OPTIONS = NAV_VIEWS.map((v) => ({ id: v, label: VIEW_LABELS[v] }));
 
 interface TopBarProps {
   view?: ViewMode;
@@ -56,6 +63,8 @@ export function TopBar({
   const [dropError, setDropError] = useState<string | null>(null);
   const viewBeforeTrash = useRef<Exclude<ViewMode, "trash">>("day");
 
+  const segmentValue = view === "trash" ? viewBeforeTrash.current : view;
+
   const toggleTrash = () => {
     if (!onViewChange) return;
     if (view === "trash") {
@@ -71,124 +80,136 @@ export function TopBar({
       className="h-14 flex items-center gap-3 px-4 border-b shrink-0"
       style={{ background: "var(--panel)", borderColor: "var(--border)" }}
     >
-      <span className="font-semibold mr-1 shrink-0">Watson</span>
-      {onSearchQueryChange && onSearchSelect && (
-        <GlobalSearch
-          query={searchQuery}
-          onQueryChange={onSearchQueryChange}
-          cards={searchCards}
-          onSelect={onSearchSelect}
-          onFocusChange={onSearchFocusChange}
-          open={searchFocused}
-        />
-      )}
-      {onCreateClick && (
-        <button
-          type="button"
-          onClick={onCreateClick}
-          className="text-sm w-8 h-8 rounded border font-bold shrink-0"
-          style={{ borderColor: "var(--border)", color: "var(--accent)" }}
-          title="新建日程"
+      {/* Left: brand + search + create */}
+      <div className="flex items-center gap-2 min-w-0 shrink-0">
+        <span className="font-semibold shrink-0" style={{ fontWeight: "var(--font-semibold)" }}>
+          Watson
+        </span>
+        {onSearchQueryChange && onSearchSelect && (
+          <GlobalSearch
+            query={searchQuery}
+            onQueryChange={onSearchQueryChange}
+            cards={searchCards}
+            onSelect={onSearchSelect}
+            onFocusChange={onSearchFocusChange}
+            open={searchFocused}
+          />
+        )}
+        {onCreateClick && (
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className={`${TOOL_BTN} w-8 font-bold btn-accent-ghost`}
+            style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)" }}
+            title="新建日程"
+          >
+            +
+          </button>
+        )}
+      </div>
+
+      {/* Center: segmented views + anchor date */}
+      <div className="flex items-center gap-2 flex-1 justify-center min-w-0 flex-wrap">
+        {onViewChange && (
+          <SegmentedControl
+            value={segmentValue}
+            options={SEGMENT_OPTIONS}
+            onChange={(id) => onViewChange(id as ViewMode)}
+          />
+        )}
+        {anchorDate && onDateChange && view !== "trash" && (
+          <AnchorDateControl value={anchorDate} onChange={onDateChange} />
+        )}
+      </div>
+
+      {/* Right: trash | preferences */}
+      <div className="flex items-center gap-2 shrink-0">
+        {dropError && (
+          <span className="text-xs text-red-600 shrink-0 max-w-[160px] truncate" title={dropError}>
+            {dropError}
+          </span>
+        )}
+        <div
+          className="flex items-center gap-1 pr-2 mr-1"
+          style={{ borderRight: "1px solid var(--border)" }}
         >
-          +
-        </button>
-      )}
-      {onViewChange && (
-        <nav className="flex gap-1 text-sm shrink-0">
-          {NAV_VIEWS.map((v) => (
+          <button
+            type="button"
+            onClick={toggleTrash}
+            onDragEnter={(e) => {
+              if (!isCardDrag(e.dataTransfer)) return;
+              e.preventDefault();
+              setDragOverTrash(true);
+            }}
+            onDragOver={(e) => {
+              if (!isCardDrag(e.dataTransfer)) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setDragOverTrash(true);
+            }}
+            onDragLeave={() => setDragOverTrash(false)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              setDragOverTrash(false);
+              const id = getDragCardId(e.dataTransfer);
+              if (!id) return;
+              setDropError(null);
+              try {
+                await deleteCard(id);
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : "删除失败";
+                setDropError(msg);
+                window.setTimeout(() => setDropError(null), 4000);
+              }
+            }}
+            className={`${TOOL_BTN} w-8 ${view === "trash" ? "btn-accent" : ""}`}
+            style={{
+              ...TOOL_BTN_STYLE,
+              borderColor: dragOverTrash || view === "trash" ? "var(--accent)" : "var(--border)",
+              background:
+                view === "trash"
+                  ? "var(--accent)"
+                  : dragOverTrash
+                    ? "var(--accent-subtle)"
+                    : "var(--bg)",
+              color: view === "trash" ? "#fff" : "var(--fg)",
+              outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
+              transform: dragOverTrash ? "scale(1.08)" : undefined,
+              boxShadow: dragOverTrash ? "var(--shadow-sm)" : undefined,
+            }}
+            title="垃圾箱（桌面可拖入删除；再点退出）"
+            aria-label="垃圾箱"
+            aria-pressed={view === "trash"}
+          >
+            🗑
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={`${TOOL_BTN} px-2`}
+            style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)" }}
+          >
+            {theme === "dark" ? "深色" : "浅色"}
+          </button>
+          {onToggleChat && (
             <button
-              key={v}
               type="button"
-              onClick={() => onViewChange(v)}
-              className="px-2 py-1 rounded"
+              onClick={onToggleChat}
+              className={`${TOOL_BTN} px-2 ${chatOpen ? "btn-accent" : ""}`}
               style={{
-                background: view === v ? "var(--accent)" : "transparent",
-                color: view === v ? "#fff" : "var(--fg)",
+                ...TOOL_BTN_STYLE,
+                borderColor: chatOpen ? "var(--accent)" : "var(--border)",
+                background: chatOpen ? "var(--accent)" : "var(--bg)",
+                color: chatOpen ? "#fff" : "var(--fg)",
               }}
             >
-              {VIEW_LABELS[v]}
+              AI
             </button>
-          ))}
-        </nav>
-      )}
-      {anchorDate && onDateChange && (
-        <AnchorDateControl value={anchorDate} onChange={onDateChange} />
-      )}
-      <div className="flex-1" />
-      {dropError && (
-        <span className="text-xs text-red-600 shrink-0 max-w-[160px] truncate" title={dropError}>
-          {dropError}
-        </span>
-      )}
-      <button
-        type="button"
-        onClick={toggleTrash}
-        onDragEnter={(e) => {
-          if (!isCardDrag(e.dataTransfer)) return;
-          e.preventDefault();
-          setDragOverTrash(true);
-        }}
-        onDragOver={(e) => {
-          if (!isCardDrag(e.dataTransfer)) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          setDragOverTrash(true);
-        }}
-        onDragLeave={() => setDragOverTrash(false)}
-        onDrop={async (e) => {
-          e.preventDefault();
-          setDragOverTrash(false);
-          const id = getDragCardId(e.dataTransfer);
-          if (!id) return;
-          setDropError(null);
-          try {
-            await deleteCard(id);
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : "删除失败";
-            setDropError(msg);
-            window.setTimeout(() => setDropError(null), 4000);
-          }
-        }}
-        className={`${TOOL_BTN} w-8`}
-        style={{
-          borderColor: dragOverTrash ? "var(--accent)" : "var(--border)",
-          background:
-            view === "trash"
-              ? "var(--accent)"
-              : dragOverTrash
-                ? "color-mix(in srgb, var(--accent) 25%, transparent)"
-                : "transparent",
-          color: view === "trash" ? "#fff" : "var(--fg)",
-          outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
-        }}
-        title="垃圾箱（桌面可拖入删除；再点退出）"
-        aria-label="垃圾箱"
-        aria-pressed={view === "trash"}
-      >
-        🗑
-      </button>
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className={`${TOOL_BTN} px-2`}
-        style={{ borderColor: "var(--border)" }}
-      >
-        {theme === "dark" ? "深色" : "浅色"}
-      </button>
-      {onToggleChat && (
-        <button
-          type="button"
-          onClick={onToggleChat}
-          className={`${TOOL_BTN} px-2`}
-          style={{
-            borderColor: "var(--border)",
-            background: chatOpen ? "var(--accent)" : "var(--bg)",
-            color: chatOpen ? "#fff" : "var(--fg)",
-          }}
-        >
-          AI
-        </button>
-      )}
+          )}
+        </div>
+      </div>
     </header>
   );
 }

@@ -16,6 +16,14 @@ const LABELS: Record<TimeNavGrain, { prev: string; current: string; next: string
   month: { prev: "上一月", current: "本月", next: "下一月" },
 };
 
+const BTN_CLASS = "text-sm px-2 py-1 border transition-interactive shell-btn";
+const BTN_STYLE = {
+  borderColor: "var(--border)",
+  borderRadius: "var(--radius-md)",
+  background: "var(--bg)",
+  color: "var(--fg)",
+} as const;
+
 function shiftMonth(anchorDay: string, deltaMonths: number, tz: string): string {
   const d = addMonths(parseDayInTz(anchorDay, tz), deltaMonths);
   return formatDayInTz(d, tz);
@@ -39,18 +47,15 @@ export function ViewTimeNav({ grain, anchorDate, onDateChange, timezone }: ViewT
     else onDateChange(shiftMonth(anchorDate, 1, timezone));
   };
 
-  const btnClass = "text-sm px-2 py-1 rounded border";
-  const btnStyle = { borderColor: "var(--border)" };
-
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <button type="button" className={btnClass} style={btnStyle} onClick={goPrev}>
+      <button type="button" className={BTN_CLASS} style={BTN_STYLE} onClick={goPrev}>
         {labels.prev}
       </button>
-      <button type="button" className={btnClass} style={btnStyle} onClick={goCurrent}>
+      <button type="button" className={BTN_CLASS} style={BTN_STYLE} onClick={goCurrent}>
         {labels.current}
       </button>
-      <button type="button" className={btnClass} style={btnStyle} onClick={goNext}>
+      <button type="button" className={BTN_CLASS} style={BTN_STYLE} onClick={goNext}>
         {labels.next}
       </button>
     </div>
