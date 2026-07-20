@@ -1,34 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api";
 
 export function useVisibilitySync(enabled: boolean) {
   const queryClient = useQueryClient();
-  const lastSync = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const sync = async () => {
-      try {
-        const data = await api.sync(lastSync.current ?? undefined);
-        lastSync.current = data.serverTime;
-        if (data.cards.length) {
-          queryClient.invalidateQueries({ queryKey: ["cards"] });
-        }
-        if (data.preferences) {
-          queryClient.setQueryData(["preferences"], data.preferences);
-        }
-      } catch {
-        /* ignore */
-      }
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void Promise.all([
+        queryClient.refetchQueries({ queryKey: ["cards"], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["categories"], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["daily-report"], type: "active" }),
+      ]);
     };
 
     const onVisible = () => {
-      if (document.visibilityState === "visible") sync();
+      if (document.visibilityState === "visible") refresh();
     };
 
+    refresh();
+    const timer = window.setInterval(refresh, 3000);
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [enabled, queryClient]);
 }

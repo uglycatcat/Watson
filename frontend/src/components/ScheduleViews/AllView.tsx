@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type ScheduleCard } from "../../lib/api";
+import { api, type CardStage, type ScheduleCard } from "../../lib/api";
 import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
 import { EmptyState } from "../ui/EmptyState";
@@ -16,6 +16,7 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   const [importance, setImportance] = useState("");
   const [urgency, setUrgency] = useState("");
   const [scheduled, setScheduled] = useState<"" | "true" | "false">("");
+  const [stage, setStage] = useState<"" | CardStage>("");
   const [quadrantOpen, setQuadrantOpen] = useState(false);
 
   const { data: catData } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
@@ -25,6 +26,7 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   if (importance !== "") params.importance = importance;
   if (urgency !== "") params.urgency = urgency;
   if (scheduled) params.scheduled = scheduled;
+  if (stage) params.stage = stage;
 
   const { data, isLoading } = useQuery({
     queryKey: ["cards", "all", params],
@@ -32,6 +34,11 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   });
 
   const cards = data?.items ?? [];
+  const overdueCardIds = new Set(
+    cards
+      .filter((card) => card.status === "active" && card.startAt && card.endAt && new Date(card.endAt).getTime() < Date.now())
+      .map((card) => card.id),
+  );
   const selectClass = "px-2 py-1 rounded-md border text-sm transition-interactive";
   const selectStyle = { borderColor: "var(--border)", background: "var(--panel)", color: "var(--fg)" };
 
@@ -78,6 +85,12 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
           <option value="true">已安排</option>
           <option value="false">未安排</option>
         </select>
+        <select value={stage} onChange={(e) => setStage(e.target.value as "" | CardStage)} className={selectClass} style={selectStyle}>
+          <option value="">全部阶段</option>
+          <option value="not_started">未开始</option>
+          <option value="in_progress">正在处理</option>
+          <option value="wrapping_up">等待收尾</option>
+        </select>
       </div>
       <div className="flex-1 min-h-0 overflow-auto">
         {isLoading ? (
@@ -90,7 +103,7 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
             action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
           />
         ) : (
-          <CardGrid cards={cards} onCardClick={onCardClick} showComplete draggableCards />
+          <CardGrid cards={cards} onCardClick={onCardClick} showComplete draggableCards showHoverBar overdueCardIds={overdueCardIds} />
         )}
       </div>
       {quadrantOpen && <QuadrantView cards={cards} onClose={() => setQuadrantOpen(false)} />}

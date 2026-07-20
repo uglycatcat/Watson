@@ -24,7 +24,7 @@ export function ConfirmDialog({
   className = "",
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={onCancel} title={title} className={`max-w-xs ${className}`}>
+    <Modal open={open} onClose={onCancel} title={title} className={`max-w-xs confirm-danger ${className}`}>
       <p className="mb-4 text-sm" style={{ color: "var(--muted)" }}>
         {message}
       </p>
@@ -33,8 +33,8 @@ export function ConfirmDialog({
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="transition-interactive text-sm px-3 py-1.5 rounded-md border"
-          style={{ borderColor: "var(--border)" }}
+          className="transition-interactive text-sm px-3 py-1.5 rounded-md border confirm-cancel"
+          style={{ borderColor: "var(--border)", color: "var(--muted)" }}
         >
           {cancelLabel}
         </button>
@@ -42,8 +42,7 @@ export function ConfirmDialog({
           type="button"
           onClick={onConfirm}
           disabled={loading}
-          className="transition-interactive text-sm px-3 py-1.5 rounded-md text-white"
-          style={{ background: "var(--accent)" }}
+          className="transition-interactive text-sm px-3 py-1.5 rounded-md text-white confirm-danger-button"
         >
           {loading ? "处理中…" : confirmLabel}
         </button>

@@ -7,6 +7,7 @@ interface QuadrantViewProps {
   cards: ScheduleCard[];
   onClose?: () => void;
   variant?: "overlay" | "embedded";
+  onHoverCardIds?: (ids: ReadonlySet<string>) => void;
 }
 
 interface Bucket {
@@ -36,7 +37,7 @@ function radiusForCount(count: number, maxCount: number): number {
   return MIN_RADIUS + t * (MAX_RADIUS - MIN_RADIUS);
 }
 
-export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantViewProps) {
+export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardIds }: QuadrantViewProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<Bucket | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -155,13 +156,18 @@ export function QuadrantView({ cards, onClose, variant = "overlay" }: QuadrantVi
                 r={r}
                 fill="var(--accent)"
                 opacity={0.85}
-                style={{ cursor: "default" }}
+                className={hover === b ? "quadrant-dot is-hovered" : "quadrant-dot"}
+                style={{ cursor: "default", transformOrigin: `${cx}px ${cy}px` }}
                 onMouseEnter={(e) => {
                   setHover(b);
+                  onHoverCardIds?.(new Set(b.cards.map((card) => card.id)));
                   const rect = (e.target as SVGCircleElement).getBoundingClientRect();
                   setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
                 }}
-                onMouseLeave={() => setHover(null)}
+                onMouseLeave={() => {
+                  setHover(null);
+                  onHoverCardIds?.(new Set());
+                }}
                 onClick={(e) => e.stopPropagation()}
               />
             );

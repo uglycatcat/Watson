@@ -43,7 +43,7 @@ export function ScheduleViewRouter({
           transitionTimingFunction: "var(--ease-standard)",
         }}
       >
-        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+        <div className="h-full min-h-0 shrink-0 overflow-hidden" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>

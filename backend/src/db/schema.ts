@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
+export const CARD_STAGES = ["not_started", "in_progress", "wrapping_up"] as const;
+
 export const categories = sqliteTable("categories", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -27,6 +29,7 @@ export const scheduleCards = sqliteTable(
     status: text("status", { enum: ["active", "completed", "deleted"] })
       .notNull()
       .default("active"),
+    stage: text("stage", { enum: CARD_STAGES }).notNull().default("not_started"),
     trashedAt: text("trashed_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
@@ -36,7 +39,21 @@ export const scheduleCards = sqliteTable(
     index("idx_cards_deadline_at").on(t.deadlineAt),
     index("idx_cards_updated_at").on(t.updatedAt),
     index("idx_cards_category").on(t.categoryId),
+    index("idx_cards_stage").on(t.stage),
   ],
+);
+
+export const dailyReports = sqliteTable(
+  "daily_reports",
+  {
+    date: text("date").primaryKey(),
+    goal: text("goal").notNull().default(""),
+    result: text("result").notNull().default(""),
+    analysis: text("analysis").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_daily_reports_updated_at").on(t.updatedAt)],
 );
 
 export const ownerPreferences = sqliteTable("owner_preferences", {
@@ -70,6 +87,7 @@ export const chatMessages = sqliteTable("chat_messages", {
 
 export type ScheduleCard = typeof scheduleCards.$inferSelect;
 export type Category = typeof categories.$inferSelect;
+export type DailyReport = typeof dailyReports.$inferSelect;
 export type OwnerPreference = typeof ownerPreferences.$inferSelect;
 export type ChatSession = typeof chatSessions.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;

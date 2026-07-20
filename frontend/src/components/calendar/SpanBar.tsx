@@ -1,5 +1,6 @@
 import type { ScheduleCard } from "../../lib/api";
 import { setDragCardId } from "../dnd/dragTrash";
+import { StageBadge } from "../cards/StageBadge";
 
 interface SpanBarProps {
   card: ScheduleCard;
@@ -32,6 +33,11 @@ export function SpanBar({
       onDragStart={(e) => {
         if (!draggable) return;
         setDragCardId(e.dataTransfer, card.id);
+        const preview = e.currentTarget.cloneNode(true) as HTMLElement;
+        preview.classList.add("drag-card-preview");
+        document.body.appendChild(preview);
+        e.dataTransfer.setDragImage(preview, 24, 20);
+        requestAnimationFrame(() => preview.remove());
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -63,7 +69,8 @@ export function SpanBar({
           lineHeight: `${LANE_HEIGHT - 8}px`,
         }}
       >
-        {card.title}
+        <span className="block truncate pr-14">{card.title}</span>
+        <span className="absolute right-1 top-1"><StageBadge stage={card.stage} compact /></span>
       </span>
     </button>
   );

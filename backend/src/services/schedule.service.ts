@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, gte, ne } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { categories, ownerPreferences, scheduleCards } from "../db/schema.js";
-import type { CardStatus, ScheduleCardDto } from "../types.js";
-import { nowIso, priorityScore } from "../types.js";
+import type { CardStage, CardStatus, ScheduleCardDto } from "../types.js";
+import { isCardStage, nowIso, priorityScore } from "../types.js";
 import type { CategoryService } from "./category.service.js";
 
 export interface CreateCardInput {
@@ -15,6 +15,7 @@ export interface CreateCardInput {
   urgency?: number;
   categoryId?: string;
   categoryName?: string;
+  stage?: CardStage;
 }
 
 export interface CardQueryFilters {
@@ -24,6 +25,7 @@ export interface CardQueryFilters {
   importance?: number;
   urgency?: number;
   scheduled?: boolean;
+  stage?: CardStage;
   sort?: "time" | "priority" | "title" | "createdAt";
 }
 
@@ -91,6 +93,7 @@ export class ScheduleService {
       categoryId: row.categoryId,
       categoryName,
       status: row.status as CardStatus,
+      stage: row.stage,
       trashedAt: row.trashedAt,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -133,8 +136,13 @@ export class ScheduleService {
 
     let categoryId = input.categoryId;
     if (!categoryId) {
-      const cat = this.categoryService.findOrCreate(input.categoryName ?? "个人");
+      const cat = input.categoryName
+        ? this.categoryService.findOrCreate(input.categoryName)
+        : this.categoryService.resolveDefault();
       categoryId = cat.id;
+    }
+    if (input.stage !== undefined && !isCardStage(input.stage)) {
+      throw Object.assign(new Error("Invalid stage"), { statusCode: 400 });
     }
 
     const now = nowIso();
@@ -153,6 +161,7 @@ export class ScheduleService {
       urgency: clampPriority(input.urgency),
       categoryId,
       status: "active" as const,
+      stage: input.stage ?? "not_started",
       trashedAt: null,
       createdAt: now,
       updatedAt: now,
@@ -166,6 +175,9 @@ export class ScheduleService {
     if (!existing) return null;
     if (existing.status !== "active") {
       throw Object.assign(new Error("Card is not active"), { statusCode: 409 });
+    }
+    if (patch.stage !== undefined && !isCardStage(patch.stage)) {
+      throw Object.assign(new Error("Invalid stage"), { statusCode: 400 });
     }
 
     let categoryId = existing.categoryId;
@@ -198,6 +210,7 @@ export class ScheduleService {
       importance: patch.importance !== undefined ? clampPriority(patch.importance) : existing.importance,
       urgency: patch.urgency !== undefined ? clampPriority(patch.urgency) : existing.urgency,
       categoryId,
+      stage: patch.stage ?? existing.stage,
       updatedAt: nowIso(),
     };
     this.db.update(scheduleCards).set(updated).where(eq(scheduleCards.id, id)).run();
@@ -289,6 +302,9 @@ export class ScheduleService {
     if (filters.urgency != null) rows = rows.filter((r) => r.urgency === filters.urgency);
     if (filters.scheduled === true) rows = rows.filter((r) => r.startAt != null && r.endAt != null);
     if (filters.scheduled === false) rows = rows.filter((r) => r.startAt == null && r.endAt == null);
+    if (filters.stage && filters.view === "all") {
+      rows = rows.filter((r) => r.stage === filters.stage);
+    }
 
     const dtos = rows.map((r) => this.joinCategory(r));
 

@@ -15,7 +15,7 @@ export function EmptyState({ icon, title, description, action, compact = false }
     >
       {icon && (
         <div
-          className={`mb-3 flex items-center justify-center rounded-full ${compact ? "text-2xl w-10 h-10" : "text-3xl w-12 h-12"}`}
+          className={`empty-state-icon mb-3 flex items-center justify-center rounded-full ${compact ? "text-2xl w-10 h-10" : "text-3xl w-12 h-12"}`}
           style={{ background: "var(--accent-subtle)", color: "var(--accent)" }}
         >
           {icon}

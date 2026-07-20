@@ -1,6 +1,9 @@
-import type { RefObject, KeyboardEvent } from "react";
-import type { ScheduleCard } from "../../lib/api";
+import { useState, type RefObject, type KeyboardEvent } from "react";
+import type { CardStage, Category, ScheduleCard } from "../../lib/api";
+import { useCategoryMutations } from "../../hooks/useCategoryMutations";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { PriorityField } from "./PriorityPicker";
+import { StageBadge } from "./StageBadge";
 
 export interface CardFormValues {
   title: string;
@@ -9,13 +12,14 @@ export interface CardFormValues {
   importance: number;
   urgency: number;
   categoryId: string;
+  stage: CardStage;
   description: string;
 }
 
 interface CardFormFieldsProps {
   values: CardFormValues;
   onChange: (patch: Partial<CardFormValues>) => void;
-  categories: { id: string; name: string }[];
+  categories: Category[];
   errors?: string[];
   readOnly?: boolean;
   titleInputRef?: RefObject<HTMLInputElement | null>;
@@ -44,6 +48,40 @@ export function CardFormFields({
   onTitleCompositionStart,
   onTitleCompositionEnd,
 }: CardFormFieldsProps) {
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState("");
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const { createCategory, deleteCategory, isCreatingCategory, isDeletingCategory } = useCategoryMutations();
+  const selectedCategory = categories.find((category) => category.id === values.categoryId);
+
+  const addCategory = async () => {
+    const name = categoryName.trim();
+    if (!name) return setCategoryError("请输入分类名称");
+    try {
+      const created = await createCategory(name);
+      onChange({ categoryId: created.id });
+      setCategoryName("");
+      setAddingCategory(false);
+      setCategoryError("");
+    } catch (error) {
+      setCategoryError(error instanceof Error ? error.message : "分类创建失败");
+    }
+  };
+
+  const removeCategory = async () => {
+    if (!deleteCategoryId) return;
+    try {
+      await deleteCategory(deleteCategoryId);
+      const none = categories.find((category) => category.name === "无");
+      if (values.categoryId === deleteCategoryId) onChange({ categoryId: none?.id ?? "" });
+      setDeleteCategoryId(null);
+      setCategoryError("");
+    } catch (error) {
+      setCategoryError(error instanceof Error ? error.message : "分类删除失败");
+    }
+  };
+
   const onStartChange = (startAt: string) => {
     const patch: Partial<CardFormValues> = { startAt };
     if (startAt) {
@@ -79,8 +117,7 @@ export function CardFormFields({
           disabled={readOnly}
         />
       </label>
-      <fieldset disabled={readOnly}>
-        <legend className="text-[var(--muted)] mb-1">时间（可选）</legend>
+      <fieldset disabled={readOnly} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label className="block">
           <span className="text-[var(--muted)]">开始时间</span>
           <input
@@ -91,7 +128,7 @@ export function CardFormFields({
             onChange={(e) => onStartChange(e.target.value)}
           />
         </label>
-        <label className="block mt-2">
+        <label className="block">
           <span className="text-[var(--muted)]">结束时间</span>
           <input
             type="datetime-local"
@@ -116,34 +153,62 @@ export function CardFormFields({
           disabled={readOnly}
         />
       </div>
-      <label className="block">
-        <span className="text-[var(--muted)]">分类</span>
-        <select
-          className={inputClass}
-          style={inputStyle}
-          value={values.categoryId}
-          onChange={(e) => onChange({ categoryId: e.target.value })}
-          disabled={readOnly}
-        >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <label className="block">
+          <span className="flex items-center justify-between text-[var(--muted)]">
+            分类
+            {!readOnly && (
+              <span className="flex gap-1">
+                <button type="button" className="category-inline-action" onClick={(event) => { event.preventDefault(); setAddingCategory((value) => !value); }}>新增</button>
+                {selectedCategory?.deletable && <button type="button" className="category-inline-action danger" onClick={(event) => { event.preventDefault(); setDeleteCategoryId(selectedCategory.id); }}>删除</button>}
+              </span>
+            )}
+          </span>
+          <select className={inputClass} style={inputStyle} value={values.categoryId} onChange={(e) => onChange({ categoryId: e.target.value })} disabled={readOnly}>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          {addingCategory && (
+            <span className="flex gap-1 mt-1">
+              <input aria-label="新分类名称" autoFocus className={inputClass} style={inputStyle} value={categoryName} onChange={(event) => setCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void addCategory(); } }} />
+              <button type="button" className="category-add-button" disabled={isCreatingCategory} onClick={(event) => { event.preventDefault(); void addCategory(); }}>添加</button>
+            </span>
+          )}
+          {categoryError && <span className="block text-xs text-red-600 mt-1" role="alert">{categoryError}</span>}
+        </label>
+        <label className="block">
+          <span className="text-[var(--muted)]">日程阶段</span>
+          {readOnly ? (
+            <div className="mt-2"><StageBadge stage={values.stage} /></div>
+          ) : (
+            <select className={inputClass} style={inputStyle} value={values.stage} onChange={(e) => onChange({ stage: e.target.value as CardStage })}>
+              <option value="not_started">未开始</option>
+              <option value="in_progress">正在处理</option>
+              <option value="wrapping_up">等待收尾</option>
+            </select>
+          )}
+        </label>
+      </div>
       <label className="block">
         <span className="text-[var(--muted)]">描述（可选）</span>
         <textarea
           className={inputClass}
           style={inputStyle}
-          rows={2}
+          rows={4}
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
           readOnly={readOnly}
           disabled={readOnly}
         />
       </label>
+      <ConfirmDialog
+        open={!!deleteCategoryId}
+        title="删除分类"
+        message={`删除「${categories.find((category) => category.id === deleteCategoryId)?.name ?? ""}」后，关联卡片会归入「无」，卡片本身不会被删除。`}
+        confirmLabel="删除分类"
+        onConfirm={() => void removeCategory()}
+        onCancel={() => setDeleteCategoryId(null)}
+        loading={isDeletingCategory}
+      />
     </div>
   );
 }
@@ -181,14 +246,15 @@ export function formValuesToInput(values: CardFormValues) {
     importance: values.importance,
     urgency: values.urgency,
     categoryId: values.categoryId || undefined,
+    stage: values.stage,
     description: values.description.trim() || null,
     startAt: values.startAt ? localInputToIso(values.startAt) : null,
     endAt: values.endAt ? localInputToIso(values.endAt) : null,
   };
 }
 
-export function cardToFormValues(card: ScheduleCard, categories: { id: string; name: string }[]): CardFormValues {
-  const personal = categories.find((c) => c.name === "个人") ?? categories[0];
+export function cardToFormValues(card: ScheduleCard, categories: Category[]): CardFormValues {
+  const personal = categories.find((c) => c.name === "个人") ?? categories.find((c) => c.name === "无");
   return {
     title: card.title,
     startAt: isoToLocalInput(card.startAt),
@@ -196,12 +262,13 @@ export function cardToFormValues(card: ScheduleCard, categories: { id: string; n
     importance: card.importance,
     urgency: card.urgency,
     categoryId: card.categoryId || personal?.id || "",
+    stage: card.stage ?? "not_started",
     description: card.description ?? "",
   };
 }
 
-export function emptyFormValues(categories: { id: string; name: string }[]): CardFormValues {
-  const personal = categories.find((c) => c.name === "个人") ?? categories[0];
+export function emptyFormValues(categories: Category[]): CardFormValues {
+  const personal = categories.find((c) => c.name === "个人") ?? categories.find((c) => c.name === "无");
   return {
     title: "",
     startAt: "",
@@ -209,6 +276,7 @@ export function emptyFormValues(categories: { id: string; name: string }[]): Car
     importance: 5,
     urgency: 5,
     categoryId: personal?.id ?? "",
+    stage: "not_started",
     description: "",
   };
 }
@@ -231,6 +299,7 @@ export function formValuesEqual(a: CardFormValues, b: CardFormValues): boolean {
     a.importance === b.importance &&
     a.urgency === b.urgency &&
     a.categoryId === b.categoryId &&
+    a.stage === b.stage &&
     a.description === b.description
   );
 }

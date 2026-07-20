@@ -5,6 +5,7 @@ import { CompleteCheckbox } from "../cards/CompleteCheckbox";
 import { PriorityMeter } from "../cards/PriorityMeter";
 import { getCategoryAccent } from "../../lib/categoryColor";
 import { setDragCardId } from "../dnd/dragTrash";
+import { StageBadge } from "../cards/StageBadge";
 
 export type CardGridSortMode = "createdAtDesc" | "preserve";
 
@@ -16,6 +17,11 @@ interface CardGridProps {
   sortMode?: CardGridSortMode;
   renderCardChrome?: (card: ScheduleCard) => ReactNode;
   draggableCards?: boolean;
+  showStage?: boolean;
+  showHoverBar?: boolean;
+  overdueCardIds?: ReadonlySet<string>;
+  highlightedCardIds?: ReadonlySet<string>;
+  onHoverCardChange?: (id: string | null) => void;
 }
 
 function cardSubtitle(c: ScheduleCard): string {
@@ -39,6 +45,11 @@ export function CardGrid({
   sortMode = "createdAtDesc",
   renderCardChrome,
   draggableCards = false,
+  showStage = true,
+  showHoverBar = false,
+  overdueCardIds,
+  highlightedCardIds,
+  onHoverCardChange,
 }: CardGridProps) {
   const sorted = useMemo(() => {
     if (sortMode === "preserve") return cards;
@@ -66,7 +77,14 @@ export function CardGrid({
               onDragStart={(e) => {
                 if (!canDrag) return;
                 setDragCardId(e.dataTransfer, c.id);
+                const preview = e.currentTarget.cloneNode(true) as HTMLElement;
+                preview.classList.add("drag-card-preview");
+                document.body.appendChild(preview);
+                e.dataTransfer.setDragImage(preview, 24, 24);
+                requestAnimationFrame(() => preview.remove());
               }}
+              onMouseEnter={() => onHoverCardChange?.(c.id)}
+              onMouseLeave={() => onHoverCardChange?.(null)}
               onClick={() => onCardClick?.(c)}
               onKeyDown={(e) => {
                 if (!onCardClick) return;
@@ -75,7 +93,7 @@ export function CardGrid({
                   onCardClick(c);
                 }
               }}
-              className="w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden"
+              className={`schedule-card w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden ${showHoverBar ? "show-hover-bar" : ""} ${overdueCardIds?.has(c.id) ? "is-overdue" : ""} ${highlightedCardIds?.has(c.id) ? "is-highlighted" : ""}`}
               style={{
                 background: "var(--panel)",
                 border: "1px solid var(--border)",
@@ -87,8 +105,9 @@ export function CardGrid({
                 borderLeftColor: accent,
               }}
             >
+              {showHoverBar && <span className="card-hover-bar" aria-hidden />}
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <div className="font-semibold line-clamp-2" style={{ fontSize: "var(--text-sm)" }}>
+                <div className="font-semibold line-clamp-2 pr-16" style={{ fontSize: "var(--text-sm)" }}>
                   {c.title}
                 </div>
                 <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>
@@ -100,6 +119,7 @@ export function CardGrid({
                   <PriorityMeter label="紧急" value={c.urgency} compact />
                 </div>
               </div>
+              {showStage && <span className={`absolute top-2 ${showComplete || renderCardChrome ? "right-9" : "right-2"}`}><StageBadge stage={c.stage} compact /></span>}
               {showComplete && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
             </div>
             {renderCardChrome?.(c)}

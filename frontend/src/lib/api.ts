@@ -1,4 +1,21 @@
 export type CardStatus = "active" | "completed" | "deleted";
+export type CardStage = "not_started" | "in_progress" | "wrapping_up";
+
+export interface DailyReport {
+  date: string;
+  goal: string;
+  result: string;
+  analysis: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  isPreset: boolean;
+  deletable: boolean;
+}
 
 export interface ScheduleCard {
   id: string;
@@ -10,6 +27,7 @@ export interface ScheduleCard {
   urgency: number;
   categoryId: string;
   categoryName: string;
+  stage: CardStage;
   status: CardStatus;
   trashedAt: string | null;
   createdAt: string;
@@ -40,6 +58,7 @@ export interface ScheduleCardInput {
   urgency?: number;
   categoryId?: string;
   categoryName?: string;
+  stage?: CardStage;
 }
 
 export type CardSort = "time" | "priority" | "title" | "createdAt";
@@ -51,6 +70,7 @@ export interface CardQueryParams {
   importance?: string | number;
   urgency?: string | number;
   scheduled?: "true" | "false";
+  stage?: CardStage;
   sort?: CardSort;
 }
 
@@ -93,7 +113,12 @@ export const api = {
   logout: () => request<void>("/api/auth/logout", { method: "POST" }),
   me: () => request<{ authenticated: boolean }>("/api/auth/me"),
   getCards: (params?: CardQueryParams | Record<string, string>) => {
-    const q = new URLSearchParams(params as Record<string, string>).toString();
+    const q = new URLSearchParams(
+      Object.entries(params ?? {}).reduce<Record<string, string>>((result, [key, value]) => {
+        if (value != null) result[key] = String(value);
+        return result;
+      }, {}),
+    ).toString();
     return request<{ items: ScheduleCard[] }>(`/api/cards${q ? `?${q}` : ""}`);
   },
   getCardById: (id: string) => request<ScheduleCard>(`/api/cards/${id}`),
@@ -105,7 +130,18 @@ export const api = {
   completeCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/complete`, { method: "POST" }),
   restoreCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/restore`, { method: "POST" }),
   permanentDeleteCard: (id: string) => request<void>(`/api/cards/${id}/permanent`, { method: "DELETE" }),
-  getCategories: () => request<{ items: { id: string; name: string; isPreset: boolean }[] }>("/api/categories"),
+  getCategories: () => request<{ items: Category[] }>("/api/categories"),
+  createCategory: (name: string) =>
+    request<Category>("/api/categories", { method: "POST", body: JSON.stringify({ name }) }),
+  deleteCategory: (id: string) =>
+    request<void>(`/api/categories/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  getDailyReport: (date: string) =>
+    request<{ item: DailyReport | null }>(`/api/daily-reports/${encodeURIComponent(date)}`),
+  putDailyReport: (date: string, snapshot: Pick<DailyReport, "goal" | "result" | "analysis">) =>
+    request<DailyReport>(`/api/daily-reports/${encodeURIComponent(date)}`, {
+      method: "PUT",
+      body: JSON.stringify(snapshot),
+    }),
   getPreferences: () => request<OwnerPreferences>("/api/preferences"),
   patchPreferences: (body: Partial<OwnerPreferences>) =>
     request<OwnerPreferences>("/api/preferences", { method: "PATCH", body: JSON.stringify(body) }),
@@ -114,7 +150,7 @@ export const api = {
       serverTime: string;
       cards: ScheduleCard[];
       preferences: OwnerPreferences | null;
-      categories: { id: string; name: string; isPreset: boolean }[] | null;
+      categories: Category[] | null;
     }>(`/api/sync${since ? `?since=${encodeURIComponent(since)}` : ""}`),
   createChatSession: () => request<{ id: string }>("/api/chat/sessions", { method: "POST" }),
   getChatMessages: (sessionId: string) =>

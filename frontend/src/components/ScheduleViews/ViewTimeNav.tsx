@@ -48,7 +48,7 @@ export function ViewTimeNav({ grain, anchorDate, onDateChange, timezone }: ViewT
   };
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex items-center gap-2 shrink-0 py-1 -my-1 overflow-visible relative z-10">
       <button type="button" className={BTN_CLASS} style={BTN_STYLE} onClick={goPrev}>
         {labels.prev}
       </button>

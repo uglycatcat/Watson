@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import type { ScheduleCard } from "../../lib/api";
 import { Drawer } from "../ui/Drawer";
+import { StageBadge } from "../cards/StageBadge";
 
 interface DayScheduleDrawerProps {
   date: string | null;
@@ -35,7 +36,7 @@ export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DaySche
                 className="w-full text-left p-3 rounded border text-sm"
                 style={{ background: "var(--bg)", borderColor: "var(--border)" }}
               >
-                <div className="font-medium">{c.title}</div>
+                <div className="flex items-start justify-between gap-2"><span className="font-medium">{c.title}</span><StageBadge stage={c.stage} compact /></div>
                 <div style={{ color: "var(--muted)" }}>{timeLabel(c)}</div>
               </button>
             </li>

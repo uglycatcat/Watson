@@ -49,7 +49,7 @@ export function Drawer({ open, onClose, side = "left", title, children }: Drawer
         aria-hidden
       />
       <aside
-        className={`absolute top-0 ${position} h-full w-full max-w-sm flex flex-col transition-interactive`}
+        className={`absolute top-0 ${position} h-full w-full max-w-sm flex flex-col transition-interactive ${!exiting ? (side === "left" ? "drawer-enter-left" : "drawer-enter-right") : ""}`}
         style={{
           background: "var(--panel)",
           borderColor: "var(--border)",

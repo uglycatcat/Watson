@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { ScheduleService } from "../services/schedule.service.js";
+import { isCardStage } from "../types.js";
 
 function parseOptionalInt(value: string | undefined): number | undefined {
   if (value == null || value === "") return undefined;
@@ -8,8 +9,14 @@ function parseOptionalInt(value: string | undefined): number | undefined {
 }
 
 export async function cardsRoutes(app: FastifyInstance, scheduleService: ScheduleService) {
-  app.get("/api/cards", async (request) => {
+  app.get("/api/cards", async (request, reply) => {
     const q = request.query as Record<string, string | undefined>;
+    if (q.stage !== undefined && !isCardStage(q.stage)) {
+      return reply.status(400).send({ error: "Invalid stage" });
+    }
+    if (q.stage !== undefined && q.view !== "all") {
+      return reply.status(400).send({ error: "Stage filter is only supported for view=all" });
+    }
     const scheduled =
       q.scheduled === "true" ? true : q.scheduled === "false" ? false : undefined;
     const items = scheduleService.listAll({
@@ -19,6 +26,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       importance: parseOptionalInt(q.importance),
       urgency: parseOptionalInt(q.urgency),
       scheduled,
+      stage: q.stage,
       sort: q.sort as "time" | "priority" | "title" | "createdAt" | undefined,
     });
     return { items };
@@ -32,8 +40,14 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
   });
 
   app.post("/api/cards", async (request, reply) => {
-    const body = request.body as Record<string, unknown>;
+    const body =
+      request.body && typeof request.body === "object"
+        ? (request.body as Record<string, unknown>)
+        : {};
     try {
+      if (body.stage !== undefined && !isCardStage(body.stage)) {
+        return reply.status(400).send({ error: "Invalid stage" });
+      }
       const card = scheduleService.create({
         title: String(body.title ?? ""),
         description: body.description ? String(body.description) : null,
@@ -43,6 +57,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
         urgency: body.urgency != null ? Number(body.urgency) : undefined,
         categoryId: body.categoryId ? String(body.categoryId) : undefined,
         categoryName: body.categoryName ? String(body.categoryName) : undefined,
+        stage: body.stage,
       });
       return reply.status(201).send(card);
     } catch (e) {
@@ -53,8 +68,14 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
 
   app.patch("/api/cards/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const body = request.body as Record<string, unknown>;
+    const body =
+      request.body && typeof request.body === "object"
+        ? (request.body as Record<string, unknown>)
+        : {};
     try {
+      if (body.stage !== undefined && !isCardStage(body.stage)) {
+        return reply.status(400).send({ error: "Invalid stage" });
+      }
       const patch: Parameters<ScheduleService["update"]>[1] = {};
       if (body.title !== undefined) patch.title = String(body.title);
       if (body.description !== undefined) patch.description = String(body.description);
@@ -64,6 +85,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (body.urgency !== undefined) patch.urgency = Number(body.urgency);
       if (body.categoryId !== undefined) patch.categoryId = String(body.categoryId);
       if (body.categoryName !== undefined) patch.categoryName = String(body.categoryName);
+      if (body.stage !== undefined) patch.stage = body.stage;
 
       const card = scheduleService.update(id, patch);
       if (!card) return reply.status(404).send({ error: "Not found" });

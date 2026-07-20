@@ -61,6 +61,7 @@ export function TopBar({
   const { deleteCard } = useCardMutations();
   const [dragOverTrash, setDragOverTrash] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
+  const [dropAccepted, setDropAccepted] = useState(false);
   const viewBeforeTrash = useRef<Exclude<ViewMode, "trash">>("day");
 
   const segmentValue = view === "trash" ? viewBeforeTrash.current : view;
@@ -82,7 +83,10 @@ export function TopBar({
     >
       {/* Left: brand + search + create */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
-        <span className="font-semibold shrink-0" style={{ fontWeight: "var(--font-semibold)" }}>
+        <span className="font-semibold shrink-0 inline-flex items-center gap-1.5" style={{ fontWeight: "var(--font-semibold)" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+            <rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M7 10h10M8 14h3M8 17h6" />
+          </svg>
           Watson
         </span>
         {onSearchQueryChange && onSearchSelect && (
@@ -156,13 +160,15 @@ export function TopBar({
               setDropError(null);
               try {
                 await deleteCard(id);
+                setDropAccepted(true);
+                window.setTimeout(() => setDropAccepted(false), 350);
               } catch (err) {
                 const msg = err instanceof Error ? err.message : "删除失败";
                 setDropError(msg);
                 window.setTimeout(() => setDropError(null), 4000);
               }
             }}
-            className={`${TOOL_BTN} w-8 ${view === "trash" ? "btn-accent" : ""}`}
+            className={`${TOOL_BTN} w-8 trash-drop-target ${view === "trash" ? "btn-accent" : ""} ${dragOverTrash ? "is-drag-over" : ""} ${dropAccepted ? "is-accepted" : ""}`}
             style={{
               ...TOOL_BTN_STYLE,
               borderColor: dragOverTrash || view === "trash" ? "var(--accent)" : "var(--border)",

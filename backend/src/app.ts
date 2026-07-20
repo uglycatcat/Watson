@@ -13,11 +13,13 @@ import { authRoutes } from "./routes/auth.js";
 import { cardsRoutes } from "./routes/cards.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { chatRoutes } from "./routes/chat.js";
+import { dailyReportsRoutes } from "./routes/daily-reports.js";
 import { preferencesRoutes } from "./routes/preferences.js";
 import { syncRoutes } from "./routes/sync.js";
 import { CategoryService } from "./services/category.service.js";
 import { ScheduleService } from "./services/schedule.service.js";
 import { ChatService } from "./services/chat.service.js";
+import { DailyReportService } from "./services/daily-report.service.js";
 import { SyncService } from "./services/sync.service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -55,6 +57,7 @@ export async function buildApp() {
   const categoryService = new CategoryService(db);
   const scheduleService = new ScheduleService(db, categoryService);
   const chatService = new ChatService(db, config);
+  const dailyReportService = new DailyReportService(db);
   const syncService = new SyncService(db, scheduleService, categoryService);
 
   const app = Fastify({ logger: process.env.NODE_ENV === "production" });
@@ -90,6 +93,7 @@ export async function buildApp() {
 
   await cardsRoutes(app, scheduleService);
   await categoriesRoutes(app, categoryService);
+  await dailyReportsRoutes(app, dailyReportService);
   await chatRoutes(app, chatService);
   await preferencesRoutes(app, db);
   await syncRoutes(app, syncService);

@@ -14,6 +14,7 @@ import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
 import { setDragCardId } from "../dnd/dragTrash";
+import { StageBadge } from "../cards/StageBadge";
 
 interface WeekViewProps {
   date: string;
@@ -89,7 +90,10 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                         className="relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive"
                         style={{ background: "var(--accent)", color: "#fff", cursor: "grab", borderRadius: "var(--radius-sm)" }}
                       >
-                        {c.title}
+                        <span className="flex items-center justify-between gap-1">
+                          <span className="truncate">{c.title}</span>
+                          <StageBadge stage={c.stage} compact />
+                        </span>
                       </button>
                     ))
                   )}

@@ -7,6 +7,7 @@ export async function categoriesRoutes(app: FastifyInstance, categoryService: Ca
       id: c.id,
       name: c.name,
       isPreset: c.isPreset,
+      deletable: c.nameLower !== "无",
     }));
     return { items };
   });
@@ -18,10 +19,23 @@ export async function categoriesRoutes(app: FastifyInstance, categoryService: Ca
     }
     try {
       const cat = categoryService.create(body.name);
-      return reply.status(201).send({ id: cat.id, name: cat.name, isPreset: cat.isPreset });
+      return reply
+        .status(201)
+        .send({ id: cat.id, name: cat.name, isPreset: cat.isPreset, deletable: true });
     } catch (e) {
       const err = e as { statusCode?: number; message?: string };
       return reply.status(err.statusCode ?? 400).send({ error: err.message });
+    }
+  });
+
+  app.delete("/api/categories/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      categoryService.delete(id);
+      return reply.status(204).send();
+    } catch (e) {
+      const err = e as { statusCode?: number; message?: string };
+      return reply.status(err.statusCode ?? 500).send({ error: err.message });
     }
   });
 }

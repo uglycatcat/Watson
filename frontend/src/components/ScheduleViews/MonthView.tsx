@@ -12,6 +12,7 @@ import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
 import { setDragCardId } from "../dnd/dragTrash";
+import { StageBadge } from "../cards/StageBadge";
 
 interface MonthViewProps {
   date: string;
@@ -105,7 +106,10 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 borderRadius: "var(--radius-sm)",
                               }}
                             >
-                              {c.title}
+                              <span className="flex items-center justify-between gap-1">
+                                <span className="truncate">{c.title}</span>
+                                <StageBadge stage={c.stage} compact />
+                              </span>
                             </button>
                           );
                         })}
