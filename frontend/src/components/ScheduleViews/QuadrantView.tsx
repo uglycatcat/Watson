@@ -157,7 +157,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
                 fill="var(--accent)"
                 opacity={0.85}
                 className={hover === b ? "quadrant-dot is-hovered" : "quadrant-dot"}
-                style={{ cursor: "default", transformOrigin: `${cx}px ${cy}px` }}
+                style={{ cursor: "default" }}
                 onMouseEnter={(e) => {
                   setHover(b);
                   onHoverCardIds?.(new Set(b.cards.map((card) => card.id)));
@@ -174,8 +174,11 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
           })}
         </svg>
       </div>
+    </div>
+  );
 
-      {hover && (
+  const tooltip = hover
+    ? createPortal(
         <div
           className="fixed z-50 rounded-md border p-3 text-xs max-w-[220px] pointer-events-none"
           style={{
@@ -197,17 +200,25 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
           {hover.cards.length > TOOLTIP_MAX && (
             <p style={{ color: "var(--muted)" }}>+{hover.cards.length - TOOLTIP_MAX} 更多</p>
           )}
-        </div>
-      )}
-    </div>
-  );
+        </div>,
+        document.body,
+      )
+    : null;
 
-  if (embedded) return plot;
+  if (embedded) {
+    return (
+      <>
+        {plot}
+        {tooltip}
+      </>
+    );
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 modal-backdrop-enter" aria-hidden />
       {plot}
+      {tooltip}
     </div>,
     document.body,
   );

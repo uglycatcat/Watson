@@ -66,8 +66,8 @@ export function AppShell() {
       />
       <div className={`flex flex-1 min-h-0 relative ${dragging ? "select-none" : ""}`}>
         <main
-          className="relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden"
-          style={{ background: "var(--bg)", padding: "var(--space-4)" }}
+          className="app-main relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden"
+          style={{ background: "var(--bg)" }}
         >
           <div className="relative flex-1 min-h-0 overflow-hidden">
             <ScheduleViewRouter
