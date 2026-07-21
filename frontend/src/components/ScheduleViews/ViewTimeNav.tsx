@@ -20,8 +20,6 @@ const BTN_CLASS = "text-sm px-2 py-1 border transition-interactive nav-time-btn"
 const BTN_STYLE = {
   borderColor: "var(--border)",
   borderRadius: "var(--radius-md)",
-  background: "var(--bg)",
-  color: "var(--fg)",
 } as const;
 
 function shiftMonth(anchorDay: string, deltaMonths: number, tz: string): string {

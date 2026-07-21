@@ -38,9 +38,9 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
     });
   };
   const daySections = [
-    ["今天截止", sections.dueToday, "截止时间落在今天"],
-    ["正在进行", sections.inProgress, "跨越今天的日程"],
-    ["今天开始", sections.startingToday, "开始时间落在今天"],
+    ["今天截止", sections.dueToday],
+    ["正在进行", sections.inProgress],
+    ["今天开始", sections.startingToday],
   ] as const;
   useEffect(() => {
     const frame = requestAnimationFrame(updateScrollEdges);
@@ -62,11 +62,11 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
               ) : cards.length === 0 ? (
                 <EmptyState icon="📅" title="这一天没有日程" description="日报仍可在下方记录" action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined} compact />
               ) : (
-                daySections.map(([title, sectionCards, description]) => (
+                daySections.map(([title, sectionCards]) => (
                   <section className="day-section" key={title}>
-                    <div className="day-section-heading"><h3>{title}</h3><span>{description} · {sectionCards.length}</span></div>
+                    <div className="day-section-heading"><h3>{title}</h3><span>{sectionCards.length}</span></div>
                     {sectionCards.length ? (
-                      <CardGrid cards={sectionCards} onCardClick={onCardClick} showComplete draggableCards sortMode="preserve" showHoverBar highlightedCardIds={highlightedCardIds} />
+                      <CardGrid cards={sectionCards} onCardClick={onCardClick} showComplete draggableCards sortMode="stageThenCreatedAtDesc" showHoverBar highlightedCardIds={highlightedCardIds} />
                     ) : <p className="day-section-empty">本章节暂无日程</p>}
                   </section>
                 ))
@@ -84,6 +84,7 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
             boxShadow: "inset 0 2px 8px color-mix(in srgb, var(--fg) 12%, transparent)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)",
+            transform: "translateY(calc(-100% / 7))",
           }}
         >
           <QuadrantView cards={cards} variant="embedded" onHoverCardIds={setHighlightedCardIds} />

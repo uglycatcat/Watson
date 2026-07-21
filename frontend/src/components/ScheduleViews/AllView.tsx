@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type CardStage, type ScheduleCard } from "../../lib/api";
+import { buildAllSections } from "../calendar/allSections";
 import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
 import { EmptyState } from "../ui/EmptyState";
@@ -15,7 +16,6 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   const [categoryId, setCategoryId] = useState("");
   const [importance, setImportance] = useState("");
   const [urgency, setUrgency] = useState("");
-  const [scheduled, setScheduled] = useState<"" | "true" | "false">("");
   const [stage, setStage] = useState<"" | CardStage>("");
   const [quadrantOpen, setQuadrantOpen] = useState(false);
 
@@ -25,7 +25,6 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   if (categoryId) params.categoryId = categoryId;
   if (importance !== "") params.importance = importance;
   if (urgency !== "") params.urgency = urgency;
-  if (scheduled) params.scheduled = scheduled;
   if (stage) params.stage = stage;
 
   const { data, isLoading } = useQuery({
@@ -34,6 +33,7 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   });
 
   const cards = data?.items ?? [];
+  const sections = useMemo(() => buildAllSections(cards), [cards]);
   const overdueCardIds = new Set(
     cards
       .filter((card) => card.status === "active" && card.startAt && card.endAt && new Date(card.endAt).getTime() < Date.now())
@@ -49,19 +49,25 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
   ));
 
   const filteredEmpty = !isLoading && cards.length === 0;
+  const allSections = [
+    ["已安排", sections.scheduled],
+    ["未安排", sections.unscheduled],
+  ] as const;
 
   return (
     <div className="h-full flex flex-col min-h-0">
       <div className="flex items-center gap-2 mb-3 shrink-0">
         <h2 className="text-lg font-semibold flex-1">全部视图</h2>
-        <button
-          type="button"
-          onClick={() => setQuadrantOpen(true)}
-          className={`${selectClass}`}
-          style={selectStyle}
-        >
-          坐标视图
-        </button>
+        <span className="inline-block" style={{ transform: "translateY(calc(100% / 5))" }}>
+          <button
+            type="button"
+            onClick={() => setQuadrantOpen(true)}
+            className="text-sm px-2 py-1 border transition-interactive nav-time-btn"
+            style={{ borderColor: "var(--border)", borderRadius: "var(--radius-md)" }}
+          >
+            坐标视图
+          </button>
+        </span>
       </div>
       <div className="flex flex-wrap gap-2 mb-4 text-sm shrink-0">
         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectClass} style={selectStyle}>
@@ -79,11 +85,6 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
         <select value={urgency} onChange={(e) => setUrgency(e.target.value)} className={selectClass} style={selectStyle}>
           <option value="">全部紧急度</option>
           {priorityOptions}
-        </select>
-        <select value={scheduled} onChange={(e) => setScheduled(e.target.value as "" | "true" | "false")} className={selectClass} style={selectStyle}>
-          <option value="">全部安排</option>
-          <option value="true">已安排</option>
-          <option value="false">未安排</option>
         </select>
         <select value={stage} onChange={(e) => setStage(e.target.value as "" | CardStage)} className={selectClass} style={selectStyle}>
           <option value="">全部阶段</option>
@@ -103,7 +104,29 @@ export function AllView({ onCardClick, onCreateClick }: AllViewProps) {
             action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
           />
         ) : (
-          <CardGrid cards={cards} onCardClick={onCardClick} showComplete draggableCards showHoverBar overdueCardIds={overdueCardIds} />
+          <div className="day-sections">
+            {allSections.map(([title, sectionCards]) => (
+              <section className="day-section" key={title}>
+                <div className="day-section-heading">
+                  <h3>{title}</h3>
+                  <span>{sectionCards.length}</span>
+                </div>
+                {sectionCards.length ? (
+                  <CardGrid
+                    cards={sectionCards}
+                    onCardClick={onCardClick}
+                    showComplete
+                    draggableCards
+                    sortMode="stageThenCreatedAtDesc"
+                    showHoverBar
+                    overdueCardIds={overdueCardIds}
+                  />
+                ) : (
+                  <p className="day-section-empty">本章节暂无日程</p>
+                )}
+              </section>
+            ))}
+          </div>
         )}
       </div>
       {quadrantOpen && <QuadrantView cards={cards} onClose={() => setQuadrantOpen(false)} />}

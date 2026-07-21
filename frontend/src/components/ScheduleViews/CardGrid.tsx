@@ -1,13 +1,13 @@
 import { useMemo, type ReactNode } from "react";
 import { format } from "date-fns";
-import type { ScheduleCard } from "../../lib/api";
+import type { CardStage, ScheduleCard } from "../../lib/api";
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
 import { PriorityMeter } from "../cards/PriorityMeter";
 import { getCategoryAccent } from "../../lib/categoryColor";
 import { setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 
-export type CardGridSortMode = "createdAtDesc" | "preserve";
+export type CardGridSortMode = "createdAtDesc" | "preserve" | "stageThenCreatedAtDesc";
 
 interface CardGridProps {
   cards: ScheduleCard[];
@@ -24,6 +24,13 @@ interface CardGridProps {
   onHoverCardChange?: (id: string | null) => void;
 }
 
+/** 等待收尾 → 正在处理 → 未开始 */
+const STAGE_SORT_RANK: Record<CardStage, number> = {
+  wrapping_up: 0,
+  in_progress: 1,
+  not_started: 2,
+};
+
 function cardSubtitle(c: ScheduleCard): string {
   if (!c.startAt) return "未安排";
   const start = formatTime(c.startAt);
@@ -35,6 +42,15 @@ function sortByCreatedAtDesc(cards: ScheduleCard[]): ScheduleCard[] {
   return [...cards].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+}
+
+function sortByStageThenCreatedAtDesc(cards: ScheduleCard[]): ScheduleCard[] {
+  return [...cards].sort((a, b) => {
+    const stageDiff =
+      STAGE_SORT_RANK[a.stage ?? "not_started"] - STAGE_SORT_RANK[b.stage ?? "not_started"];
+    if (stageDiff !== 0) return stageDiff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function CardGrid({
@@ -53,6 +69,7 @@ export function CardGrid({
 }: CardGridProps) {
   const sorted = useMemo(() => {
     if (sortMode === "preserve") return cards;
+    if (sortMode === "stageThenCreatedAtDesc") return sortByStageThenCreatedAtDesc(cards);
     return sortByCreatedAtDesc(cards);
   }, [cards, sortMode]);
 
@@ -69,7 +86,7 @@ export function CardGrid({
         const canDrag = draggableCards && c.status === "active";
         const accent = getCategoryAccent(c.categoryId);
         return (
-          <div key={c.id} className="relative">
+          <div key={c.id}>
             <div
               role={onCardClick ? "button" : undefined}
               tabIndex={onCardClick ? 0 : undefined}
@@ -93,7 +110,7 @@ export function CardGrid({
                   onCardClick(c);
                 }
               }}
-              className={`schedule-card w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden ${showHoverBar ? "show-hover-bar" : ""} ${overdueCardIds?.has(c.id) ? "is-overdue" : ""} ${highlightedCardIds?.has(c.id) ? "is-highlighted" : ""}`}
+              className={`schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden ${renderCardChrome ? "pb-8" : ""} ${showHoverBar ? "show-hover-bar" : ""} ${overdueCardIds?.has(c.id) ? "is-overdue" : ""} ${highlightedCardIds?.has(c.id) ? "is-highlighted" : ""}`}
               style={{
                 background: "var(--panel)",
                 border: "1px solid var(--border)",
@@ -121,8 +138,8 @@ export function CardGrid({
               </div>
               {showStage && <span className={`absolute top-2 ${showComplete || renderCardChrome ? "right-9" : "right-2"}`}><StageBadge stage={c.stage} compact /></span>}
               {showComplete && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
+              {renderCardChrome?.(c)}
             </div>
-            {renderCardChrome?.(c)}
           </div>
         );
       })}

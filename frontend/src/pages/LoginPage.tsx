@@ -57,10 +57,6 @@ export function LoginPage() {
           WATSON
         </h1>
 
-        <p className="text-sm mb-6 text-center" style={{ color: "rgba(255,255,255,0.55)" }}>
-          请输入四字符验证码以登录
-        </p>
-
         <PinCodeInput
           onComplete={onComplete}
           failed={failed}

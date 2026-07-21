@@ -6,6 +6,8 @@ import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { CardGrid } from "./CardGrid";
 import { EmptyState } from "../ui/EmptyState";
 import { SkeletonCardGrid } from "../ui/Skeleton";
+import { buildTrashSections } from "../calendar/trashSections";
+import { DEFAULT_TIMEZONE } from "../calendar/tz";
 
 interface TrashViewProps {
   onCardClick: (card: ScheduleCard) => void;
@@ -37,19 +39,16 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
+  const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
+
   const { data, isLoading } = useQuery({
     queryKey: ["cards", "trash"],
     queryFn: () => api.getCards({ view: "trash" }),
   });
 
-  const cards = useMemo(() => {
-    const items = data?.items ?? [];
-    return [...items].sort((a, b) => {
-      const ta = a.trashedAt ? new Date(a.trashedAt).getTime() : 0;
-      const tb = b.trashedAt ? new Date(b.trashedAt).getTime() : 0;
-      return tb - ta;
-    });
-  }, [data?.items]);
+  const cards = data?.items ?? [];
+  const sections = useMemo(() => buildTrashSections(cards, tz), [cards, tz]);
 
   const handleRestore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,6 +71,34 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
     }
   };
 
+  const renderChrome = (c: ScheduleCard) => (
+    <>
+      <TrashBadge card={c} />
+      <div className="absolute bottom-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="text-[10px] px-1.5 py-0.5 rounded-md border transition-interactive"
+          style={{ borderColor: "var(--border)", background: "var(--bg)" }}
+          disabled={isRestoring}
+          onClick={(e) => void handleRestore(c.id, e)}
+        >
+          恢复
+        </button>
+        <button
+          type="button"
+          className="text-[10px] px-1.5 py-0.5 rounded-md border text-red-600 transition-interactive"
+          style={{ borderColor: "var(--border)" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmId(c.id);
+          }}
+        >
+          永久删除
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="h-full flex flex-col min-h-0">
       <h2 className="text-lg font-semibold mb-3 shrink-0">垃圾箱</h2>
@@ -86,38 +113,22 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
             action={onLeaveTrash ? { label: "返回日程", onClick: onLeaveTrash } : undefined}
           />
         ) : (
-          <CardGrid
-            cards={cards}
-            onCardClick={onCardClick}
-            sortMode="preserve"
-            renderCardChrome={(c) => (
-              <>
-                <TrashBadge card={c} />
-                <div className="absolute bottom-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="text-[10px] px-1.5 py-0.5 rounded-md border transition-interactive"
-                    style={{ borderColor: "var(--border)", background: "var(--bg)" }}
-                    disabled={isRestoring}
-                    onClick={(e) => void handleRestore(c.id, e)}
-                  >
-                    恢复
-                  </button>
-                  <button
-                    type="button"
-                    className="text-[10px] px-1.5 py-0.5 rounded-md border text-red-600 transition-interactive"
-                    style={{ borderColor: "var(--border)" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmId(c.id);
-                    }}
-                  >
-                    永久删除
-                  </button>
+          <div className="day-sections">
+            {sections.map((section) => (
+              <section className="day-section" key={section.day || "unknown"}>
+                <div className="day-section-heading">
+                  <h3>{section.label}</h3>
+                  <span>{section.cards.length}</span>
                 </div>
-              </>
-            )}
-          />
+                <CardGrid
+                  cards={section.cards}
+                  onCardClick={onCardClick}
+                  sortMode="preserve"
+                  renderCardChrome={renderChrome}
+                />
+              </section>
+            ))}
+          </div>
         )}
       </div>
       <ConfirmDialog
