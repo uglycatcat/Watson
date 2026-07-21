@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type ScheduleCard } from "../../lib/api";
+import { api, isParentCard, type ScheduleCard } from "../../lib/api";
 import {
   MAX_CHIPS_PER_CELL,
   buildSpanSegments,
@@ -87,12 +87,24 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                         draggable
                         onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
                         onClick={() => onCardClick(c)}
-                        className="relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive"
-                        style={{ background: "var(--accent)", color: "#fff", cursor: "grab", borderRadius: "var(--radius-sm)" }}
+                        className={`relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${isParentCard(c) ? "parent-card-stack parent-chip" : ""}`}
+                        style={{
+                          background: isParentCard(c) ? "var(--accent-subtle)" : "var(--accent)",
+                          color: isParentCard(c) ? "var(--fg)" : "#fff",
+                          cursor: "grab",
+                          borderRadius: "var(--radius-sm)",
+                          border: isParentCard(c) ? "1px solid var(--border)" : undefined,
+                        }}
                       >
                         <span className="flex items-center justify-between gap-1">
-                          <span className="truncate">{c.title}</span>
-                          <StageBadge stage={c.stage} compact />
+                          <span className="truncate pr-1">{c.title}</span>
+                          {isParentCard(c) ? (
+                            <span className="parent-child-badge parent-child-badge--inline" aria-label={`${c.childCount ?? 0} 张子卡片`}>
+                              {c.childCount ?? 0}
+                            </span>
+                          ) : (
+                            <StageBadge stage={c.stage} compact />
+                          )}
                         </span>
                       </button>
                     ))

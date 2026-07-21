@@ -74,6 +74,15 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
   const renderChrome = (c: ScheduleCard) => (
     <>
       <TrashBadge card={c} />
+      {c.lastParentTitle ? (
+        <span
+          className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded-md max-w-[calc(100%-4rem)] truncate"
+          style={{ background: "var(--accent-subtle)", color: "var(--muted)" }}
+          title={`原属：${c.lastParentTitle}`}
+        >
+          原属：{c.lastParentTitle}
+        </span>
+      ) : null}
       <div className="absolute bottom-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"

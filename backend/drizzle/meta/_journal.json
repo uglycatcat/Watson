@@ -78,6 +78,13 @@
       "when": 1784567040000,
       "tag": "0010_category_color_hex",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784567100000,
+      "tag": "0011_parent_cards",
+      "breakpoints": true
     }
   ]
 }

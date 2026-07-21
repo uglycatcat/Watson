@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type ScheduleCard } from "../../lib/api";
+import { api, isParentCard, type ScheduleCard } from "../../lib/api";
 import {
   MAX_CHIPS_PER_CELL,
   allCardsForCell,
@@ -83,6 +83,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                       <div className="space-y-0.5 flex-1 min-h-0 overflow-y-auto">
                         {visible.map((c) => {
                           const multi = multiDayIds.has(c.id);
+                          const parent = isParentCard(c);
                           return (
                             <button
                               key={c.id}
@@ -93,10 +94,10 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 e.stopPropagation();
                                 onCardClick(c);
                               }}
-                              className="relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive"
+                              className={`relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""}`}
                               style={{
-                                background: "var(--accent)",
-                                color: "#fff",
+                                background: parent ? "var(--accent-subtle)" : "var(--accent)",
+                                color: parent ? "var(--fg)" : "#fff",
                                 paddingTop: multi ? 3 : 2,
                                 paddingBottom: multi ? 3 : 2,
                                 marginLeft: multi ? -2 : 0,
@@ -104,11 +105,18 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 width: multi ? "calc(100% + 4px)" : "100%",
                                 cursor: "grab",
                                 borderRadius: "var(--radius-sm)",
+                                border: parent ? "1px solid var(--border)" : undefined,
                               }}
                             >
                               <span className="flex items-center justify-between gap-1">
-                                <span className="truncate">{c.title}</span>
-                                <StageBadge stage={c.stage} compact />
+                                <span className="truncate pr-1">{c.title}</span>
+                                {parent ? (
+                                  <span className="parent-child-badge parent-child-badge--inline" aria-label={`${c.childCount ?? 0} 张子卡片`}>
+                                    {c.childCount ?? 0}
+                                  </span>
+                                ) : (
+                                  <StageBadge stage={c.stage} compact />
+                                )}
                               </span>
                             </button>
                           );

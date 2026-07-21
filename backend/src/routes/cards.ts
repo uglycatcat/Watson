@@ -8,13 +8,22 @@ function parseOptionalInt(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function handleServiceError(
+  e: unknown,
+  reply: { status: (code: number) => { send: (body: { error: string }) => unknown } },
+) {
+  const err = e as { statusCode?: number; message?: string };
+  return reply.status(err.statusCode ?? 400).send({ error: err.message ?? "Bad request" });
+}
+
 export async function cardsRoutes(app: FastifyInstance, scheduleService: ScheduleService) {
   app.get("/api/cards", async (request, reply) => {
     const q = request.query as Record<string, string | undefined>;
     if (q.stage !== undefined && !isCardStage(q.stage)) {
       return reply.status(400).send({ error: "Invalid stage" });
     }
-    if (q.stage !== undefined && q.view !== "all") {
+    // Stage filter: all-view list, or undated day fetch used by AllView quadrant (all standards).
+    if (q.stage !== undefined && q.view !== "all" && !(q.view === "day" && !q.date)) {
       return reply.status(400).send({ error: "Stage filter is only supported for view=all" });
     }
     const scheduled =
@@ -30,6 +39,27 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       sort: q.sort as "time" | "priority" | "title" | "createdAt" | undefined,
     });
     return { items };
+  });
+
+  app.post("/api/cards/compose", async (request, reply) => {
+    const body =
+      request.body && typeof request.body === "object"
+        ? (request.body as Record<string, unknown>)
+        : {};
+    try {
+      const cardIds = Array.isArray(body.cardIds)
+        ? body.cardIds.map((id) => String(id))
+        : [];
+      const card = scheduleService.compose({
+        cardIds,
+        title: String(body.title ?? ""),
+        startAt: body.startAt !== undefined ? (body.startAt ? String(body.startAt) : null) : undefined,
+        endAt: body.endAt !== undefined ? (body.endAt ? String(body.endAt) : null) : undefined,
+      });
+      return reply.status(201).send(card);
+    } catch (e) {
+      return handleServiceError(e, reply);
+    }
   });
 
   app.get("/api/cards/:id", async (request, reply) => {
@@ -61,8 +91,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       });
       return reply.status(201).send(card);
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
     }
   });
 
@@ -91,8 +120,49 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (!card) return reply.status(404).send({ error: "Not found" });
       return card;
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
+    }
+  });
+
+  app.post("/api/cards/:parentId/children", async (request, reply) => {
+    const { parentId } = request.params as { parentId: string };
+    const body =
+      request.body && typeof request.body === "object"
+        ? (request.body as Record<string, unknown>)
+        : {};
+    try {
+      const cardId = String(body.cardId ?? "");
+      if (!cardId) return reply.status(400).send({ error: "cardId required" });
+      const card = scheduleService.addChild(parentId, cardId);
+      return card;
+    } catch (e) {
+      return handleServiceError(e, reply);
+    }
+  });
+
+  app.post("/api/cards/:parentId/merge", async (request, reply) => {
+    const { parentId } = request.params as { parentId: string };
+    const body =
+      request.body && typeof request.body === "object"
+        ? (request.body as Record<string, unknown>)
+        : {};
+    try {
+      const sourceParentId = String(body.sourceParentId ?? "");
+      if (!sourceParentId) return reply.status(400).send({ error: "sourceParentId required" });
+      const card = scheduleService.mergeParents(parentId, sourceParentId);
+      return card;
+    } catch (e) {
+      return handleServiceError(e, reply);
+    }
+  });
+
+  app.post("/api/cards/:cardId/detach", async (request, reply) => {
+    const { cardId } = request.params as { cardId: string };
+    try {
+      const card = scheduleService.detachChild(cardId);
+      return card;
+    } catch (e) {
+      return handleServiceError(e, reply);
     }
   });
 
@@ -103,8 +173,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (!card) return reply.status(404).send({ error: "Not found" });
       return card;
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
     }
   });
 
@@ -115,8 +184,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (!card) return reply.status(404).send({ error: "Not found" });
       return card;
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
     }
   });
 
@@ -127,8 +195,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (!ok) return reply.status(404).send({ error: "Not found" });
       return reply.status(204).send();
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
     }
   });
 
@@ -139,8 +206,7 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       if (!card) return reply.status(404).send({ error: "Not found" });
       return card;
     } catch (e) {
-      const err = e as { statusCode?: number; message?: string };
-      return reply.status(err.statusCode ?? 400).send({ error: err.message });
+      return handleServiceError(e, reply);
     }
   });
 }

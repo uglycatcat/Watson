@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { ScheduleCard } from "../lib/api";
+import { isParentCard, type ScheduleCard } from "../lib/api";
 import { api } from "../lib/api";
 import { TopBar } from "../components/TopBar/TopBar";
 import { ScheduleViewRouter, useTodayStr, type ViewMode } from "../components/ScheduleViews/ScheduleViewRouter";
@@ -9,6 +9,7 @@ import { useVisibilitySync } from "../hooks/useVisibilitySync";
 import { useChatPanelLayout } from "../hooks/useChatPanelLayout";
 import { ResizeHandle } from "../components/ui/ResizeHandle";
 import { CardDetailModal } from "../components/cards/CardDetailModal";
+import { ParentCardDetailModal } from "../components/cards/ParentCardDetailModal";
 import { CreateCardModal } from "../components/cards/CreateCardModal";
 
 export function AppShell() {
@@ -18,6 +19,7 @@ export function AppShell() {
   const [view, setView] = useState<ViewMode>("day");
   const [anchorDate, setAnchorDate] = useState(today);
   const [selectedCard, setSelectedCard] = useState<ScheduleCard | null>(null);
+  const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -31,6 +33,7 @@ export function AppShell() {
     queryFn: () => api.getCards({ view: "trash" }),
   });
   const searchCards = [...(allCardsData?.items ?? []), ...(trashCardsData?.items ?? [])];
+  const knownTitles = (allCardsData?.items ?? []).map((c) => c.title);
 
   useEffect(() => {
     if (anchorDate === prevTodayRef.current) {
@@ -40,6 +43,26 @@ export function AppShell() {
   }, [today, anchorDate]);
 
   useVisibilitySync(true);
+
+  const handleCardClick = (card: ScheduleCard) => {
+    if (isParentCard(card)) {
+      setSelectedParentId(card.id);
+      setSelectedCard(null);
+    } else {
+      setSelectedCard(card);
+      setSelectedParentId(null);
+    }
+  };
+
+  const handleParentClick = (card: ScheduleCard) => {
+    setSelectedParentId(card.id);
+    setSelectedCard(null);
+  };
+
+  const handleParentIdClick = (parentId: string) => {
+    setSelectedParentId(parentId);
+    setSelectedCard(null);
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -62,7 +85,7 @@ export function AppShell() {
         searchFocused={searchFocused}
         onSearchFocusChange={setSearchFocused}
         searchCards={searchCards}
-        onSearchSelect={setSelectedCard}
+        onSearchSelect={handleCardClick}
       />
       <div className={`flex flex-1 min-h-0 relative ${dragging ? "select-none" : ""}`}>
         <main
@@ -76,7 +99,9 @@ export function AppShell() {
               onDateChange={(d) => {
                 if (d) setAnchorDate(d);
               }}
-              onCardClick={setSelectedCard}
+              onCardClick={handleCardClick}
+              onParentClick={handleParentClick}
+              onParentIdClick={handleParentIdClick}
               onCreateClick={() => setCreateOpen(true)}
               onLeaveTrash={() => setView("day")}
             />
@@ -113,6 +138,11 @@ export function AppShell() {
         card={selectedCard}
         onClose={() => setSelectedCard(null)}
         onUpdated={setSelectedCard}
+      />
+      <ParentCardDetailModal
+        parentId={selectedParentId}
+        knownTitles={knownTitles}
+        onClose={() => setSelectedParentId(null)}
       />
       <CreateCardModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>

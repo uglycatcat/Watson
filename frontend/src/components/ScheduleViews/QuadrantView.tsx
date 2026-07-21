@@ -57,6 +57,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
   const buckets = useMemo(() => {
     const map = new Map<string, Bucket>();
     for (const card of cards) {
+      if (card.kind === "parent") continue;
       const key = `${card.urgency},${card.importance}`;
       const existing = map.get(key);
       if (existing) existing.cards.push(card);

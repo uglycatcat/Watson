@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 export const CARD_STAGES = ["not_started", "in_progress", "wrapping_up"] as const;
+export const CARD_KINDS = ["standard", "parent"] as const;
 
 export const categories = sqliteTable("categories", {
   id: text("id").primaryKey(),
@@ -33,6 +34,10 @@ export const scheduleCards = sqliteTable(
       .default("active"),
     stage: text("stage", { enum: CARD_STAGES }).notNull().default("not_started"),
     trashedAt: text("trashed_at"),
+    kind: text("kind", { enum: CARD_KINDS }).notNull().default("standard"),
+    parentId: text("parent_id"),
+    timeManual: integer("time_manual", { mode: "boolean" }).notNull().default(false),
+    lastParentTitle: text("last_parent_title"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
@@ -42,6 +47,7 @@ export const scheduleCards = sqliteTable(
     index("idx_cards_updated_at").on(t.updatedAt),
     index("idx_cards_category").on(t.categoryId),
     index("idx_cards_stage").on(t.stage),
+    index("idx_cards_parent_id").on(t.parentId),
   ],
 );
 

@@ -1,20 +1,7 @@
 ALTER TABLE `categories` ADD `color` text;
 --> statement-breakpoint
-UPDATE `categories` SET `color` = CASE `color_index`
-  WHEN 0 THEN '#E57373'
-  WHEN 1 THEN '#F06292'
-  WHEN 2 THEN '#BA68C8'
-  WHEN 3 THEN '#7986CB'
-  WHEN 4 THEN '#64B5F6'
-  WHEN 5 THEN '#4DB6AC'
-  WHEN 6 THEN '#81C784'
-  WHEN 7 THEN '#FFB74D'
-  WHEN 8 THEN '#A1887F'
-  WHEN 9 THEN '#90A4AE'
-  ELSE NULL
-END
-WHERE `color` IS NULL AND `color_index` IS NOT NULL;
---> statement-breakpoint
+-- Note: earlier drafts referenced a color_index column that was never shipped in migrations;
+-- map known presets by name_lower, then fill remaining rows below.
 UPDATE `categories` SET `color` = '#90A4AE' WHERE `color` IS NULL AND `name_lower` = '无';
 --> statement-breakpoint
 UPDATE `categories` SET `color` = '#64B5F6' WHERE `color` IS NULL AND `name_lower` = '工作';

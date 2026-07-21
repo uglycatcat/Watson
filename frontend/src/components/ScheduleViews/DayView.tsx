@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type ScheduleCard } from "../../lib/api";
+import { api, isParentCard, type ScheduleCard } from "../../lib/api";
 import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
 import { ViewTimeNav } from "./ViewTimeNav";
@@ -14,10 +14,11 @@ interface DayViewProps {
   date: string;
   onDateChange: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
+  onParentClick?: (parentId: string) => void;
   onCreateClick?: () => void;
 }
 
-export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayViewProps) {
+export function DayView({ date, onDateChange, onCardClick, onParentClick, onCreateClick }: DayViewProps) {
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
   const { data, isLoading } = useQuery({
@@ -25,6 +26,7 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
     queryFn: () => api.getCards({ view: "day", date }),
   });
   const cards = data?.items ?? [];
+  const quadrantCards = useMemo(() => cards.filter((c) => !isParentCard(c)), [cards]);
   const sections = useMemo(() => buildDaySections(cards, date, tz), [cards, date, tz]);
   const [highlightedCardIds, setHighlightedCardIds] = useState<ReadonlySet<string>>(new Set());
   const [scrollEdges, setScrollEdges] = useState({ top: false, bottom: false });
@@ -66,7 +68,17 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
                   <section className="day-section" key={title}>
                     <div className="day-section-heading"><h3>{title}</h3><span>{sectionCards.length}</span></div>
                     {sectionCards.length ? (
-                      <CardGrid cards={sectionCards} onCardClick={onCardClick} showComplete draggableCards sortMode="stageThenCreatedAtDesc" showHoverBar highlightedCardIds={highlightedCardIds} />
+                      <CardGrid
+                        cards={sectionCards}
+                        onCardClick={onCardClick}
+                        showComplete
+                        draggableCards
+                        sortMode="stageThenCreatedAtDesc"
+                        showHoverBar
+                        highlightedCardIds={highlightedCardIds}
+                        showParentFold
+                        onParentFoldClick={(parentId) => onParentClick?.(parentId)}
+                      />
                     ) : <p className="day-section-empty">本章节暂无日程</p>}
                   </section>
                 ))
@@ -87,7 +99,7 @@ export function DayView({ date, onDateChange, onCardClick, onCreateClick }: DayV
             transform: "translateY(calc(-100% / 7))",
           }}
         >
-          <QuadrantView cards={cards} variant="embedded" onHoverCardIds={setHighlightedCardIds} />
+          <QuadrantView cards={quadrantCards} variant="embedded" onHoverCardIds={setHighlightedCardIds} />
         </div>
       </div>
     </div>

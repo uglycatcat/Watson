@@ -1,5 +1,6 @@
 export type CardStatus = "active" | "completed" | "deleted";
 export type CardStage = "not_started" | "in_progress" | "wrapping_up";
+export type CardKind = "standard" | "parent";
 
 export interface DailyReport {
   date: string;
@@ -19,6 +20,7 @@ export interface Category {
 
 export interface ScheduleCard {
   id: string;
+  kind?: CardKind;
   title: string;
   description: string | null;
   startAt: string | null;
@@ -32,8 +34,37 @@ export interface ScheduleCard {
   stage: CardStage;
   status: CardStatus;
   trashedAt: string | null;
+  parentId?: string | null;
+  parentTitle?: string | null;
+  childCount?: number;
+  timeManual?: boolean;
+  lastParentTitle?: string | null;
+  children?: ScheduleCard[] | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export function cardKind(card: ScheduleCard): CardKind {
+  return card.kind ?? "standard";
+}
+
+export function isParentCard(card: ScheduleCard): boolean {
+  return cardKind(card) === "parent";
+}
+
+export function isIndependentStandard(card: ScheduleCard): boolean {
+  return cardKind(card) === "standard" && card.status === "active" && !card.parentId;
+}
+
+export function envelopeFromCards(cards: ScheduleCard[]): { startAt: string | null; endAt: string | null } {
+  const scheduled = cards.filter((c) => c.startAt != null && c.endAt != null);
+  if (scheduled.length === 0) return { startAt: null, endAt: null };
+  const starts = scheduled.map((c) => new Date(c.startAt!).getTime());
+  const ends = scheduled.map((c) => new Date(c.endAt!).getTime());
+  return {
+    startAt: new Date(Math.min(...starts)).toISOString(),
+    endAt: new Date(Math.max(...ends)).toISOString(),
+  };
 }
 
 export interface ChatMessage {
@@ -132,6 +163,25 @@ export const api = {
   completeCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/complete`, { method: "POST" }),
   restoreCard: (id: string) => request<ScheduleCard>(`/api/cards/${id}/restore`, { method: "POST" }),
   permanentDeleteCard: (id: string) => request<void>(`/api/cards/${id}/permanent`, { method: "DELETE" }),
+  composeParent: (body: {
+    cardIds: [string, string];
+    title: string;
+    startAt?: string | null;
+    endAt?: string | null;
+  }) =>
+    request<ScheduleCard>("/api/cards/compose", { method: "POST", body: JSON.stringify(body) }),
+  addChildToParent: (parentId: string, cardId: string) =>
+    request<ScheduleCard>(`/api/cards/${parentId}/children`, {
+      method: "POST",
+      body: JSON.stringify({ cardId }),
+    }),
+  mergeParents: (targetParentId: string, sourceParentId: string) =>
+    request<ScheduleCard>(`/api/cards/${targetParentId}/merge`, {
+      method: "POST",
+      body: JSON.stringify({ sourceParentId }),
+    }),
+  detachChild: (cardId: string) =>
+    request<ScheduleCard>(`/api/cards/${cardId}/detach`, { method: "POST" }),
   getCategories: () => request<{ items: Category[] }>("/api/categories"),
   createCategory: (name: string) =>
     request<Category>("/api/categories", { method: "POST", body: JSON.stringify({ name }) }),

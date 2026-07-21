@@ -17,6 +17,8 @@ interface ScheduleViewRouterProps {
   anchorDate: string;
   onDateChange?: (d: string) => void;
   onCardClick: (card: ScheduleCard) => void;
+  onParentClick?: (card: ScheduleCard) => void;
+  onParentIdClick?: (parentId: string) => void;
   onCreateClick?: () => void;
   onLeaveTrash?: () => void;
 }
@@ -26,6 +28,8 @@ export function ScheduleViewRouter({
   anchorDate,
   onDateChange,
   onCardClick,
+  onParentClick,
+  onParentIdClick,
   onCreateClick,
   onLeaveTrash,
 }: ScheduleViewRouterProps) {
@@ -44,7 +48,13 @@ export function ScheduleViewRouter({
         }}
       >
         <div className="h-full min-h-0 shrink-0 overflow-hidden" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <DayView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} onCreateClick={onCreateClick} />
+          <DayView
+            date={anchorDate}
+            onDateChange={setDate}
+            onCardClick={onCardClick}
+            onParentClick={onParentIdClick}
+            onCreateClick={onCreateClick}
+          />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
@@ -53,7 +63,7 @@ export function ScheduleViewRouter({
           <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <AllView onCardClick={onCardClick} onCreateClick={onCreateClick} />
+          <AllView onCardClick={onCardClick} onParentClick={onParentClick} onCreateClick={onCreateClick} />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />

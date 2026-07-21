@@ -1,4 +1,5 @@
 import type { ScheduleCard } from "../../lib/api";
+import { isParentCard } from "../../lib/api";
 import { setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 
@@ -26,6 +27,7 @@ export function SpanBar({
   topOffset = 36,
   draggable = true,
 }: SpanBarProps) {
+  const parent = isParentCard(card);
   return (
     <button
       type="button"
@@ -43,34 +45,45 @@ export function SpanBar({
         e.stopPropagation();
         onClick(card);
       }}
-      className="absolute pointer-events-auto transition-interactive"
+      className={`absolute pointer-events-auto transition-interactive ${parent ? "parent-card-stack parent-span-bar" : ""}`}
       style={{
         top: topOffset + lane * LANE_HEIGHT,
         left: `calc(${(startCol / 7) * 100}% + 2px)`,
         width: `calc(${((endCol - startCol + 1) / 7) * 100}% - 4px)`,
         height: LANE_HEIGHT - 4,
-        background: "var(--accent)",
-        opacity: 0.9,
+        background: parent ? "var(--accent-subtle)" : "var(--accent)",
+        color: parent ? "var(--fg)" : "#fff",
+        opacity: 0.95,
         zIndex: 2,
         cursor: draggable ? "grab" : "pointer",
         borderRadius: "var(--radius-sm)",
         boxShadow: "var(--shadow-sm)",
+        border: parent ? "1px solid var(--border)" : undefined,
       }}
       title={card.title}
       aria-label={card.title}
     >
       <span
-        className="absolute text-left text-xs px-1 truncate text-white"
+        className="absolute text-left text-xs px-1 truncate"
         style={{
           left: 0,
           top: 0,
           width: COL_WIDTH,
           height: LANE_HEIGHT - 4,
           lineHeight: `${LANE_HEIGHT - 8}px`,
+          color: "inherit",
         }}
       >
-        <span className="block truncate pr-14">{card.title}</span>
-        <span className="absolute right-1 top-1"><StageBadge stage={card.stage} compact /></span>
+        <span className={`block truncate ${parent ? "pr-7" : "pr-14"}`}>{card.title}</span>
+        {parent ? (
+          <span className="parent-child-badge parent-child-badge--compact" aria-label={`${card.childCount ?? 0} 张子卡片`}>
+            {card.childCount ?? 0}
+          </span>
+        ) : (
+          <span className="absolute right-1 top-1">
+            <StageBadge stage={card.stage} compact />
+          </span>
+        )}
       </span>
     </button>
   );

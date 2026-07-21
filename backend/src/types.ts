@@ -1,6 +1,8 @@
 export type CardStatus = "active" | "completed" | "deleted";
 export const CARD_STAGES = ["not_started", "in_progress", "wrapping_up"] as const;
 export type CardStage = (typeof CARD_STAGES)[number];
+export const CARD_KINDS = ["standard", "parent"] as const;
+export type CardKind = (typeof CARD_KINDS)[number];
 
 export function isCardStage(value: unknown): value is CardStage {
   return typeof value === "string" && CARD_STAGES.includes(value as CardStage);
@@ -8,6 +10,7 @@ export function isCardStage(value: unknown): value is CardStage {
 
 export interface ScheduleCardDto {
   id: string;
+  kind: CardKind;
   title: string;
   description: string | null;
   startAt: string | null;
@@ -21,6 +24,12 @@ export interface ScheduleCardDto {
   status: CardStatus;
   stage: CardStage;
   trashedAt: string | null;
+  parentId: string | null;
+  parentTitle?: string | null;
+  childCount?: number;
+  timeManual?: boolean;
+  lastParentTitle?: string | null;
+  children?: ScheduleCardDto[] | null;
   createdAt: string;
   updatedAt: string;
 }
