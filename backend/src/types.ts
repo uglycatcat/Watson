@@ -16,6 +16,8 @@ export interface ScheduleCardDto {
   urgency: number;
   categoryId: string;
   categoryName: string;
+  /** Category left-edge accent; only for card strip rendering. */
+  categoryColor: string;
   status: CardStatus;
   stage: CardStage;
   trashedAt: string | null;

@@ -84,7 +84,7 @@ export function CardGrid({
     >
       {sorted.map((c) => {
         const canDrag = draggableCards && c.status === "active";
-        const accent = getCategoryAccent(c.categoryId);
+        const accent = getCategoryAccent(c.categoryColor);
         return (
           <div key={c.id}>
             <div

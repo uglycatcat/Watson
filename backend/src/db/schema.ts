@@ -7,6 +7,8 @@ export const categories = sqliteTable("categories", {
   name: text("name").notNull().unique(),
   nameLower: text("name_lower").notNull().unique(),
   isPreset: integer("is_preset", { mode: "boolean" }).notNull().default(false),
+  /** Left-edge accent on cards; from CATEGORY_COLOR_PALETTE. */
+  color: text("color").notNull().default("#90A4AE"),
   createdAt: text("created_at").notNull(),
 });
 

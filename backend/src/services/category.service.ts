@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { categories, scheduleCards } from "../db/schema.js";
+import { allocateCategoryColor, isPaletteColor } from "../lib/categoryColors.js";
 import { nowIso } from "../types.js";
 
 const NONE_CATEGORY_NAME = "无";
@@ -39,6 +40,27 @@ export class CategoryService {
     return category;
   }
 
+  private nextColor(): string {
+    const used = this.db
+      .select({ color: categories.color })
+      .from(categories)
+      .all()
+      .map((r) => r.color);
+    return allocateCategoryColor(used);
+  }
+
+  /** Assign palette colors to any category missing one or outside current palette. */
+  ensureColors() {
+    const rows = this.db.select().from(categories).all();
+    const used = rows.map((r) => r.color).filter((c) => isPaletteColor(c));
+    for (const row of rows) {
+      if (isPaletteColor(row.color)) continue;
+      const color = allocateCategoryColor(used);
+      used.push(color);
+      this.db.update(categories).set({ color }).where(eq(categories.id, row.id)).run();
+    }
+  }
+
   findOrCreate(name: string) {
     const trimmed = name.trim();
     if (!trimmed || trimmed.length > 32) {
@@ -51,6 +73,7 @@ export class CategoryService {
       name: trimmed,
       nameLower: trimmed.toLowerCase(),
       isPreset: false,
+      color: this.nextColor(),
       createdAt: nowIso(),
     };
     this.db.insert(categories).values(row).run();
@@ -89,6 +112,7 @@ export class CategoryService {
         .set({ categoryId: none.id, updatedAt: nowIso() })
         .where(eq(scheduleCards.categoryId, target.id))
         .run();
+      // Deleting the row releases its color for future allocations.
       tx.delete(categories).where(eq(categories.id, target.id)).run();
 
       return { reassignedCardCount: reassigned.changes };

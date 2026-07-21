@@ -64,6 +64,20 @@
       "when": 1784566920000,
       "tag": "0008_none_category",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784566980000,
+      "tag": "0009_category_color",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784567040000,
+      "tag": "0010_category_color_hex",
+      "breakpoints": true
     }
   ]
 }

@@ -27,6 +27,8 @@ export interface ScheduleCard {
   urgency: number;
   categoryId: string;
   categoryName: string;
+  /** Assigned category palette color; used only for card left-edge strip. */
+  categoryColor: string;
   stage: CardStage;
   status: CardStatus;
   trashedAt: string | null;

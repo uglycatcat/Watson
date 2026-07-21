@@ -81,7 +81,11 @@ export class ScheduleService {
     private categoryService: CategoryService,
   ) {}
 
-  private toDto(row: typeof scheduleCards.$inferSelect, categoryName: string): ScheduleCardDto {
+  private toDto(
+    row: typeof scheduleCards.$inferSelect,
+    categoryName: string,
+    categoryColor: string,
+  ): ScheduleCardDto {
     return {
       id: row.id,
       title: row.title,
@@ -92,6 +96,7 @@ export class ScheduleService {
       urgency: row.urgency,
       categoryId: row.categoryId,
       categoryName,
+      categoryColor,
       status: row.status as CardStatus,
       stage: row.stage,
       trashedAt: row.trashedAt,
@@ -102,7 +107,7 @@ export class ScheduleService {
 
   private joinCategory(row: typeof scheduleCards.$inferSelect): ScheduleCardDto {
     const cat = this.categoryService.findById(row.categoryId);
-    return this.toDto(row, cat?.name ?? "未知");
+    return this.toDto(row, cat?.name ?? "未知", cat?.color ?? "#90A4AE");
   }
 
   private assertTitleUnique(titleLower: string, excludeId?: string) {

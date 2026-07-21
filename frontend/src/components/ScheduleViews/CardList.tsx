@@ -16,7 +16,7 @@ export function CardList({ cards, onCardClick, emptyMessage = "暂无日程" }: 
   return (
     <ul className="space-y-2">
       {cards.map((c) => {
-        const accent = getCategoryAccent(c.categoryId);
+        const accent = getCategoryAccent(c.categoryColor);
         return (
           <li key={c.id}>
             <button
