@@ -64,6 +64,8 @@
   --overdue-wash: color-mix(in srgb, #f43f5e 22%, transparent);
   --parent-fold-bg: color-mix(in srgb, var(--accent) 18%, var(--panel));
   --parent-fold-line: color-mix(in srgb, var(--accent) 65%, var(--fg));
+  --parent-cover-bg: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 5%, var(--panel));
 }
 
 .dark {
@@ -95,6 +97,8 @@
   --overdue-wash: color-mix(in srgb, #fb7185 28%, transparent);
   --parent-fold-bg: color-mix(in srgb, var(--accent) 28%, var(--panel));
   --parent-fold-line: color-mix(in srgb, var(--accent) 75%, var(--fg));
+  --parent-cover-bg: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 7%, var(--panel));
 }
 
 html {
@@ -259,6 +263,11 @@ body {
     linear-gradient(to left, var(--overdue-wash), transparent 58%),
     var(--panel) !important;
 }
+.schedule-card.parent-cover-card.is-overdue {
+  background:
+    linear-gradient(to left, var(--overdue-wash), transparent 58%),
+    var(--parent-cover-bg) !important;
+}
 .schedule-card.is-highlighted {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 2px var(--accent-subtle), var(--shadow-md) !important;
@@ -267,18 +276,26 @@ body {
   position: absolute;
   pointer-events: none;
   top: 0;
-  left: 8px;
-  right: 8px;
+  left: 0;
+  right: 0;
   height: 3px;
-  border-radius: 0 0 999px 999px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--accent);
   opacity: 0;
   transform: scaleX(.3);
+  transform-origin: center top;
   transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+  z-index: 2;
 }
 .schedule-card.show-hover-bar:hover .card-hover-bar {
   opacity: 1;
   transform: scaleX(1);
+}
+/* Parent: keep static topband; hover bar expands flush beneath it */
+.parent-cover-card .card-hover-bar {
+  top: 3px;
+  border-radius: 0;
+  z-index: 2;
 }
 
 .day-sections { padding: 2px 4px 18px 2px; }
@@ -396,7 +413,83 @@ body {
 .drag-card-preview { position: fixed !important; top: -1000px !important; left: -1000px !important; width: 220px !important; opacity: .88; transform: rotate(2deg); box-shadow: var(--shadow-lg) !important; z-index: 9999; }
 .schedule-card.is-dragging { opacity: 0.55; transform: scale(1.02); box-shadow: var(--shadow-md); }
 
-/* Parent child-count badge (stack shadow removed — parent uses standard card chrome) */
+/* Parent cover card: A top band + soft fill, C cover layout, B bottom color spine */
+.parent-cover-card {
+  flex-direction: column;
+  gap: 0;
+  padding: 0 !important;
+  border-left-width: 1px !important;
+  background: var(--parent-cover-bg);
+}
+.parent-cover-topband {
+  display: block;
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+  background: var(--accent);
+  border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+}
+.parent-cover-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px var(--space-3) 8px;
+}
+.parent-cover-title {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--fg-strong);
+}
+.parent-cover-meta {
+  flex-shrink: 0;
+  padding: 8px var(--space-3) 10px;
+  background: var(--parent-cover-meta-bg);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border));
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.parent-cover-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.parent-cover-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
+}
+.parent-cover-spine {
+  display: flex;
+  height: 3px;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
+}
+.parent-cover-spine > span {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Parent child-count badge */
+.parent-cover-card .parent-child-badge--meta {
+  position: static;
+  flex-shrink: 0;
+}
 .parent-child-badge {
   position: absolute;
   top: 8px;

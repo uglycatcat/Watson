@@ -209,7 +209,7 @@ export function CardGrid({
 
   return (
     <div
-      className="grid gap-3"
+      className="grid gap-3 items-center"
       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
     >
       {sorted.map((c) => {
@@ -222,12 +222,12 @@ export function CardGrid({
           isParent && mode === "add" && c.childCount != null ? c.childCount + 1 : c.childCount;
 
         const cardClasses = [
-          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2 min-h-[107px]",
+          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2",
+          isParent ? "parent-cover-card overflow-hidden min-h-[115px]" : "min-h-[107px]",
           !isParent && !(showParentFold && (c.parentId || c.lastParentTitle)) ? "overflow-hidden" : "",
           !isParent && showParentFold && (c.parentId || c.lastParentTitle) ? "overflow-visible" : "",
-          isParent ? "overflow-hidden" : "",
           renderCardChrome ? "pb-8" : "",
-          showHoverBar && !isParent ? "show-hover-bar" : "",
+          showHoverBar ? "show-hover-bar" : "",
           overdueCardIds?.has(c.id) ? "is-overdue" : "",
           highlightedCardIds?.has(c.id) ? "is-highlighted" : "",
           isDragTarget && mode && mode !== "forbid" ? "compose-drop-target" : "",
@@ -242,6 +242,9 @@ export function CardGrid({
           if (isParent) onParentClick?.(c);
           else onCardClick?.(c);
         };
+
+        const childCategories = c.childCategories ?? [];
+        const spineCategories = childCategories.slice(0, 6);
 
         return (
           <div key={c.id}>
@@ -286,24 +289,19 @@ export function CardGrid({
               }}
               className={cardClasses}
               style={{
-                background: "var(--panel)",
+                background: isParent ? "var(--parent-cover-bg)" : "var(--panel)",
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius-lg)",
                 boxShadow: "var(--shadow-sm)",
                 cursor: canDrag ? "grab" : onCardClick || onParentClick ? "pointer" : "default",
-                padding: "var(--space-3)",
+                padding: isParent ? 0 : "var(--space-3)",
                 borderLeftWidth: isParent ? "1px" : "4px",
                 borderLeftColor: accent,
                 ...(collapseSourceId === c.id ? collapseStyle : null),
               }}
               title={isDragTarget && mode === "forbid" ? composeDisabledReason : undefined}
             >
-              {showHoverBar && !isParent && <span className="card-hover-bar" aria-hidden />}
-              {isParent && previewCount != null && (
-                <span className="parent-child-badge" aria-label={`${previewCount} 张子卡片`}>
-                  {previewCount}
-                </span>
-              )}
+              {showHoverBar && <span className="card-hover-bar" aria-hidden />}
               {showParentFold && (c.parentId || c.lastParentTitle) && (
                 c.parentId ? (
                   <button
@@ -324,40 +322,65 @@ export function CardGrid({
                   />
                 )
               )}
-              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <div
-                  className={`font-semibold line-clamp-1 ${isParent ? "pr-16" : ""}`}
-                  style={{ fontSize: "var(--text-sm)" }}
-                >
-                  {c.title}
-                </div>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div className="text-xs line-clamp-1 min-w-0 flex-1" style={{ color: "var(--muted)" }}>
-                    {cardDateSubtitle(c)}
+              {isParent ? (
+                <>
+                  <span className="parent-cover-topband" aria-hidden />
+                  <div className="parent-cover-body">
+                    <div className="parent-cover-title">{c.title}</div>
                   </div>
-                  {!isParent && (
-                    <span className="inline-flex items-center gap-1 shrink-0">
-                      <CategoryBadge name={c.categoryName} color={c.categoryColor} compact />
-                      {showStage && <StageBadge stage={c.stage} compact />}
-                    </span>
+                  <div className="parent-cover-meta">
+                    <div className="parent-cover-meta-row">
+                      <span className="truncate flex-1 min-w-0">{cardDateSubtitle(c)}</span>
+                      {previewCount != null && (
+                        <span
+                          className="parent-child-badge parent-child-badge--meta"
+                          aria-label={`${previewCount} 张子卡片`}
+                        >
+                          {previewCount}
+                        </span>
+                      )}
+                    </div>
+                    {childCategories.length > 0 && (
+                      <div className="parent-cover-badges">
+                        {childCategories.map((cat) => (
+                          <CategoryBadge key={cat.id} name={cat.name} color={cat.color} compact />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {spineCategories.length > 0 && (
+                    <div className="parent-cover-spine" aria-hidden>
+                      {spineCategories.map((cat) => (
+                        <span key={cat.id} style={{ background: getCategoryAccent(cat.color) }} />
+                      ))}
+                    </div>
                   )}
-                </div>
-                {!isParent ? (
-                  <div className="flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
-                    <PriorityMeter label="重要" value={c.importance} compact />
-                    <PriorityMeter label="紧急" value={c.urgency} compact />
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                    <div className="font-semibold line-clamp-1" style={{ fontSize: "var(--text-sm)" }}>
+                      {c.title}
+                    </div>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="text-xs line-clamp-1 min-w-0 flex-1" style={{ color: "var(--muted)" }}>
+                        {cardDateSubtitle(c)}
+                      </div>
+                      <span className="inline-flex items-center gap-1 shrink-0">
+                        <CategoryBadge name={c.categoryName} color={c.categoryColor} compact />
+                        {showStage && <StageBadge stage={c.stage} compact />}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
+                      <PriorityMeter label="重要" value={c.importance} compact />
+                      <PriorityMeter label="紧急" value={c.urgency} compact />
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-1 mt-0.5 w-full min-w-0 min-h-[28px]">
-                    {(c.childCategories ?? []).map((cat) => (
-                      <CategoryBadge key={cat.id} name={cat.name} color={cat.color} compact />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {showComplete && !isParent && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
-              {!showComplete && reserveCompleteSlot && !isParent && (
-                <span className="shrink-0 w-5 mt-0.5" aria-hidden />
+                  {showComplete && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
+                  {!showComplete && reserveCompleteSlot && (
+                    <span className="shrink-0 w-5 mt-0.5" aria-hidden />
+                  )}
+                </>
               )}
               {renderCardChrome?.(c)}
             </div>
