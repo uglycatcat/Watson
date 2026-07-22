@@ -38,7 +38,9 @@ export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DaySche
                   onClick={() => onCardClick(c)}
                   className={`w-full text-left p-3 rounded border text-sm ${overdue ? "is-overdue" : ""}`}
                   style={{
-                    background: overdue ? "var(--overdue-bg)" : "var(--bg)",
+                    background: overdue
+                      ? "linear-gradient(to left, var(--overdue-wash), transparent 58%), var(--bg)"
+                      : "var(--bg)",
                     borderColor: "var(--border)",
                   }}
                 >

@@ -91,13 +91,17 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                         draggable
                         onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
                         onClick={() => onCardClick(c)}
-                        className={`relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""} ${overdue ? "is-overdue" : ""}`}
+                        className={`cal-chip relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${parent ? "parent-chip" : ""} ${overdue ? "is-overdue" : ""}`}
                         style={{
-                          background: overdue ? "var(--overdue-bg)" : parent ? "var(--accent-subtle)" : "var(--accent)",
-                          color: overdue || parent ? "var(--fg)" : "#fff",
+                          background: overdue
+                            ? `linear-gradient(to left, var(--overdue-wash), transparent 70%), ${parent ? "var(--accent-subtle)" : "var(--accent)"}`
+                            : parent
+                              ? "var(--accent-subtle)"
+                              : "var(--accent)",
+                          color: parent ? "var(--fg)" : "#fff",
                           cursor: "grab",
                           borderRadius: "var(--radius-sm)",
-                          border: parent || overdue ? "1px solid var(--border)" : undefined,
+                          border: parent ? "1px solid var(--border)" : undefined,
                         }}
                       >
                         <span className="flex items-center justify-between gap-1">

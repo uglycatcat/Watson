@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import type { ScheduleCard } from "./api";
+import type { CardStage, ScheduleCard } from "./api";
 
 /** Compact month+day for card chips, e.g. "0720". */
 export function formatCardDateShort(iso: string): string {
@@ -34,4 +34,22 @@ export function collectOverdueCardIds(
   now = Date.now(),
 ): Set<string> {
   return new Set(cards.filter((c) => isOverdueCard(c, now)).map((c) => c.id));
+}
+
+/** 等待收尾 → 正在处理 → 未开始，同阶段按创建时间倒序 */
+const STAGE_SORT_RANK: Record<CardStage, number> = {
+  wrapping_up: 0,
+  in_progress: 1,
+  not_started: 2,
+};
+
+export function sortByStageThenCreatedAtDesc<T extends Pick<ScheduleCard, "stage" | "createdAt">>(
+  cards: readonly T[],
+): T[] {
+  return [...cards].sort((a, b) => {
+    const stageDiff =
+      STAGE_SORT_RANK[a.stage ?? "not_started"] - STAGE_SORT_RANK[b.stage ?? "not_started"];
+    if (stageDiff !== 0) return stageDiff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }

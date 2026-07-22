@@ -95,14 +95,14 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 e.stopPropagation();
                                 onCardClick(c);
                               }}
-                              className={`relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""} ${isOverdueCard(c) ? "is-overdue" : ""}`}
+                              className={`cal-chip relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive ${parent ? "parent-chip" : ""} ${isOverdueCard(c) ? "is-overdue" : ""}`}
                               style={{
                                 background: isOverdueCard(c)
-                                  ? "var(--overdue-bg)"
+                                  ? `linear-gradient(to left, var(--overdue-wash), transparent 70%), ${parent ? "var(--accent-subtle)" : "var(--accent)"}`
                                   : parent
                                     ? "var(--accent-subtle)"
                                     : "var(--accent)",
-                                color: isOverdueCard(c) || parent ? "var(--fg)" : "#fff",
+                                color: parent ? "var(--fg)" : "#fff",
                                 paddingTop: multi ? 3 : 2,
                                 paddingBottom: multi ? 3 : 2,
                                 marginLeft: multi ? -2 : 0,
@@ -110,7 +110,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 width: multi ? "calc(100% + 4px)" : "100%",
                                 cursor: "grab",
                                 borderRadius: "var(--radius-sm)",
-                                border: parent || isOverdueCard(c) ? "1px solid var(--border)" : undefined,
+                                border: parent ? "1px solid var(--border)" : undefined,
                               }}
                             >
                               <span className="flex items-center justify-between gap-1">

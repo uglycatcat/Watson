@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type ReactNode } from "react";
-import type { CardStage, ScheduleCard } from "../../lib/api";
+import type { ScheduleCard } from "../../lib/api";
 import { isIndependentStandard, isParentCard } from "../../lib/api";
-import { cardDateSubtitle } from "../../lib/cardDisplay";
+import { cardDateSubtitle, sortByStageThenCreatedAtDesc } from "../../lib/cardDisplay";
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
 import { PriorityMeter } from "../cards/PriorityMeter";
 import { getCategoryAccent } from "../../lib/categoryColor";
@@ -41,26 +41,10 @@ interface CardGridProps {
   composeSuccessAnim?: { sourceIds: string[]; targetId: string } | null;
 }
 
-/** 等待收尾 → 正在处理 → 未开始 */
-const STAGE_SORT_RANK: Record<CardStage, number> = {
-  wrapping_up: 0,
-  in_progress: 1,
-  not_started: 2,
-};
-
 function sortByCreatedAtDesc(cards: ScheduleCard[]): ScheduleCard[] {
   return [...cards].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
-}
-
-function sortByStageThenCreatedAtDesc(cards: ScheduleCard[]): ScheduleCard[] {
-  return [...cards].sort((a, b) => {
-    const stageDiff =
-      STAGE_SORT_RANK[a.stage ?? "not_started"] - STAGE_SORT_RANK[b.stage ?? "not_started"];
-    if (stageDiff !== 0) return stageDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
 }
 
 function resolveComposeDrop(
@@ -238,10 +222,10 @@ export function CardGrid({
           isParent && mode === "add" && c.childCount != null ? c.childCount + 1 : c.childCount;
 
         const cardClasses = [
-          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2",
-          isParent ? "min-h-[104px] parent-card-stack" : "min-h-[88px]",
+          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2 min-h-[107px]",
           !isParent && !(showParentFold && (c.parentId || c.lastParentTitle)) ? "overflow-hidden" : "",
           !isParent && showParentFold && (c.parentId || c.lastParentTitle) ? "overflow-visible" : "",
+          isParent ? "overflow-hidden" : "",
           renderCardChrome ? "pb-8" : "",
           showHoverBar && !isParent ? "show-hover-bar" : "",
           overdueCardIds?.has(c.id) ? "is-overdue" : "",
@@ -343,7 +327,7 @@ export function CardGrid({
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                 <div
                   className={`font-semibold line-clamp-1 ${isParent ? "pr-16" : ""}`}
-                  style={{ fontSize: isParent ? "var(--text-base)" : "var(--text-sm)" }}
+                  style={{ fontSize: "var(--text-sm)" }}
                 >
                   {c.title}
                 </div>
@@ -358,10 +342,16 @@ export function CardGrid({
                     </span>
                   )}
                 </div>
-                {!isParent && (
+                {!isParent ? (
                   <div className="flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
                     <PriorityMeter label="重要" value={c.importance} compact />
                     <PriorityMeter label="紧急" value={c.urgency} compact />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-1 mt-0.5 w-full min-w-0 min-h-[28px]">
+                    {(c.childCategories ?? []).map((cat) => (
+                      <CategoryBadge key={cat.id} name={cat.name} color={cat.color} compact />
+                    ))}
                   </div>
                 )}
               </div>

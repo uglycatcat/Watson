@@ -5,7 +5,7 @@ import {
   envelopeFromCards,
   type ScheduleCard,
 } from "../../lib/api";
-import { cardDateSubtitle, isOverdueCard } from "../../lib/cardDisplay";
+import { cardDateSubtitle, isOverdueCard, sortByStageThenCreatedAtDesc } from "../../lib/cardDisplay";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import { Modal } from "../ui/Modal";
 import {
@@ -78,14 +78,9 @@ export function ParentCardDetailModal({
 
   const children = useMemo(() => {
     if (isDraft && draftChildren) {
-      return [...draftChildren].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
+      return sortByStageThenCreatedAtDesc(draftChildren);
     }
-    const list = parent?.children ?? [];
-    return [...list].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
+    return sortByStageThenCreatedAtDesc(parent?.children ?? []);
   }, [isDraft, draftChildren, parent?.children]);
 
   const childEnvelope = useMemo(() => envelopeFromCards(children), [children]);

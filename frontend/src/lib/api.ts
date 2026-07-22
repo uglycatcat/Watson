@@ -37,6 +37,8 @@ export interface ScheduleCard {
   parentId?: string | null;
   parentTitle?: string | null;
   childCount?: number;
+  /** Distinct categories of active children (parent cards only). */
+  childCategories?: { id: string; name: string; color: string }[];
   timeManual?: boolean;
   lastParentTitle?: string | null;
   children?: ScheduleCard[] | null;

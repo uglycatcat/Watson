@@ -61,7 +61,7 @@
   --stage-progress-fg: #1d4ed8;
   --stage-wrapping-bg: #fef3c7;
   --stage-wrapping-fg: #92400e;
-  --overdue-bg: color-mix(in srgb, #ef4444 12%, var(--panel));
+  --overdue-wash: color-mix(in srgb, #f43f5e 22%, transparent);
   --parent-fold-bg: color-mix(in srgb, var(--accent) 18%, var(--panel));
   --parent-fold-line: color-mix(in srgb, var(--accent) 65%, var(--fg));
 }
@@ -92,7 +92,7 @@
   --stage-progress-fg: #bfdbfe;
   --stage-wrapping-bg: #5b3b0b;
   --stage-wrapping-fg: #fde68a;
-  --overdue-bg: color-mix(in srgb, #7f1d1d 38%, var(--panel));
+  --overdue-wash: color-mix(in srgb, #fb7185 28%, transparent);
   --parent-fold-bg: color-mix(in srgb, var(--accent) 28%, var(--panel));
   --parent-fold-line: color-mix(in srgb, var(--accent) 75%, var(--fg));
 }
@@ -254,7 +254,11 @@ body {
 .grid > div:nth-child(4) .schedule-card { animation-delay: 75ms; }
 .grid > div:nth-child(5) .schedule-card { animation-delay: 100ms; }
 .grid > div:nth-child(n+6) .schedule-card { animation-delay: 125ms; }
-.schedule-card.is-overdue { background: var(--overdue-bg) !important; }
+.schedule-card.is-overdue {
+  background:
+    linear-gradient(to left, var(--overdue-wash), transparent 58%),
+    var(--panel) !important;
+}
 .schedule-card.is-highlighted {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 2px var(--accent-subtle), var(--shadow-md) !important;
@@ -392,34 +396,7 @@ body {
 .drag-card-preview { position: fixed !important; top: -1000px !important; left: -1000px !important; width: 220px !important; opacity: .88; transform: rotate(2deg); box-shadow: var(--shadow-lg) !important; z-index: 9999; }
 .schedule-card.is-dragging { opacity: 0.55; transform: scale(1.02); box-shadow: var(--shadow-md); }
 
-/* Parent card stack shadow & badge */
-.parent-card-stack {
-  --parent-stack-offset: 3px;
-  --parent-stack-color: color-mix(in srgb, var(--fg) 14%, transparent);
-  margin-right: calc(var(--parent-stack-offset) * 2);
-  margin-bottom: calc(var(--parent-stack-offset) * 2);
-  overflow: visible;
-}
-.dark .parent-card-stack {
-  --parent-stack-color: color-mix(in srgb, var(--fg) 22%, transparent);
-}
-.parent-card-stack::before,
-.parent-card-stack::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--parent-stack-color);
-  border-radius: inherit;
-  pointer-events: none;
-}
-.parent-card-stack::before {
-  transform: translate(var(--parent-stack-offset), var(--parent-stack-offset));
-  opacity: 0.55;
-}
-.parent-card-stack::after {
-  transform: translate(calc(var(--parent-stack-offset) * 2), calc(var(--parent-stack-offset) * 2));
-  opacity: 0.3;
-}
+/* Parent child-count badge (stack shadow removed — parent uses standard card chrome) */
 .parent-child-badge {
   position: absolute;
   top: 8px;
@@ -566,11 +543,6 @@ body {
   padding: 0 3px;
   font-size: 9px;
   flex-shrink: 0;
-}
-.parent-span-bar.parent-card-stack,
-.parent-chip.parent-card-stack {
-  --parent-stack-offset: 2px;
-  overflow: visible;
 }
 .parent-children-zone.is-detach-target {
   outline: 2px dashed var(--accent);

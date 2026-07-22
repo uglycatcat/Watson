@@ -46,9 +46,26 @@ export interface CardQueryFilters {
 interface DtoExtras {
   parentTitle?: string | null;
   childCount?: number;
+  childCategories?: { id: string; name: string; color: string }[];
   timeManual?: boolean;
   lastParentTitle?: string | null;
   children?: ScheduleCardDto[] | null;
+}
+
+const STAGE_SORT_RANK: Record<CardStage, number> = {
+  wrapping_up: 0,
+  in_progress: 1,
+  not_started: 2,
+};
+
+function sortChildrenByStageThenCreatedAtDesc<T extends { stage: CardStage; createdAt: string }>(
+  rows: T[],
+): T[] {
+  return [...rows].sort((a, b) => {
+    const stageDiff = STAGE_SORT_RANK[a.stage] - STAGE_SORT_RANK[b.stage];
+    if (stageDiff !== 0) return stageDiff;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
 }
 
 function normalizeTitle(title: string): { title: string; titleLower: string } {
@@ -170,11 +187,50 @@ export class ScheduleService {
 
     if (extras.parentTitle !== undefined) dto.parentTitle = extras.parentTitle;
     if (extras.childCount !== undefined) dto.childCount = extras.childCount;
+    if (extras.childCategories !== undefined) dto.childCategories = extras.childCategories;
     if (row.kind === "parent") dto.timeManual = extras.timeManual ?? row.timeManual;
     if (extras.lastParentTitle !== undefined) dto.lastParentTitle = extras.lastParentTitle;
     if (extras.children !== undefined) dto.children = extras.children;
 
     return dto;
+  }
+
+  private listChildCategories(
+    parentId: string,
+    db: DbClient = this.db,
+  ): { id: string; name: string; color: string }[] {
+    const children = db
+      .select()
+      .from(scheduleCards)
+      .where(
+        and(
+          eq(scheduleCards.parentId, parentId),
+          eq(scheduleCards.status, "active"),
+          eq(scheduleCards.kind, "standard"),
+        ),
+      )
+      .all();
+    const seen = new Set<string>();
+    const out: { id: string; name: string; color: string }[] = [];
+    for (const child of children) {
+      if (seen.has(child.categoryId)) continue;
+      seen.add(child.categoryId);
+      const cat = this.categoryService.findById(child.categoryId);
+      out.push({
+        id: child.categoryId,
+        name: cat?.name ?? "未知",
+        color: cat?.color ?? "#90A4AE",
+      });
+    }
+    return out;
+  }
+
+  private parentListExtras(parentId: string, timeManual: boolean, db: DbClient = this.db): DtoExtras {
+    return {
+      childCount: this.countActiveChildren(parentId, db),
+      childCategories: this.listChildCategories(parentId, db),
+      timeManual,
+    };
   }
 
   private joinCategory(row: CardRow, extras: DtoExtras = {}): ScheduleCardDto {
@@ -395,14 +451,16 @@ export class ScheduleService {
     if (!row) return null;
 
     if (row.kind === "parent") {
-      const children = this.db
-        .select()
-        .from(scheduleCards)
-        .where(and(eq(scheduleCards.parentId, id), eq(scheduleCards.status, "active")))
-        .all()
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const children = sortChildrenByStageThenCreatedAtDesc(
+        this.db
+          .select()
+          .from(scheduleCards)
+          .where(and(eq(scheduleCards.parentId, id), eq(scheduleCards.status, "active")))
+          .all(),
+      );
       return this.joinCategory(row, {
         childCount: children.length,
+        childCategories: this.listChildCategories(id),
         timeManual: row.timeManual,
         children: children.map((c) => this.joinCategory(c)),
       });
@@ -529,7 +587,7 @@ export class ScheduleService {
       }
 
       const parent = this.getRow(parentId, tx)!;
-      return this.joinCategory(parent, { childCount: 2, timeManual: parent.timeManual });
+      return this.joinCategory(parent, this.parentListExtras(parentId, parent.timeManual, tx));
     });
   }
 
@@ -551,10 +609,7 @@ export class ScheduleService {
 
       this.recomputeParentTime(parentId, tx);
       const updated = this.getRow(parentId, tx)!;
-      return this.joinCategory(updated, {
-        childCount: this.countActiveChildren(parentId, tx),
-        timeManual: updated.timeManual,
-      });
+      return this.joinCategory(updated, this.parentListExtras(parentId, updated.timeManual, tx));
     });
   }
 
@@ -590,10 +645,7 @@ export class ScheduleService {
 
       this.recomputeParentTime(targetId, tx);
       const updated = this.getRow(targetId, tx)!;
-      return this.joinCategory(updated, {
-        childCount: this.countActiveChildren(targetId, tx),
-        timeManual: updated.timeManual,
-      });
+      return this.joinCategory(updated, this.parentListExtras(targetId, updated.timeManual, tx));
     });
   }
 
@@ -977,10 +1029,7 @@ export class ScheduleService {
 
     const dtos = rows.map((r) => {
       if (r.kind === "parent") {
-        return this.joinCategory(r, {
-          childCount: this.countActiveChildren(r.id),
-          timeManual: r.timeManual,
-        });
+        return this.joinCategory(r, this.parentListExtras(r.id, r.timeManual));
       }
       const extras: DtoExtras = {};
       if (r.parentId) {

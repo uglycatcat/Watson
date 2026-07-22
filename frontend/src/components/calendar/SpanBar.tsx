@@ -47,20 +47,24 @@ export function SpanBar({
         e.stopPropagation();
         onClick(card);
       }}
-      className={`absolute pointer-events-auto transition-interactive ${parent ? "parent-card-stack parent-span-bar" : ""} ${overdue ? "is-overdue" : ""}`}
+      className={`absolute pointer-events-auto transition-interactive ${parent ? "parent-span-bar" : "cal-chip"} ${overdue ? "is-overdue" : ""}`}
       style={{
         top: topOffset + lane * LANE_HEIGHT,
         left: `calc(${(startCol / 7) * 100}% + 2px)`,
         width: `calc(${((endCol - startCol + 1) / 7) * 100}% - 4px)`,
         height: LANE_HEIGHT - 4,
-        background: overdue ? "var(--overdue-bg)" : parent ? "var(--accent-subtle)" : "var(--accent)",
-        color: overdue || parent ? "var(--fg)" : "#fff",
+        background: overdue
+          ? `linear-gradient(to left, var(--overdue-wash), transparent 70%), ${parent ? "var(--accent-subtle)" : "var(--accent)"}`
+          : parent
+            ? "var(--accent-subtle)"
+            : "var(--accent)",
+        color: parent ? "var(--fg)" : "#fff",
         opacity: 0.95,
         zIndex: 2,
         cursor: draggable ? "grab" : "pointer",
         borderRadius: "var(--radius-sm)",
         boxShadow: "var(--shadow-sm)",
-        border: parent || overdue ? "1px solid var(--border)" : undefined,
+        border: parent ? "1px solid var(--border)" : undefined,
       }}
       title={card.title}
       aria-label={card.title}
