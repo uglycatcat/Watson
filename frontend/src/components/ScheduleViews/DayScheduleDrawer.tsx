@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import type { ScheduleCard } from "../../lib/api";
+import { isOverdueCard } from "../../lib/cardDisplay";
 import { Drawer } from "../ui/Drawer";
 import { StageBadge } from "../cards/StageBadge";
 
@@ -28,19 +29,28 @@ export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DaySche
         <p style={{ color: "var(--muted)" }}>该日无安排</p>
       ) : (
         <ul className="space-y-2">
-          {cards.map((c) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => onCardClick(c)}
-                className="w-full text-left p-3 rounded border text-sm"
-                style={{ background: "var(--bg)", borderColor: "var(--border)" }}
-              >
-                <div className="flex items-start justify-between gap-2"><span className="font-medium">{c.title}</span><StageBadge stage={c.stage} compact /></div>
-                <div style={{ color: "var(--muted)" }}>{timeLabel(c)}</div>
-              </button>
-            </li>
-          ))}
+          {cards.map((c) => {
+            const overdue = isOverdueCard(c);
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => onCardClick(c)}
+                  className={`w-full text-left p-3 rounded border text-sm ${overdue ? "is-overdue" : ""}`}
+                  style={{
+                    background: overdue ? "var(--overdue-bg)" : "var(--bg)",
+                    borderColor: "var(--border)",
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-medium">{c.title}</span>
+                    <StageBadge stage={c.stage} compact />
+                  </div>
+                  <div style={{ color: "var(--muted)" }}>{timeLabel(c)}</div>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Drawer>

@@ -19,6 +19,8 @@ interface ScheduleViewRouterProps {
   onCardClick: (card: ScheduleCard) => void;
   onParentClick?: (card: ScheduleCard) => void;
   onParentIdClick?: (parentId: string) => void;
+  onComposeDraft?: (a: ScheduleCard, b: ScheduleCard) => void;
+  composeSuccessAnim?: { sourceIds: string[]; targetId: string } | null;
   onCreateClick?: () => void;
   onLeaveTrash?: () => void;
 }
@@ -30,6 +32,8 @@ export function ScheduleViewRouter({
   onCardClick,
   onParentClick,
   onParentIdClick,
+  onComposeDraft,
+  composeSuccessAnim = null,
   onCreateClick,
   onLeaveTrash,
 }: ScheduleViewRouterProps) {
@@ -63,7 +67,13 @@ export function ScheduleViewRouter({
           <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <AllView onCardClick={onCardClick} onParentClick={onParentClick} onCreateClick={onCreateClick} />
+          <AllView
+            onCardClick={onCardClick}
+            onParentClick={onParentClick}
+            onCreateClick={onCreateClick}
+            onComposeDraft={onComposeDraft}
+            composeSuccessAnim={composeSuccessAnim}
+          />
         </div>
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />

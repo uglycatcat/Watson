@@ -201,7 +201,7 @@ export function CardGrid({
 
     if (!source || !mode || mode === "forbid") return;
 
-    // Compose waits for CreateParentModal confirm (T054); add/merge animate after success (T055).
+    // Compose opens parent-detail draft until confirm; add/merge animate after success.
     if (mode === "compose") {
       onComposePair?.(source, target);
       return;
@@ -239,7 +239,9 @@ export function CardGrid({
 
         const cardClasses = [
           "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2",
-          isParent ? "min-h-[104px] parent-card-stack" : "min-h-[88px] overflow-hidden",
+          isParent ? "min-h-[104px] parent-card-stack" : "min-h-[88px]",
+          !isParent && !(showParentFold && (c.parentId || c.lastParentTitle)) ? "overflow-hidden" : "",
+          !isParent && showParentFold && (c.parentId || c.lastParentTitle) ? "overflow-visible" : "",
           renderCardChrome ? "pb-8" : "",
           showHoverBar && !isParent ? "show-hover-bar" : "",
           overdueCardIds?.has(c.id) ? "is-overdue" : "",
@@ -323,7 +325,7 @@ export function CardGrid({
                   <button
                     type="button"
                     className="parent-fold-corner"
-                    title={c.parentTitle ?? "查看父卡片"}
+                    data-tip={c.parentTitle ?? "查看父卡片"}
                     aria-label={c.parentTitle ? `原属：${c.parentTitle}` : "查看父卡片"}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -333,7 +335,7 @@ export function CardGrid({
                 ) : (
                   <span
                     className="parent-fold-corner"
-                    title={c.lastParentTitle ? `原属：${c.lastParentTitle}` : undefined}
+                    data-tip={c.lastParentTitle ? `原属：${c.lastParentTitle}` : undefined}
                     aria-label={c.lastParentTitle ? `原属：${c.lastParentTitle}` : "原属父卡片"}
                   />
                 )

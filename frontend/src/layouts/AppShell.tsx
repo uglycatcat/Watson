@@ -22,6 +22,11 @@ export function AppShell() {
   const [selectedCard, setSelectedCard] = useState<ScheduleCard | null>(null);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [returnToParentId, setReturnToParentId] = useState<string | null>(null);
+  const [composeDraft, setComposeDraft] = useState<ScheduleCard[] | null>(null);
+  const [composeSuccessAnim, setComposeSuccessAnim] = useState<{
+    sourceIds: string[];
+    targetId: string;
+  } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -48,6 +53,7 @@ export function AppShell() {
 
   const handleCardClick = (card: ScheduleCard) => {
     setReturnToParentId(null);
+    setComposeDraft(null);
     if (isParentCard(card)) {
       setSelectedParentId(card.id);
       setSelectedCard(null);
@@ -59,14 +65,23 @@ export function AppShell() {
 
   const handleParentClick = (card: ScheduleCard) => {
     setReturnToParentId(null);
+    setComposeDraft(null);
     setSelectedParentId(card.id);
     setSelectedCard(null);
   };
 
   const handleParentIdClick = (parentId: string) => {
     setReturnToParentId(null);
+    setComposeDraft(null);
     setSelectedParentId(parentId);
     setSelectedCard(null);
+  };
+
+  const handleComposeDraft = (a: ScheduleCard, b: ScheduleCard) => {
+    setReturnToParentId(null);
+    setSelectedCard(null);
+    setSelectedParentId(null);
+    setComposeDraft([a, b]);
   };
 
   const closeCardDetail = () => {
@@ -113,6 +128,8 @@ export function AppShell() {
               onCardClick={handleCardClick}
               onParentClick={handleParentClick}
               onParentIdClick={handleParentIdClick}
+              onComposeDraft={handleComposeDraft}
+              composeSuccessAnim={composeSuccessAnim}
               onCreateClick={() => setCreateOpen(true)}
               onLeaveTrash={() => setView("day")}
             />
@@ -150,15 +167,22 @@ export function AppShell() {
         onUpdated={setSelectedCard}
       />
       <ParentCardDetailModal
-        parentId={selectedParentId}
+        parentId={composeDraft ? null : selectedParentId}
+        draftChildren={composeDraft}
         knownTitles={knownTitles}
         onClose={() => {
           setReturnToParentId(null);
           setSelectedParentId(null);
+          setComposeDraft(null);
+        }}
+        onDraftCreated={(parent, sourceIds) => {
+          setComposeSuccessAnim({ sourceIds, targetId: parent.id });
+          window.setTimeout(() => setComposeSuccessAnim(null), 400);
         }}
         onOpenChild={(child) => {
           setReturnToParentId(selectedParentId ?? child.parentId ?? null);
           setSelectedParentId(null);
+          setComposeDraft(null);
           setSelectedCard(child);
         }}
       />

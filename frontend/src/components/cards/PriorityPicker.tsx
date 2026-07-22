@@ -1,5 +1,8 @@
 import { PriorityMeter } from "./PriorityMeter";
 
+/** Must match `.priority-range` thumb width in CSS (incl. visual center). */
+const THUMB_SIZE = 18;
+
 interface PriorityPickerProps {
   label: string;
   value: number;
@@ -9,9 +12,12 @@ interface PriorityPickerProps {
 
 export function PriorityPicker({ label, value, onChange, disabled }: PriorityPickerProps) {
   const safeValue = Math.max(0, Math.min(10, Math.round(value)));
+  const ratio = safeValue / 10;
+  const thumbCenter = `calc(${THUMB_SIZE / 2}px + (100% - ${THUMB_SIZE}px) * ${ratio})`;
+
   return (
     <div className="priority-range-wrap">
-      <output className="priority-range-value" style={{ left: `${safeValue * 10}%` }}>
+      <output className="priority-range-value" style={{ left: thumbCenter }}>
         {safeValue}
       </output>
       <input

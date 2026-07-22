@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, isParentCard, type ScheduleCard } from "../../lib/api";
+import { isOverdueCard } from "../../lib/cardDisplay";
 import {
   MAX_CHIPS_PER_CELL,
   buildSpanSegments,
@@ -80,25 +81,28 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                       无安排
                     </p>
                   ) : (
-                    visible.map((c) => (
+                    visible.map((c) => {
+                      const parent = isParentCard(c);
+                      const overdue = isOverdueCard(c);
+                      return (
                       <button
                         key={c.id}
                         type="button"
                         draggable
                         onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
                         onClick={() => onCardClick(c)}
-                        className={`relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${isParentCard(c) ? "parent-card-stack parent-chip" : ""}`}
+                        className={`relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""} ${overdue ? "is-overdue" : ""}`}
                         style={{
-                          background: isParentCard(c) ? "var(--accent-subtle)" : "var(--accent)",
-                          color: isParentCard(c) ? "var(--fg)" : "#fff",
+                          background: overdue ? "var(--overdue-bg)" : parent ? "var(--accent-subtle)" : "var(--accent)",
+                          color: overdue || parent ? "var(--fg)" : "#fff",
                           cursor: "grab",
                           borderRadius: "var(--radius-sm)",
-                          border: isParentCard(c) ? "1px solid var(--border)" : undefined,
+                          border: parent || overdue ? "1px solid var(--border)" : undefined,
                         }}
                       >
                         <span className="flex items-center justify-between gap-1">
                           <span className="truncate pr-1">{c.title}</span>
-                          {isParentCard(c) ? (
+                          {parent ? (
                             <span className="parent-child-badge parent-child-badge--inline" aria-label={`${c.childCount ?? 0} 张子卡片`}>
                               {c.childCount ?? 0}
                             </span>
@@ -107,7 +111,8 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                           )}
                         </span>
                       </button>
-                    ))
+                      );
+                    })
                   )}
                   {extra > 0 && (
                     <button

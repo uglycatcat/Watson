@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, isParentCard, type ScheduleCard } from "../../lib/api";
+import { isOverdueCard } from "../../lib/cardDisplay";
 import {
   MAX_CHIPS_PER_CELL,
   allCardsForCell,
@@ -94,10 +95,14 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 e.stopPropagation();
                                 onCardClick(c);
                               }}
-                              className={`relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""}`}
+                              className={`relative z-10 w-full text-left truncate px-1 rounded text-[10px] transition-interactive ${parent ? "parent-card-stack parent-chip" : ""} ${isOverdueCard(c) ? "is-overdue" : ""}`}
                               style={{
-                                background: parent ? "var(--accent-subtle)" : "var(--accent)",
-                                color: parent ? "var(--fg)" : "#fff",
+                                background: isOverdueCard(c)
+                                  ? "var(--overdue-bg)"
+                                  : parent
+                                    ? "var(--accent-subtle)"
+                                    : "var(--accent)",
+                                color: isOverdueCard(c) || parent ? "var(--fg)" : "#fff",
                                 paddingTop: multi ? 3 : 2,
                                 paddingBottom: multi ? 3 : 2,
                                 marginLeft: multi ? -2 : 0,
@@ -105,7 +110,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                 width: multi ? "calc(100% + 4px)" : "100%",
                                 cursor: "grab",
                                 borderRadius: "var(--radius-sm)",
-                                border: parent ? "1px solid var(--border)" : undefined,
+                                border: parent || isOverdueCard(c) ? "1px solid var(--border)" : undefined,
                               }}
                             >
                               <span className="flex items-center justify-between gap-1">

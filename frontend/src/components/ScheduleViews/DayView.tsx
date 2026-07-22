@@ -8,6 +8,7 @@ import { EmptyState } from "../ui/EmptyState";
 import { SkeletonCardGrid } from "../ui/Skeleton";
 import { DEFAULT_TIMEZONE } from "../calendar/tz";
 import { buildDaySections } from "../calendar/daySections";
+import { collectOverdueCardIds } from "../../lib/cardDisplay";
 import { DailyReportPanel } from "../daily-report/DailyReportPanel";
 
 interface DayViewProps {
@@ -28,6 +29,7 @@ export function DayView({ date, onDateChange, onCardClick, onParentClick, onCrea
   const cards = data?.items ?? [];
   const quadrantCards = useMemo(() => cards.filter((c) => !isParentCard(c)), [cards]);
   const sections = useMemo(() => buildDaySections(cards, date, tz), [cards, date, tz]);
+  const overdueCardIds = useMemo(() => collectOverdueCardIds(cards), [cards]);
   const [highlightedCardIds, setHighlightedCardIds] = useState<ReadonlySet<string>>(new Set());
   const [scrollEdges, setScrollEdges] = useState({ top: false, bottom: false });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,6 +77,7 @@ export function DayView({ date, onDateChange, onCardClick, onParentClick, onCrea
                         draggableCards
                         sortMode="stageThenCreatedAtDesc"
                         showHoverBar
+                        overdueCardIds={overdueCardIds}
                         highlightedCardIds={highlightedCardIds}
                         showParentFold
                         onParentFoldClick={(parentId) => onParentClick?.(parentId)}

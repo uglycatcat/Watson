@@ -14,3 +14,24 @@ export function cardDateSubtitle(card: Pick<ScheduleCard, "startAt" | "endAt">):
   const end = formatCardDateShort(card.endAt);
   return `${start} - ${end}`;
 }
+
+/**
+ * 过期：活跃且已安排（有起止），结束时刻早于现在。
+ * 非 active（含垃圾箱 completed/deleted）一律不算过期。
+ * 标准卡、父卡、父卡内子卡均按各自 endAt 判定。
+ */
+export function isOverdueCard(
+  card: Pick<ScheduleCard, "status" | "startAt" | "endAt">,
+  now = Date.now(),
+): boolean {
+  if (card.status !== "active") return false;
+  if (!card.startAt || !card.endAt) return false;
+  return new Date(card.endAt).getTime() < now;
+}
+
+export function collectOverdueCardIds(
+  cards: ReadonlyArray<Pick<ScheduleCard, "id" | "status" | "startAt" | "endAt">>,
+  now = Date.now(),
+): Set<string> {
+  return new Set(cards.filter((c) => isOverdueCard(c, now)).map((c) => c.id));
+}

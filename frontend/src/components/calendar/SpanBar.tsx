@@ -1,5 +1,6 @@
 import type { ScheduleCard } from "../../lib/api";
 import { isParentCard } from "../../lib/api";
+import { isOverdueCard } from "../../lib/cardDisplay";
 import { setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 
@@ -28,6 +29,7 @@ export function SpanBar({
   draggable = true,
 }: SpanBarProps) {
   const parent = isParentCard(card);
+  const overdue = isOverdueCard(card);
   return (
     <button
       type="button"
@@ -45,20 +47,20 @@ export function SpanBar({
         e.stopPropagation();
         onClick(card);
       }}
-      className={`absolute pointer-events-auto transition-interactive ${parent ? "parent-card-stack parent-span-bar" : ""}`}
+      className={`absolute pointer-events-auto transition-interactive ${parent ? "parent-card-stack parent-span-bar" : ""} ${overdue ? "is-overdue" : ""}`}
       style={{
         top: topOffset + lane * LANE_HEIGHT,
         left: `calc(${(startCol / 7) * 100}% + 2px)`,
         width: `calc(${((endCol - startCol + 1) / 7) * 100}% - 4px)`,
         height: LANE_HEIGHT - 4,
-        background: parent ? "var(--accent-subtle)" : "var(--accent)",
-        color: parent ? "var(--fg)" : "#fff",
+        background: overdue ? "var(--overdue-bg)" : parent ? "var(--accent-subtle)" : "var(--accent)",
+        color: overdue || parent ? "var(--fg)" : "#fff",
         opacity: 0.95,
         zIndex: 2,
         cursor: draggable ? "grab" : "pointer",
         borderRadius: "var(--radius-sm)",
         boxShadow: "var(--shadow-sm)",
-        border: parent ? "1px solid var(--border)" : undefined,
+        border: parent || overdue ? "1px solid var(--border)" : undefined,
       }}
       title={card.title}
       aria-label={card.title}

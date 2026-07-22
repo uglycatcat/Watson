@@ -323,12 +323,60 @@ body {
 .daily-report-skeleton { animation: skeleton-pulse 1.4s ease-in-out infinite; background: var(--accent-subtle); }
 .daily-report-retry { color: #dc2626; font-size: var(--text-xs); margin-bottom: 4px; }
 
-.priority-range-wrap { position: relative; padding: 20px 4px 0; }
-.priority-range { width: 100%; height: 6px; appearance: none; border-radius: 999px; outline: none; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 25%, var(--bg)), var(--accent)); }
-.priority-range::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); box-shadow: var(--shadow-sm); cursor: grab; }
-.priority-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 3px solid var(--panel); box-shadow: var(--shadow-sm); cursor: grab; }
+.priority-range-wrap { position: relative; padding: 20px 0 0; }
+.priority-range {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  outline: none;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 25%, var(--bg)), var(--accent));
+}
+.priority-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+.priority-range::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+.priority-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+}
+.priority-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+}
 .priority-range:focus-visible { box-shadow: 0 0 0 3px var(--accent-subtle); }
-.priority-range-value { position: absolute; top: 0; transform: translateX(-50%); padding: 1px 5px; border-radius: 999px; background: var(--accent); color: white; font-size: 10px; }
+.priority-range-value {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  line-height: 1.2;
+  pointer-events: none;
+}
 .priority-range-ticks { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: var(--muted); }
 .category-inline-action { color: var(--accent); font-size: 10px; }
 .category-inline-action.danger { color: #dc2626; }
@@ -398,10 +446,11 @@ body {
   bottom: 0;
   width: 28px;
   height: 28px;
-  z-index: 1;
+  z-index: 2;
   padding: 0;
   border: none;
   cursor: pointer;
+  overflow: visible;
   background: linear-gradient(
     135deg,
     transparent 50%,
@@ -420,8 +469,56 @@ body {
   border-bottom: 2px solid var(--parent-fold-line);
   opacity: 0.85;
 }
+/* Drawer tip: pulls out to the right from the fold, outside the card */
+.parent-fold-corner[data-tip]::before {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 2px);
+  bottom: 0;
+  z-index: 30;
+  max-width: 14rem;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--fg);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+  transition:
+    opacity var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
+}
+.parent-fold-corner[data-tip]:hover::before,
+.parent-fold-corner[data-tip]:focus-visible::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
 .parent-fold-corner:hover {
-  filter: brightness(1.08);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    color-mix(in srgb, var(--parent-fold-bg) 88%, var(--fg) 12%) 50%
+  );
+}
+
+/* Raise the card above neighbors while the fold tip is open */
+.grid > div:has(.parent-fold-corner:hover),
+.grid > div:has(.parent-fold-corner:focus-visible) {
+  position: relative;
+  z-index: 12;
+}
+.schedule-card:has(.parent-fold-corner:hover),
+.schedule-card:has(.parent-fold-corner:focus-visible) {
+  z-index: 12;
 }
 
 /* Compose drop feedback */

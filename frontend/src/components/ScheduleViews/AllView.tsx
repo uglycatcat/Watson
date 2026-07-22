@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, isParentCard, type CardStage, type ScheduleCard } from "../../lib/api";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import { buildAllSections } from "../calendar/allSections";
-import { CreateParentModal } from "../cards/CreateParentModal";
+import { collectOverdueCardIds } from "../../lib/cardDisplay";
 import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
 import { EmptyState } from "../ui/EmptyState";
@@ -13,20 +13,23 @@ interface AllViewProps {
   onCardClick: (card: ScheduleCard) => void;
   onParentClick?: (card: ScheduleCard) => void;
   onCreateClick?: () => void;
+  onComposeDraft?: (a: ScheduleCard, b: ScheduleCard) => void;
+  composeSuccessAnim?: { sourceIds: string[]; targetId: string } | null;
 }
 
-export function AllView({ onCardClick, onParentClick, onCreateClick }: AllViewProps) {
+export function AllView({
+  onCardClick,
+  onParentClick,
+  onCreateClick,
+  onComposeDraft,
+  composeSuccessAnim = null,
+}: AllViewProps) {
   const { addChildToParent, mergeParents } = useCardMutations();
   const [categoryId, setCategoryId] = useState("");
   const [importance, setImportance] = useState("");
   const [urgency, setUrgency] = useState("");
   const [stage, setStage] = useState<"" | CardStage>("");
   const [quadrantOpen, setQuadrantOpen] = useState(false);
-  const [composePair, setComposePair] = useState<ScheduleCard[] | null>(null);
-  const [composeSuccessAnim, setComposeSuccessAnim] = useState<{
-    sourceIds: string[];
-    targetId: string;
-  } | null>(null);
 
   const { data: catData } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
@@ -55,18 +58,13 @@ export function AllView({ onCardClick, onParentClick, onCreateClick }: AllViewPr
   });
 
   const cards = data?.items ?? [];
-  const knownTitles = useMemo(() => cards.map((c) => c.title), [cards]);
   const composeLookup = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
   const quadrantCards = useMemo(
     () => (quadrantData?.items ?? []).filter((c) => !isParentCard(c)),
     [quadrantData],
   );
   const sections = useMemo(() => buildAllSections(cards), [cards]);
-  const overdueCardIds = new Set(
-    cards
-      .filter((card) => card.status === "active" && card.startAt && card.endAt && new Date(card.endAt).getTime() < Date.now())
-      .map((card) => card.id),
-  );
+  const overdueCardIds = useMemo(() => collectOverdueCardIds(cards), [cards]);
   const selectClass = "px-2 py-1 rounded-md border text-sm transition-interactive";
   const selectStyle = { borderColor: "var(--border)", background: "var(--panel)", color: "var(--fg)" };
 
@@ -152,7 +150,7 @@ export function AllView({ onCardClick, onParentClick, onCreateClick }: AllViewPr
                     enableComposeDrop
                     composeCardLookup={composeLookup}
                     composeSuccessAnim={composeSuccessAnim}
-                    onComposePair={(a, b) => setComposePair([a, b])}
+                    onComposePair={(a, b) => onComposeDraft?.(a, b)}
                     onAddToParent={async (childId, parentId) => {
                       await addChildToParent({ parentId, cardId: childId });
                     }}
@@ -169,16 +167,6 @@ export function AllView({ onCardClick, onParentClick, onCreateClick }: AllViewPr
         )}
       </div>
       {quadrantOpen && <QuadrantView cards={quadrantCards} onClose={() => setQuadrantOpen(false)} />}
-      <CreateParentModal
-        open={!!composePair}
-        cards={composePair}
-        knownTitles={knownTitles}
-        onClose={() => setComposePair(null)}
-        onSuccess={(parent, sourceIds) => {
-          setComposeSuccessAnim({ sourceIds, targetId: parent.id });
-          window.setTimeout(() => setComposeSuccessAnim(null), 400);
-        }}
-      />
     </div>
   );
 }
