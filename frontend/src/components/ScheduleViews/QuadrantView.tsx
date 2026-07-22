@@ -78,11 +78,11 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
       style={
         embedded
           ? ({
-              /* Soft Autumn / muted earth — classic Eisenhower-friendly tints (day embedded only) */
-              ["--quadrant-q1"]: "color-mix(in srgb, #C4856A 24%, var(--panel))", // dusty terracotta · 立即做
-              ["--quadrant-q2"]: "color-mix(in srgb, #7A8C6E 24%, var(--panel))", // muted sage · 计划做
-              ["--quadrant-q3"]: "color-mix(in srgb, #A89880 22%, var(--panel))", // warm taupe · 减少做
-              ["--quadrant-q4"]: "color-mix(in srgb, #6B8CAE 24%, var(--panel))", // soft slate blue · 授权做
+              /* Mission-control telemetry tints (cool) — 立即做/计划做/减少做/授权做 */
+              ["--quadrant-q1"]: "color-mix(in srgb, var(--tele-critical) 20%, var(--panel))", // critical · 立即做
+              ["--quadrant-q2"]: "color-mix(in srgb, var(--tele-caution) 20%, var(--panel))", // caution · 计划做
+              ["--quadrant-q3"]: "color-mix(in srgb, var(--muted) 16%, var(--panel))", // idle · 减少做
+              ["--quadrant-q4"]: "color-mix(in srgb, var(--tele-info) 20%, var(--panel))", // info · 授权做
             } as CSSProperties)
           : {
               background: "var(--panel)",

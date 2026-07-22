@@ -13,7 +13,6 @@ const TOOL_BTN =
 
 const TOOL_BTN_STYLE = {
   borderRadius: "var(--radius-md)",
-  background: "var(--bg)",
 } as const;
 
 const NAV_VIEWS = ["day", "week", "month", "all"] as const;
@@ -83,11 +82,36 @@ export function TopBar({
     >
       {/* Left: brand + search + create */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">
-        <span className="font-semibold shrink-0 inline-flex items-center gap-1.5" style={{ fontWeight: "var(--font-semibold)" }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+        <span
+          className="shrink-0 inline-flex items-center gap-2 select-none"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" aria-hidden>
             <rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M7 10h10M8 14h3M8 17h6" />
           </svg>
-          Watson
+          <span className="flex flex-col leading-none">
+            <span
+              style={{
+                fontWeight: "var(--font-semibold)",
+                letterSpacing: "0.16em",
+                fontSize: "0.9rem",
+                color: "var(--fg-strong)",
+              }}
+            >
+              WATSON
+            </span>
+            <span
+              className="max-sm:hidden"
+              style={{
+                fontSize: "8px",
+                letterSpacing: "0.22em",
+                color: "var(--muted)",
+                marginTop: "2px",
+              }}
+            >
+              PERSONAL OPS
+            </span>
+          </span>
         </span>
         {onSearchQueryChange && onSearchSelect && (
           <GlobalSearch
@@ -129,7 +153,11 @@ export function TopBar({
       {/* Right: trash | preferences */}
       <div className="flex items-center gap-2 shrink-0">
         {dropError && (
-          <span className="text-xs text-red-600 shrink-0 max-w-[160px] truncate" title={dropError}>
+          <span
+            className="text-xs shrink-0 max-w-[160px] truncate"
+            style={{ color: "var(--tele-critical)", fontFamily: "var(--font-mono)" }}
+            title={dropError}
+          >
             {dropError}
           </span>
         )}
@@ -177,8 +205,8 @@ export function TopBar({
                   ? "var(--accent)"
                   : dragOverTrash
                     ? "var(--accent-subtle)"
-                    : "var(--bg)",
-              color: view === "trash" ? "#fff" : "var(--fg)",
+                    : undefined,
+              color: view === "trash" ? "#05070a" : "var(--fg)",
               outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
               transform: dragOverTrash ? "scale(1.08)" : undefined,
               boxShadow: dragOverTrash ? "var(--shadow-sm)" : undefined,
@@ -195,9 +223,10 @@ export function TopBar({
             type="button"
             onClick={toggleTheme}
             className={`${TOOL_BTN} px-2`}
-            style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)" }}
+            style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)", letterSpacing: "0.08em" }}
+            title="切换主题"
           >
-            {theme === "dark" ? "深色" : "浅色"}
+            {theme === "dark" ? "DARK" : "LIGHT"}
           </button>
           {onToggleChat && (
             <button
@@ -207,9 +236,12 @@ export function TopBar({
               style={{
                 ...TOOL_BTN_STYLE,
                 borderColor: chatOpen ? "var(--accent)" : "var(--border)",
-                background: chatOpen ? "var(--accent)" : "var(--bg)",
-                color: chatOpen ? "#fff" : "var(--fg)",
+                background: chatOpen ? "var(--accent)" : undefined,
+                color: chatOpen ? "#05070a" : "var(--fg)",
+                letterSpacing: "0.1em",
+                fontWeight: "var(--font-semibold)",
               }}
+              title="AI 指挥台"
             >
               AI
             </button>

@@ -22,12 +22,18 @@ export function PriorityMeter({ label, value, showNumber = true, compact = false
 
   return (
     <div className={`flex items-center gap-1.5 min-w-0 ${compact ? "text-[10px]" : "text-xs"}`}>
-      <span className="shrink-0 w-6" style={{ color: "var(--muted)" }}>
+      <span
+        className="shrink-0 w-6"
+        style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}
+      >
         {label}
       </span>
       <div
         className="flex-1 min-w-[48px] h-1.5 rounded-full overflow-hidden"
-        style={{ background: "color-mix(in srgb, var(--border) 60%, transparent)" }}
+        style={{
+          background: "color-mix(in srgb, var(--border) 70%, transparent)",
+          boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--border-strong) 40%, transparent)",
+        }}
         role="meter"
         aria-label={`${label} ${clamped}`}
         aria-valuenow={clamped}
@@ -40,7 +46,10 @@ export function PriorityMeter({ label, value, showNumber = true, compact = false
         />
       </div>
       {showNumber && (
-        <span className="shrink-0 tabular-nums w-4 text-right" style={{ color: "var(--muted)" }}>
+        <span
+          className="shrink-0 tabular-nums w-4 text-right"
+          style={{ color: "var(--fg)", fontFamily: "var(--font-mono)" }}
+        >
           {clamped}
         </span>
       )}

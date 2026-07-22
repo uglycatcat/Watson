@@ -222,7 +222,7 @@ export function CardGrid({
           isParent && mode === "add" && c.childCount != null ? c.childCount + 1 : c.childCount;
 
         const cardClasses = [
-          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2",
+          "schedule-card relative w-full text-left text-sm transition-interactive flex gap-2",
           isParent ? "parent-cover-card overflow-hidden min-h-[115px]" : "min-h-[107px]",
           !isParent && !(showParentFold && (c.parentId || c.lastParentTitle)) ? "overflow-hidden" : "",
           !isParent && showParentFold && (c.parentId || c.lastParentTitle) ? "overflow-visible" : "",
@@ -359,11 +359,17 @@ export function CardGrid({
               ) : (
                 <>
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                    <div className="font-semibold line-clamp-1" style={{ fontSize: "var(--text-sm)" }}>
+                    <div
+                      className="font-semibold line-clamp-1"
+                      style={{ fontSize: "var(--text-sm)", color: "var(--fg-strong)", letterSpacing: "0.01em" }}
+                    >
                       {c.title}
                     </div>
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <div className="text-xs line-clamp-1 min-w-0 flex-1" style={{ color: "var(--muted)" }}>
+                      <div
+                        className="text-xs line-clamp-1 min-w-0 flex-1"
+                        style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}
+                      >
                         {cardDateSubtitle(c)}
                       </div>
                       <span className="inline-flex items-center gap-1 shrink-0">

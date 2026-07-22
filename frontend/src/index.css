@@ -1,22 +1,75 @@
 @import "tailwindcss";
 
+/* ── Mission Control · local mono typeface (JetBrains Mono) ── */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+}
+
 @theme inline {
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
 }
 
+/*
+ * MISSION CONTROL — 深色任务控制台为唯一基线。
+ * :root 直接采用深空控制台配色；.dark 与之对齐。亮色主题不再单独投入。
+ * NASA 结构 × SpaceX 冷峻 × NVIDIA 绿(仅关键状态)。见 DESIGN.md。
+ */
 :root {
-  --bg: #f4f4f5;
-  --fg: #18181b;
-  --panel: #ffffff;
-  --border: #e4e4e7;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-active: #1e40af;
+  color-scheme: dark;
+
+  /* 深空基底 */
+  --bg: #05070a;
+  --bg-raised: #0a0e14;
+  --panel: #0f141b;
+  --panel-raised: #151b24;
+  --border: #1e2733;
+  --border-strong: #2c3949;
+  --grid-line: rgba(120, 150, 180, 0.06);
+
+  /* 冷白文字 */
+  --fg-strong: #f0f4f8;
+  --fg: #c4ccd6;
+  --muted: #6b7684;
+  --muted-dim: #4a535f;
+
+  /* 招牌强调 — NVIDIA 绿(仅关键状态) */
+  --accent: #76b900;
+  --accent-hover: #8ed600;
+  --accent-active: #5a8c00;
+  --accent-bright: #8ed600;
+  --accent-dim: #5a8c00;
   --accent-subtle: color-mix(in srgb, var(--accent) 12%, transparent);
-  --muted: #71717a;
-  --fg-strong: #09090b;
+  --accent-glow: color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* 遥测状态色 */
+  --tele-nominal: #76b900;
+  --tele-caution: #f5a623;
+  --tele-critical: #ff453a;
+  --tele-info: #3d9be9;
+
+  /* 字体族 */
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -31,9 +84,9 @@
   --radius-md: 8px;
   --radius-lg: 12px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4);
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -51,54 +104,58 @@
   --duration-slow: 250ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --quadrant-q1: color-mix(in srgb, #ef4444 8%, var(--panel));
-  --quadrant-q2: color-mix(in srgb, #f59e0b 8%, var(--panel));
-  --quadrant-q3: color-mix(in srgb, #3b82f6 8%, var(--panel));
-  --quadrant-q4: color-mix(in srgb, #22c55e 8%, var(--panel));
-  --stage-not-started-bg: #f1f5f9;
-  --stage-not-started-fg: #475569;
-  --stage-progress-bg: #dbeafe;
-  --stage-progress-fg: #1d4ed8;
-  --stage-wrapping-bg: #fef3c7;
-  --stage-wrapping-fg: #92400e;
-  --overdue-wash: color-mix(in srgb, #f43f5e 22%, transparent);
-  --parent-fold-bg: color-mix(in srgb, var(--accent) 18%, var(--panel));
-  --parent-fold-line: color-mix(in srgb, var(--accent) 65%, var(--fg));
-  --parent-cover-bg: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  --quadrant-q1: color-mix(in srgb, var(--tele-critical) 14%, var(--panel));
+  --quadrant-q2: color-mix(in srgb, var(--tele-caution) 14%, var(--panel));
+  --quadrant-q3: color-mix(in srgb, var(--tele-info) 14%, var(--panel));
+  --quadrant-q4: color-mix(in srgb, var(--tele-nominal) 14%, var(--panel));
+  --stage-not-started-bg: #1a222c;
+  --stage-not-started-fg: #9aa6b2;
+  --stage-progress-bg: color-mix(in srgb, var(--tele-info) 22%, var(--panel));
+  --stage-progress-fg: #a9d4f5;
+  --stage-wrapping-bg: color-mix(in srgb, var(--tele-caution) 22%, var(--panel));
+  --stage-wrapping-fg: #f5cf8a;
+  --overdue-wash: color-mix(in srgb, var(--tele-critical) 26%, transparent);
+  --parent-fold-bg: color-mix(in srgb, var(--accent) 22%, var(--panel));
+  --parent-fold-line: color-mix(in srgb, var(--accent) 75%, var(--fg));
+  --parent-cover-bg: color-mix(in srgb, var(--accent) 8%, var(--panel));
   --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 5%, var(--panel));
 }
 
+/* 深色是唯一基线；.dark 与 :root 对齐，保证主题开关两态都落在控制台美学内。 */
 .dark {
-  --bg: #1e1e1e;
-  --fg: #e4e4e7;
-  --panel: #252526;
-  --border: #3f3f46;
+  --bg: #05070a;
+  --bg-raised: #0a0e14;
+  --panel: #0f141b;
+  --panel-raised: #151b24;
+  --border: #1e2733;
+  --border-strong: #2c3949;
   --accent: #76b900;
-  --accent-hover: #8ed100;
-  --accent-active: #5a9100;
-  --accent-subtle: color-mix(in srgb, var(--accent) 18%, transparent);
-  --muted: #a1a1aa;
-  --fg-strong: #fafafa;
+  --accent-hover: #8ed600;
+  --accent-active: #5a8c00;
+  --accent-subtle: color-mix(in srgb, var(--accent) 14%, transparent);
+  --muted: #6b7684;
+  --fg: #c4ccd6;
+  --fg-strong: #f0f4f8;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4);
 
-  --quadrant-q1: color-mix(in srgb, #ef4444 14%, var(--panel));
-  --quadrant-q2: color-mix(in srgb, #f59e0b 14%, var(--panel));
-  --quadrant-q3: color-mix(in srgb, #3b82f6 14%, var(--panel));
-  --quadrant-q4: color-mix(in srgb, #22c55e 14%, var(--panel));
-  --stage-not-started-bg: #34343a;
-  --stage-not-started-fg: #d4d4d8;
-  --stage-progress-bg: #173c69;
-  --stage-progress-fg: #bfdbfe;
-  --stage-wrapping-bg: #5b3b0b;
-  --stage-wrapping-fg: #fde68a;
-  --overdue-wash: color-mix(in srgb, #fb7185 28%, transparent);
-  --parent-fold-bg: color-mix(in srgb, var(--accent) 28%, var(--panel));
-  --parent-fold-line: color-mix(in srgb, var(--accent) 75%, var(--fg));
-  --parent-cover-bg: color-mix(in srgb, var(--accent) 10%, var(--panel));
-  --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  --quadrant-q1: color-mix(in srgb, var(--tele-critical) 16%, var(--panel));
+  --quadrant-q2: color-mix(in srgb, var(--tele-caution) 16%, var(--panel));
+  --quadrant-q3: color-mix(in srgb, var(--tele-info) 16%, var(--panel));
+  --quadrant-q4: color-mix(in srgb, var(--tele-nominal) 16%, var(--panel));
+  --stage-not-started-bg: #1a222c;
+  --stage-not-started-fg: #9aa6b2;
+  --stage-progress-bg: color-mix(in srgb, var(--tele-info) 24%, var(--panel));
+  --stage-progress-fg: #a9d4f5;
+  --stage-wrapping-bg: color-mix(in srgb, var(--tele-caution) 24%, var(--panel));
+  --stage-wrapping-fg: #f5cf8a;
+  --overdue-wash: color-mix(in srgb, var(--tele-critical) 28%, transparent);
+  --parent-fold-bg: color-mix(in srgb, var(--accent) 24%, var(--panel));
+  --parent-fold-line: color-mix(in srgb, var(--accent) 78%, var(--fg));
+  --parent-cover-bg: color-mix(in srgb, var(--accent) 9%, var(--panel));
+  --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 6%, var(--panel));
 }
 
 html {
@@ -109,15 +166,42 @@ html {
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: var(--font-normal);
   background: var(--bg);
   color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* ── Mission Control · shared utility classes ── */
+.mono { font-family: var(--font-mono); }
+.telemetry-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: var(--font-medium);
+  color: var(--muted);
+}
+/* faint telemetry grid overlay for main surfaces */
+.mission-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, #000 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, #000 55%, transparent 100%);
 }
 
 .transition-interactive {
@@ -157,13 +241,46 @@ body {
   border-color: var(--accent-active);
 }
 
+.shell-btn {
+  font-family: var(--font-mono);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  background: var(--bg-raised);
+  border-color: var(--border);
+}
+
 .shell-btn:hover:not(:disabled) {
-  border-color: var(--accent-hover);
+  border-color: var(--accent);
   background: var(--accent-subtle);
+  color: var(--accent-bright);
+  box-shadow: 0 0 0 1px var(--accent-subtle), 0 0 12px -4px var(--accent-glow);
 }
 
 .shell-btn:active:not(:disabled) {
   border-color: var(--accent-active);
+  transform: translateY(1px);
+}
+
+.shell-btn:focus-visible:not(:disabled) {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.shell-input {
+  font-family: var(--font-sans);
+}
+.shell-input::placeholder {
+  color: var(--muted-dim);
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  font-size: 0.8em;
+}
+.shell-input:focus-visible {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .nav-time-btn {
@@ -252,6 +369,24 @@ body {
 .schedule-card {
   position: relative;
   animation: card-enter var(--duration-slow) var(--ease-standard) both;
+}
+/* Mission-control panel hover: green edge + glow + slight lift */
+.schedule-card[role="button"]:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 8px 22px -10px var(--accent-glow),
+    var(--shadow-md) !important;
+  transform: translateY(-2px);
+  z-index: 5;
+}
+.schedule-card[role="button"]:active {
+  transform: translateY(0);
+}
+.schedule-card[role="button"]:focus-visible {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow) !important;
 }
 .grid > div:nth-child(2) .schedule-card { animation-delay: 25ms; }
 .grid > div:nth-child(3) .schedule-card { animation-delay: 50ms; }
@@ -809,7 +944,7 @@ body {
 .space-backdrop--night {
   --space-star: rgba(255, 255, 255, 0.7);
   --space-star-bright: rgba(255, 255, 255, 0.9);
-  --space-horizon-glow: rgba(252, 61, 33, 0.12);
+  --space-horizon-glow: rgba(118, 185, 0, 0.14);
   --space-horizon-band: rgba(12, 28, 56, 0.55);
   --space-horizon-deep: rgba(6, 12, 24, 0.9);
   --space-horizon-edge: rgba(255, 255, 255, 0.06);
@@ -897,19 +1032,38 @@ body {
 }
 
 .app-shell-topbar {
-  background: color-mix(in srgb, var(--panel) 78%, transparent);
-  backdrop-filter: blur(14px) saturate(1.1);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .app-shell-aside {
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter: blur(14px) saturate(1.05);
-  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(1.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
 }
 
 .app-shell .app-main {
   background: transparent;
+}
+/* telemetry grid faintly overlaying the schedule surface */
+.app-shell .app-main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 85% at 50% 30%, #000 45%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 85% at 50% 30%, #000 45%, transparent 100%);
+}
+.app-shell .app-main > * {
+  position: relative;
+  z-index: 1;
 }
 
 .app-shell .scroll-fade-top {
@@ -926,22 +1080,22 @@ body {
 
 /* Expose fade token on shell for scroll edges */
 .app-shell {
-  --space-fade: rgba(232, 240, 250, 0.92);
+  --space-fade: rgba(5, 7, 10, 0.94);
 }
 .dark .app-shell {
-  --space-fade: rgba(7, 11, 20, 0.92);
+  --space-fade: rgba(5, 7, 10, 0.94);
 }
 
 /* ── Login page (NASA / SpaceX-inspired, scoped) ── */
 .login-page {
-  --login-bg: #05070b;
-  --login-fg: #f4f4f5;
-  --login-muted: rgba(244, 244, 245, 0.55);
-  --login-line: rgba(244, 244, 245, 0.18);
-  --login-accent: #fc3d21;
+  --login-bg: #05070a;
+  --login-fg: #f0f4f8;
+  --login-muted: rgba(196, 204, 214, 0.6);
+  --login-line: rgba(196, 204, 214, 0.16);
+  --login-accent: #76b900;
   --login-ink: #0a1628;
-  --login-display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --login-body: "Barlow", "Helvetica Neue", sans-serif;
+  --login-display: var(--font-mono);
+  --login-body: var(--font-sans);
 
   position: relative;
   min-height: 100vh;
