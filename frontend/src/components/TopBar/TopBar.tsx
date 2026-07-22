@@ -1,15 +1,16 @@
 import { useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/useTheme";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import type { ViewMode } from "../ScheduleViews/ScheduleViewRouter";
 import { GlobalSearch } from "../search/GlobalSearch";
-import type { ScheduleCard } from "../../lib/api";
+import { api, type ScheduleCard } from "../../lib/api";
 import { AnchorDateControl } from "./AnchorDateControl";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { getDragCardId, isCardDrag } from "../dnd/dragTrash";
 
 const TOOL_BTN =
-  "transition-interactive text-sm h-8 border shrink-0 inline-flex items-center justify-center shell-btn";
+  "transition-interactive text-sm h-9 border shrink-0 inline-flex items-center justify-center shell-btn";
 
 const TOOL_BTN_STYLE = {
   borderRadius: "var(--radius-md)",
@@ -63,6 +64,13 @@ export function TopBar({
   const [dropAccepted, setDropAccepted] = useState(false);
   const viewBeforeTrash = useRef<Exclude<ViewMode, "trash">>("day");
 
+  // Live telemetry: count of active cards for the HUD readout.
+  const { data: activeData } = useQuery({
+    queryKey: ["cards", "all", { view: "all" }],
+    queryFn: () => api.getCards({ view: "all" }),
+  });
+  const activeCount = activeData?.items?.length ?? 0;
+
   const segmentValue = view === "trash" ? viewBeforeTrash.current : view;
 
   const toggleTrash = () => {
@@ -77,24 +85,26 @@ export function TopBar({
 
   return (
     <header
-      className="app-shell-topbar h-14 flex items-center gap-3 px-4 border-b shrink-0 relative z-[1]"
+      className="app-shell-topbar h-16 flex items-center gap-4 px-5 border-b shrink-0 relative z-[1]"
       style={{ borderColor: "var(--border)" }}
     >
-      {/* Left: brand + search + create */}
-      <div className="flex items-center gap-2 min-w-0 shrink-0">
+      {/* Left: brand + telemetry + search + create */}
+      <div className="flex items-center gap-3 min-w-0 shrink-0">
         <span
-          className="shrink-0 inline-flex items-center gap-2 select-none"
+          className="shrink-0 inline-flex items-center gap-2.5 select-none"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" aria-hidden>
-            <rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M7 10h10M8 14h3M8 17h6" />
-          </svg>
+          <span className="hud-brand-mark" aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4M16 3v4M7 10h10M8 14h3M8 17h6" />
+            </svg>
+          </span>
           <span className="flex flex-col leading-none">
             <span
               style={{
                 fontWeight: "var(--font-semibold)",
-                letterSpacing: "0.16em",
-                fontSize: "0.9rem",
+                letterSpacing: "0.18em",
+                fontSize: "0.95rem",
                 color: "var(--fg-strong)",
               }}
             >
@@ -104,15 +114,23 @@ export function TopBar({
               className="max-sm:hidden"
               style={{
                 fontSize: "8px",
-                letterSpacing: "0.22em",
+                letterSpacing: "0.24em",
                 color: "var(--muted)",
-                marginTop: "2px",
+                marginTop: "3px",
               }}
             >
               PERSONAL OPS
             </span>
           </span>
         </span>
+
+        {/* Telemetry readout */}
+        <div className="hud-telemetry max-lg:hidden" aria-hidden>
+          <span className="hud-telemetry__dot" />
+          <span className="hud-telemetry__num">{String(activeCount).padStart(2, "0")}</span>
+          <span className="hud-telemetry__unit">ACTIVE</span>
+        </div>
+
         {onSearchQueryChange && onSearchSelect && (
           <GlobalSearch
             query={searchQuery}
@@ -127,7 +145,7 @@ export function TopBar({
           <button
             type="button"
             onClick={onCreateClick}
-            className={`${TOOL_BTN} w-8 font-bold btn-accent-ghost`}
+            className={`${TOOL_BTN} w-9 font-bold btn-accent-ghost`}
             style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)" }}
             title="新建日程"
           >
@@ -137,7 +155,7 @@ export function TopBar({
       </div>
 
       {/* Center: segmented views + anchor date */}
-      <div className="flex items-center gap-2 flex-1 justify-center min-w-0 flex-wrap">
+      <div className="flex items-center gap-3 flex-1 justify-center min-w-0 flex-wrap">
         {onViewChange && (
           <SegmentedControl
             value={segmentValue}
@@ -162,7 +180,7 @@ export function TopBar({
           </span>
         )}
         <div
-          className="flex items-center gap-1 pr-2 mr-1"
+          className="flex items-center gap-1 pr-3 mr-1"
           style={{ borderRight: "1px solid var(--border)" }}
         >
           <button
@@ -196,7 +214,7 @@ export function TopBar({
                 window.setTimeout(() => setDropError(null), 4000);
               }
             }}
-            className={`${TOOL_BTN} w-8 trash-drop-target ${view === "trash" ? "btn-accent" : ""} ${dragOverTrash ? "is-drag-over" : ""} ${dropAccepted ? "is-accepted" : ""}`}
+            className={`${TOOL_BTN} w-9 trash-drop-target ${view === "trash" ? "btn-accent" : ""} ${dragOverTrash ? "is-drag-over" : ""} ${dropAccepted ? "is-accepted" : ""}`}
             style={{
               ...TOOL_BTN_STYLE,
               borderColor: dragOverTrash || view === "trash" ? "var(--accent)" : "var(--border)",
@@ -222,7 +240,7 @@ export function TopBar({
           <button
             type="button"
             onClick={toggleTheme}
-            className={`${TOOL_BTN} px-2`}
+            className={`${TOOL_BTN} px-3`}
             style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)", letterSpacing: "0.08em" }}
             title="切换主题"
           >
@@ -232,7 +250,7 @@ export function TopBar({
             <button
               type="button"
               onClick={onToggleChat}
-              className={`${TOOL_BTN} px-2 ${chatOpen ? "btn-accent" : ""}`}
+              className={`${TOOL_BTN} px-3 ${chatOpen ? "btn-accent" : ""}`}
               style={{
                 ...TOOL_BTN_STYLE,
                 borderColor: chatOpen ? "var(--accent)" : "var(--border)",

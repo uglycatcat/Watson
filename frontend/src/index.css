@@ -1377,3 +1377,332 @@ body {
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MISSION CONTROL · console design language
+   自定义下拉 / 筛选控制面板 / 激活芯片条 / 发光交互
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── ConsoleSelect 自定义下拉 ── */
+.console-select {
+  position: relative;
+  display: inline-block;
+}
+.console-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.console-select__trigger:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 0 1px var(--accent-subtle), 0 0 14px -6px var(--accent-glow);
+}
+.console-select__trigger.is-open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+.console-select__trigger.is-active {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  background: var(--accent-subtle);
+}
+.console-select__label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.console-select__trigger.is-active .console-select__label {
+  color: color-mix(in srgb, var(--accent) 80%, var(--fg));
+}
+.console-select__value {
+  font-size: 12px;
+  font-weight: var(--font-medium);
+  color: var(--fg-strong);
+  letter-spacing: 0.02em;
+}
+.console-select__trigger.is-active .console-select__value {
+  color: var(--accent-bright);
+}
+.console-select__chevron {
+  color: var(--muted);
+  transition: transform var(--duration-normal) var(--ease-standard), color var(--duration-fast);
+}
+.console-select__trigger.is-open .console-select__chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+.console-select__panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--panel-raised) 96%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 34px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--accent-subtle);
+  animation: console-pop-in var(--duration-fast) var(--ease-standard);
+  transform-origin: top center;
+}
+.console-select__option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  transition: background-color var(--duration-fast), color var(--duration-fast);
+}
+.console-select__option.is-active {
+  background: var(--accent-subtle);
+  color: var(--accent-bright);
+}
+.console-select__option.is-selected {
+  color: var(--accent);
+  font-weight: var(--font-medium);
+}
+.console-select__tick {
+  width: 10px;
+  color: var(--accent);
+  font-size: 10px;
+}
+.console-select__opt-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes console-pop-in {
+  from { opacity: 0; transform: translateY(-6px) scaleY(0.96); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+/* ── 筛选控制面板 (遥测条) ── */
+.filter-console {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--panel-raised) 70%, transparent), color-mix(in srgb, var(--panel) 70%, transparent));
+  position: relative;
+}
+.filter-console::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 0;
+  width: 28px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+  border-radius: 0 0 2px 2px;
+}
+.filter-console__tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-right: 2px;
+}
+.filter-console__spacer { flex: 1; }
+.filter-console__count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.filter-console__count b {
+  color: var(--accent-bright);
+  font-weight: var(--font-semibold);
+}
+
+/* ── 激活筛选芯片条 ── */
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 4px 0 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-subtle);
+  color: var(--accent-bright);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  animation: chip-in var(--duration-fast) var(--ease-standard);
+}
+.filter-chip__x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  transition: background-color var(--duration-fast);
+}
+.filter-chip__x:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--fg-strong);
+}
+.filter-clear {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color var(--duration-fast);
+}
+.filter-clear:hover { color: var(--tele-critical); }
+
+@keyframes chip-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── 坐标视图入口操作卡 ── */
+.quadrant-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: linear-gradient(180deg, var(--accent-subtle), transparent);
+  color: var(--accent-bright);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--font-medium);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.quadrant-launch svg { color: var(--accent); }
+.quadrant-launch:hover {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 1px var(--accent-subtle), 0 6px 20px -8px var(--accent-glow);
+  transform: translateY(-2px);
+}
+.quadrant-launch:active { transform: translateY(0); }
+
+/* ── HUD command bar elements ── */
+.hud-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: radial-gradient(circle at 50% 40%, var(--accent-subtle), transparent 70%);
+  box-shadow: inset 0 0 12px -6px var(--accent-glow);
+}
+.hud-telemetry {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  font-family: var(--font-mono);
+}
+.hud-telemetry__dot {
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: hud-pulse 2.4s ease-in-out infinite;
+}
+.hud-telemetry__num {
+  font-size: 15px;
+  font-weight: var(--font-semibold);
+  color: var(--accent-bright);
+  letter-spacing: 0.02em;
+}
+.hud-telemetry__unit {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+@keyframes hud-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+/* ── Segmented control → 舱段式发光 tab ── */
+.segmented-control {
+  padding: 3px !important;
+  background: var(--bg-raised) !important;
+  border-color: var(--border) !important;
+}
+.segment-tab {
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  font-size: 13px !important;
+  padding: 5px 16px !important;
+}
+.segment-indicator {
+  background: var(--accent-subtle) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 16px -6px var(--accent-glow) !important;
+}
+.segment-tab[aria-selected="true"] {
+  color: var(--accent-bright) !important;
+  font-weight: var(--font-medium) !important;
+}

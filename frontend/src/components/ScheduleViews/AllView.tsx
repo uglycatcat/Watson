@@ -8,6 +8,7 @@ import { CardGrid } from "./CardGrid";
 import { QuadrantView } from "./QuadrantView";
 import { EmptyState } from "../ui/EmptyState";
 import { SkeletonCardGrid } from "../ui/Skeleton";
+import { ConsoleSelect } from "../ui/ConsoleSelect";
 
 interface AllViewProps {
   onCardClick: (card: ScheduleCard) => void;
@@ -16,6 +17,12 @@ interface AllViewProps {
   onComposeDraft?: (a: ScheduleCard, b: ScheduleCard) => void;
   composeSuccessAnim?: { sourceIds: string[]; targetId: string } | null;
 }
+
+const STAGE_LABELS: Record<CardStage, string> = {
+  not_started: "未开始",
+  in_progress: "正在处理",
+  wrapping_up: "等待收尾",
+};
 
 export function AllView({
   onCardClick,
@@ -65,14 +72,23 @@ export function AllView({
   );
   const sections = useMemo(() => buildAllSections(cards), [cards]);
   const overdueCardIds = useMemo(() => collectOverdueCardIds(cards), [cards]);
-  const selectClass = "px-2 py-1 rounded-md border text-sm transition-interactive";
-  const selectStyle = { borderColor: "var(--border)", background: "var(--panel)", color: "var(--fg)" };
 
-  const priorityOptions = Array.from({ length: 11 }, (_, i) => (
-    <option key={i} value={String(i)}>
-      {i}
-    </option>
-  ));
+  const categories = catData?.items ?? [];
+  const categoryName = categories.find((c) => c.id === categoryId)?.name ?? "";
+  const priorityOptions = Array.from({ length: 11 }, (_, i) => ({ value: String(i), label: String(i) }));
+
+  const activeChips: { key: string; label: string; clear: () => void }[] = [];
+  if (categoryId) activeChips.push({ key: "cat", label: `分类 · ${categoryName}`, clear: () => setCategoryId("") });
+  if (importance !== "") activeChips.push({ key: "imp", label: `重要度 · ${importance}`, clear: () => setImportance("") });
+  if (urgency !== "") activeChips.push({ key: "urg", label: `紧急度 · ${urgency}`, clear: () => setUrgency("") });
+  if (stage) activeChips.push({ key: "stg", label: `阶段 · ${STAGE_LABELS[stage]}`, clear: () => setStage("") });
+
+  const clearAll = () => {
+    setCategoryId("");
+    setImportance("");
+    setUrgency("");
+    setStage("");
+  };
 
   const filteredEmpty = !isLoading && cards.length === 0;
   const allSections = [
@@ -82,43 +98,88 @@ export function AllView({
 
   return (
     <div className="h-full flex flex-col min-h-0">
-      <div className="flex items-center gap-2 mb-3 shrink-0">
-        <h2 className="text-lg font-semibold flex-1">全部视图</h2>
-        <span className="inline-block" style={{ transform: "translateY(calc(100% / 5))" }}>
-          <button
-            type="button"
-            onClick={() => setQuadrantOpen(true)}
-            className="text-sm px-2 py-1 border transition-interactive nav-time-btn"
-            style={{ borderColor: "var(--border)", borderRadius: "var(--radius-md)" }}
+      {/* ── Console header ── */}
+      <div className="flex items-end gap-3 mb-3 shrink-0">
+        <div className="flex flex-col min-w-0">
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "9px",
+              letterSpacing: "0.22em",
+              color: "var(--muted)",
+            }}
           >
-            坐标视图
-          </button>
+            ALL RECORDS
+          </span>
+          <h2
+            className="font-semibold leading-none"
+            style={{ fontSize: "1.5rem", color: "var(--fg-strong)", letterSpacing: "0.01em", marginTop: "4px" }}
+          >
+            全部视图
+          </h2>
+        </div>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={() => setQuadrantOpen(true)}
+          className="quadrant-launch"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M2 14V2M2 14h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="6" cy="9" r="1.4" fill="currentColor" />
+            <circle cx="10" cy="5" r="1.4" fill="currentColor" />
+            <circle cx="11.5" cy="10.5" r="1.4" fill="currentColor" />
+          </svg>
+          <span>坐标视图</span>
+        </button>
+      </div>
+
+      {/* ── Filter console ── */}
+      <div className="filter-console mb-2 shrink-0">
+        <span className="filter-console__tag">FILTERS</span>
+        <ConsoleSelect
+          label="分类"
+          allLabel="全部分类"
+          value={categoryId}
+          onChange={setCategoryId}
+          options={categories.map((c) => ({ value: c.id, label: c.name }))}
+        />
+        <ConsoleSelect label="重要度" allLabel="全部" value={importance} onChange={setImportance} options={priorityOptions} />
+        <ConsoleSelect label="紧急度" allLabel="全部" value={urgency} onChange={setUrgency} options={priorityOptions} />
+        <ConsoleSelect
+          label="阶段"
+          allLabel="全部阶段"
+          value={stage}
+          onChange={(v) => setStage(v as "" | CardStage)}
+          options={[
+            { value: "not_started", label: "未开始" },
+            { value: "in_progress", label: "正在处理" },
+            { value: "wrapping_up", label: "等待收尾" },
+          ]}
+        />
+        <span className="filter-console__spacer" />
+        <span className="filter-console__count">
+          <b>{cards.length}</b> 条记录
         </span>
       </div>
-      <div className="flex flex-wrap gap-2 mb-4 text-sm shrink-0">
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectClass} style={selectStyle}>
-          <option value="">全部分类</option>
-          {(catData?.items ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+
+      {/* ── Active filter chips ── */}
+      {activeChips.length > 0 && (
+        <div className="filter-chips mb-3 shrink-0">
+          {activeChips.map((chip) => (
+            <span key={chip.key} className="filter-chip">
+              {chip.label}
+              <button type="button" className="filter-chip__x" onClick={chip.clear} aria-label={`移除 ${chip.label}`}>
+                ×
+              </button>
+            </span>
           ))}
-        </select>
-        <select value={importance} onChange={(e) => setImportance(e.target.value)} className={selectClass} style={selectStyle}>
-          <option value="">全部重要度</option>
-          {priorityOptions}
-        </select>
-        <select value={urgency} onChange={(e) => setUrgency(e.target.value)} className={selectClass} style={selectStyle}>
-          <option value="">全部紧急度</option>
-          {priorityOptions}
-        </select>
-        <select value={stage} onChange={(e) => setStage(e.target.value as "" | CardStage)} className={selectClass} style={selectStyle}>
-          <option value="">全部阶段</option>
-          <option value="not_started">未开始</option>
-          <option value="in_progress">正在处理</option>
-          <option value="wrapping_up">等待收尾</option>
-        </select>
-      </div>
+          <button type="button" className="filter-clear" onClick={clearAll}>
+            清除全部
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 min-h-0 overflow-auto">
         {isLoading ? (
           <SkeletonCardGrid />
