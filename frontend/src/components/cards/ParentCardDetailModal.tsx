@@ -213,12 +213,16 @@ export function ParentCardDetailModal({
 
   const handleDetach = async (childId: string) => {
     if (isDraft) return;
+    // 记录操作前是否为最后一张子卡：若是，移出后后端会硬删父卡，
+    // 此时无论 refetch 是否 404 都应关闭弹窗回到管理页。
+    const wasLastChild = children.length <= 1;
     try {
       await detachChild(childId);
-      const { data } = await refetch();
-      // 最后一张子卡离开后父卡被后端自动删除（children 归零），关闭弹窗回到管理页；
-      // 仍有子卡（含仅剩一张）时父卡保留，弹窗不关。
-      if ((data?.children?.length ?? 0) === 0) handleClose();
+      if (wasLastChild) {
+        handleClose();
+        return;
+      }
+      await refetch();
     } catch (err) {
       setErrors([err instanceof Error ? err.message : "移出失败"]);
     }
@@ -407,9 +411,13 @@ export function ParentCardDetailModal({
                             cardId={child.id}
                             className="mt-0.5"
                             onComplete={() => {
-                              void refetch().then(({ data }) => {
-                                if ((data?.children?.length ?? 0) === 0) handleClose();
-                              });
+                              // 完成后子卡离开 active 列表；若操作前仅剩这一张，
+                              // 父卡会被后端硬删，直接关闭弹窗，不依赖 refetch 结果。
+                              if (children.length <= 1) {
+                                handleClose();
+                                return;
+                              }
+                              void refetch();
                             }}
                           />
                         )}
