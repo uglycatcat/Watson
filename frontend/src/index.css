@@ -284,8 +284,10 @@ body {
 }
 
 .nav-time-btn {
-  background: var(--bg);
+  background: var(--bg-raised);
   color: var(--fg);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
 }
 
 .nav-time-btn:hover:not(:disabled) {
