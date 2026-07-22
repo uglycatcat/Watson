@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import {
   api,
   envelopeFromCards,
   type ScheduleCard,
 } from "../../lib/api";
+import { cardDateSubtitle } from "../../lib/cardDisplay";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import { Modal } from "../ui/Modal";
 import {
@@ -16,6 +16,8 @@ import {
 } from "./CardFormFields";
 import { PriorityMeter } from "./PriorityMeter";
 import { StageBadge } from "./StageBadge";
+import { CategoryBadge } from "./CategoryBadge";
+import { CompleteCheckbox } from "./CompleteCheckbox";
 import { getCategoryAccent } from "../../lib/categoryColor";
 import { setDragCardId } from "../dnd/dragTrash";
 
@@ -41,19 +43,6 @@ function isNarrowerThanEnvelope(
   if (startAt == null || endAt == null) return true;
   if (envelope.startAt == null || envelope.endAt == null) return false;
   return new Date(startAt) > new Date(envelope.startAt) || new Date(endAt) < new Date(envelope.endAt);
-}
-
-function formatChildTime(iso: string | null) {
-  if (!iso) return "—";
-  return format(new Date(iso), "MM-dd HH:mm");
-}
-
-function childSubtitle(c: ScheduleCard): string {
-  if (!c.startAt) return "未安排";
-  const start = formatChildTime(c.startAt);
-  const end = c.endAt ? formatChildTime(c.endAt) : null;
-  const time = end ? `${start} – ${end}` : start;
-  return c.categoryName ? `${time} · ${c.categoryName}` : time;
 }
 
 export function ParentCardDetailModal({
@@ -192,7 +181,7 @@ export function ParentCardDetailModal({
       open={!!parentId}
       onClose={handleClose}
       title={parent?.title ?? "父卡片详情"}
-      className="max-w-lg"
+      className="max-w-3xl"
     >
       {isLoading && !parent ? (
         <p style={{ color: "var(--muted)" }}>加载中…</p>
@@ -249,7 +238,7 @@ export function ParentCardDetailModal({
             <h3 className="text-sm font-semibold mb-2">子卡片</h3>
             <div
               ref={childrenZoneRef}
-              className={`parent-children-zone rounded-lg border p-2 min-h-[72px] ${dragOutside ? "is-detach-target" : ""}`}
+              className={`parent-children-zone rounded-lg border p-2 min-h-[72px] max-h-[min(420px,50vh)] overflow-y-auto ${dragOutside ? "is-detach-target" : ""}`}
               style={{ borderColor: "var(--border)", background: "var(--bg)" }}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -260,10 +249,7 @@ export function ParentCardDetailModal({
                   暂无子卡片
                 </p>
               ) : (
-                <div
-                  className="grid gap-2"
-                  style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                   {children.map((child) => {
                     const openChild = () => onOpenChild?.(child);
                     return (
@@ -301,7 +287,7 @@ export function ParentCardDetailModal({
                           dragOutsideRef.current = false;
                           setDragOutside(false);
                         }}
-                        className="schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 cursor-grab"
+                        className="schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2 min-h-[88px] overflow-hidden show-hover-bar cursor-grab"
                         style={{
                           background: "var(--panel)",
                           border: "1px solid var(--border)",
@@ -312,21 +298,34 @@ export function ParentCardDetailModal({
                           borderLeftColor: getCategoryAccent(child.categoryColor),
                         }}
                       >
+                        <span className="card-hover-bar" aria-hidden />
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                          <div className="font-semibold line-clamp-2 pr-8" style={{ fontSize: "var(--text-sm)" }}>
+                          <div className="font-semibold line-clamp-1" style={{ fontSize: "var(--text-sm)" }}>
                             {child.title}
                           </div>
-                          <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>
-                            {childSubtitle(child)}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <div className="text-xs line-clamp-1 min-w-0 flex-1" style={{ color: "var(--muted)" }}>
+                              {cardDateSubtitle(child)}
+                            </div>
+                            <span className="inline-flex items-center gap-1 shrink-0">
+                              <CategoryBadge name={child.categoryName} color={child.categoryColor} compact />
+                              <StageBadge stage={child.stage} compact />
+                            </span>
                           </div>
-                          <div className="flex flex-col gap-0.5 mt-0.5">
+                          <div className="flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
                             <PriorityMeter label="重要" value={child.importance} compact />
                             <PriorityMeter label="紧急" value={child.urgency} compact />
                           </div>
                         </div>
-                        <span className="absolute top-2 right-2">
-                          <StageBadge stage={child.stage} compact />
-                        </span>
+                        <CompleteCheckbox
+                          cardId={child.id}
+                          className="mt-0.5"
+                          onComplete={() => {
+                            void refetch().then(() => {
+                              if (children.length <= 1) handleClose();
+                            });
+                          }}
+                        />
                       </div>
                     );
                   })}

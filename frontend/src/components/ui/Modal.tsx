@@ -9,7 +9,7 @@ interface ModalProps {
   className?: string;
 }
 
-export function Modal({ open, onClose, title, children, className = "" }: ModalProps) {
+export function Modal({ open, onClose, title, children, className = "max-w-lg" }: ModalProps) {
   const [mounted, setMounted] = useState(open);
   const [exiting, setExiting] = useState(false);
 
@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, children, className = "" }: ModalP
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full max-w-lg max-h-[90vh] overflow-auto p-5 ${exiting ? "modal-panel-exit" : "modal-panel-enter"} ${className}`}
+        className={`relative w-full max-h-[90vh] overflow-auto p-5 ${exiting ? "modal-panel-exit" : "modal-panel-enter"} ${className}`}
         style={{
           background: "var(--panel)",
           border: "1px solid var(--border)",

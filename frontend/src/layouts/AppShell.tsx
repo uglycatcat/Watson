@@ -21,6 +21,7 @@ export function AppShell() {
   const [anchorDate, setAnchorDate] = useState(today);
   const [selectedCard, setSelectedCard] = useState<ScheduleCard | null>(null);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [returnToParentId, setReturnToParentId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -46,6 +47,7 @@ export function AppShell() {
   useVisibilitySync(true);
 
   const handleCardClick = (card: ScheduleCard) => {
+    setReturnToParentId(null);
     if (isParentCard(card)) {
       setSelectedParentId(card.id);
       setSelectedCard(null);
@@ -56,13 +58,23 @@ export function AppShell() {
   };
 
   const handleParentClick = (card: ScheduleCard) => {
+    setReturnToParentId(null);
     setSelectedParentId(card.id);
     setSelectedCard(null);
   };
 
   const handleParentIdClick = (parentId: string) => {
+    setReturnToParentId(null);
     setSelectedParentId(parentId);
     setSelectedCard(null);
+  };
+
+  const closeCardDetail = () => {
+    setSelectedCard(null);
+    if (returnToParentId) {
+      setSelectedParentId(returnToParentId);
+      setReturnToParentId(null);
+    }
   };
 
   return (
@@ -134,14 +146,18 @@ export function AppShell() {
       </div>
       <CardDetailModal
         card={selectedCard}
-        onClose={() => setSelectedCard(null)}
+        onClose={closeCardDetail}
         onUpdated={setSelectedCard}
       />
       <ParentCardDetailModal
         parentId={selectedParentId}
         knownTitles={knownTitles}
-        onClose={() => setSelectedParentId(null)}
+        onClose={() => {
+          setReturnToParentId(null);
+          setSelectedParentId(null);
+        }}
         onOpenChild={(child) => {
+          setReturnToParentId(selectedParentId ?? child.parentId ?? null);
           setSelectedParentId(null);
           setSelectedCard(child);
         }}

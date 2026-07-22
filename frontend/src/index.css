@@ -228,6 +228,23 @@ body {
 .stage-in_progress { color: var(--stage-progress-fg); background: var(--stage-progress-bg); }
 .stage-wrapping_up { color: var(--stage-wrapping-fg); background: var(--stage-wrapping-bg); }
 
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 5.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 10px;
+  line-height: 1.25;
+  font-weight: var(--font-medium);
+}
+.category-badge-compact { padding: 1px 5px; font-size: 9px; }
+
 .schedule-card {
   position: relative;
   animation: card-enter var(--duration-slow) var(--ease-standard) both;

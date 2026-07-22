@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type ReactNode } from "react";
-import { format } from "date-fns";
 import type { CardStage, ScheduleCard } from "../../lib/api";
 import { isIndependentStandard, isParentCard } from "../../lib/api";
+import { cardDateSubtitle } from "../../lib/cardDisplay";
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
 import { PriorityMeter } from "../cards/PriorityMeter";
 import { getCategoryAccent } from "../../lib/categoryColor";
 import { getDragCardId, isCardDrag, setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
+import { CategoryBadge } from "../cards/CategoryBadge";
 
 export type CardGridSortMode = "createdAtDesc" | "preserve" | "stageThenCreatedAtDesc";
 
@@ -17,6 +18,8 @@ interface CardGridProps {
   onCardClick?: (card: ScheduleCard) => void;
   emptyMessage?: string;
   showComplete?: boolean;
+  /** Keep trailing w-5 column when complete checkbox is hidden (e.g. trash). */
+  reserveCompleteSlot?: boolean;
   sortMode?: CardGridSortMode;
   renderCardChrome?: (card: ScheduleCard) => ReactNode;
   draggableCards?: boolean;
@@ -44,13 +47,6 @@ const STAGE_SORT_RANK: Record<CardStage, number> = {
   in_progress: 1,
   not_started: 2,
 };
-
-function cardSubtitle(c: ScheduleCard): string {
-  if (!c.startAt) return "未安排";
-  const start = formatTime(c.startAt);
-  const end = c.endAt ? formatTime(c.endAt) : null;
-  return end ? `${start} – ${end}` : start;
-}
 
 function sortByCreatedAtDesc(cards: ScheduleCard[]): ScheduleCard[] {
   return [...cards].sort(
@@ -91,6 +87,7 @@ export function CardGrid({
   onCardClick,
   emptyMessage = "暂无日程",
   showComplete = false,
+  reserveCompleteSlot = false,
   sortMode = "createdAtDesc",
   renderCardChrome,
   draggableCards = false,
@@ -321,42 +318,55 @@ export function CardGrid({
                   {previewCount}
                 </span>
               )}
-              {showParentFold && c.parentId && (
-                <button
-                  type="button"
-                  className="parent-fold-corner"
-                  title={c.parentTitle ?? "查看父卡片"}
-                  aria-label={c.parentTitle ? `原属：${c.parentTitle}` : "查看父卡片"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (c.parentId) onParentFoldClick?.(c.parentId, c.parentTitle);
-                  }}
-                />
+              {showParentFold && (c.parentId || c.lastParentTitle) && (
+                c.parentId ? (
+                  <button
+                    type="button"
+                    className="parent-fold-corner"
+                    title={c.parentTitle ?? "查看父卡片"}
+                    aria-label={c.parentTitle ? `原属：${c.parentTitle}` : "查看父卡片"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (c.parentId) onParentFoldClick?.(c.parentId, c.parentTitle);
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="parent-fold-corner"
+                    title={c.lastParentTitle ? `原属：${c.lastParentTitle}` : undefined}
+                    aria-label={c.lastParentTitle ? `原属：${c.lastParentTitle}` : "原属父卡片"}
+                  />
+                )
               )}
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                 <div
-                  className="font-semibold line-clamp-2 pr-16"
+                  className={`font-semibold line-clamp-1 ${isParent ? "pr-16" : ""}`}
                   style={{ fontSize: isParent ? "var(--text-base)" : "var(--text-sm)" }}
                 >
                   {c.title}
                 </div>
-                <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>
-                  {cardSubtitle(c)}
-                  {!isParent && c.categoryName ? ` · ${c.categoryName}` : ""}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="text-xs line-clamp-1 min-w-0 flex-1" style={{ color: "var(--muted)" }}>
+                    {cardDateSubtitle(c)}
+                  </div>
+                  {!isParent && (
+                    <span className="inline-flex items-center gap-1 shrink-0">
+                      <CategoryBadge name={c.categoryName} color={c.categoryColor} compact />
+                      {showStage && <StageBadge stage={c.stage} compact />}
+                    </span>
+                  )}
                 </div>
                 {!isParent && (
-                  <div className="flex flex-col gap-0.5 mt-0.5">
+                  <div className="flex flex-col gap-0.5 mt-0.5 w-full min-w-0">
                     <PriorityMeter label="重要" value={c.importance} compact />
                     <PriorityMeter label="紧急" value={c.urgency} compact />
                   </div>
                 )}
               </div>
-              {showStage && !isParent && (
-                <span className={`absolute top-2 ${showComplete || renderCardChrome ? "right-9" : "right-2"}`}>
-                  <StageBadge stage={c.stage} compact />
-                </span>
-              )}
               {showComplete && !isParent && <CompleteCheckbox cardId={c.id} className="mt-0.5" />}
+              {!showComplete && reserveCompleteSlot && !isParent && (
+                <span className="shrink-0 w-5 mt-0.5" aria-hidden />
+              )}
               {renderCardChrome?.(c)}
             </div>
           </div>
@@ -364,9 +374,4 @@ export function CardGrid({
       })}
     </div>
   );
-}
-
-function formatTime(iso: string | null) {
-  if (!iso) return "—";
-  return format(new Date(iso), "MM-dd HH:mm");
 }
