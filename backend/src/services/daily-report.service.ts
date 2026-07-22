@@ -20,27 +20,30 @@ export class DailyReportService {
   }
 
   upsert(date: string, snapshot: DailyReportSnapshot): DailyReportDto {
-    const existing = this.get(date);
-    const merged = {
-      goal: snapshot.goal ?? existing?.goal ?? "",
-      result: snapshot.result ?? existing?.result ?? "",
-      analysis: snapshot.analysis ?? existing?.analysis ?? "",
-    };
     const now = nowIso();
+
+    // On conflict, only overwrite the fields actually provided in this request.
+    // Fields left undefined keep their existing DB value, so this upsert is a
+    // single atomic statement with no read-modify-write window (no lost updates
+    // between concurrent writers touching different fields of the same date).
+    const set: Record<string, unknown> = { updatedAt: now };
+    if (snapshot.goal !== undefined) set.goal = snapshot.goal;
+    if (snapshot.result !== undefined) set.result = snapshot.result;
+    if (snapshot.analysis !== undefined) set.analysis = snapshot.analysis;
+
     this.db
       .insert(dailyReports)
       .values({
         date,
-        ...merged,
+        goal: snapshot.goal ?? "",
+        result: snapshot.result ?? "",
+        analysis: snapshot.analysis ?? "",
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
         target: dailyReports.date,
-        set: {
-          ...merged,
-          updatedAt: now,
-        },
+        set,
       })
       .run();
 

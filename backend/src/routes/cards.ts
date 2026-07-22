@@ -8,6 +8,16 @@ function parseOptionalInt(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/** Parse a required priority (importance/urgency) from a request body value.
+ *  Throws 400 on non-finite input so NaN can never be persisted. */
+function parsePriority(value: unknown, field: string): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    throw Object.assign(new Error(`${field} must be a number`), { statusCode: 400 });
+  }
+  return n;
+}
+
 function handleServiceError(
   e: unknown,
   reply: { status: (code: number) => { send: (body: { error: string }) => unknown } },
@@ -83,8 +93,8 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
         description: body.description ? String(body.description) : null,
         startAt: body.startAt ? String(body.startAt) : null,
         endAt: body.endAt ? String(body.endAt) : null,
-        importance: body.importance != null ? Number(body.importance) : undefined,
-        urgency: body.urgency != null ? Number(body.urgency) : undefined,
+        importance: body.importance != null ? parsePriority(body.importance, "importance") : undefined,
+        urgency: body.urgency != null ? parsePriority(body.urgency, "urgency") : undefined,
         categoryId: body.categoryId ? String(body.categoryId) : undefined,
         categoryName: body.categoryName ? String(body.categoryName) : undefined,
         stage: body.stage,
@@ -107,11 +117,12 @@ export async function cardsRoutes(app: FastifyInstance, scheduleService: Schedul
       }
       const patch: Parameters<ScheduleService["update"]>[1] = {};
       if (body.title !== undefined) patch.title = String(body.title);
-      if (body.description !== undefined) patch.description = String(body.description);
+      if (body.description !== undefined)
+        patch.description = body.description == null ? null : String(body.description);
       if (body.startAt !== undefined) patch.startAt = body.startAt ? String(body.startAt) : null;
       if (body.endAt !== undefined) patch.endAt = body.endAt ? String(body.endAt) : null;
-      if (body.importance !== undefined) patch.importance = Number(body.importance);
-      if (body.urgency !== undefined) patch.urgency = Number(body.urgency);
+      if (body.importance !== undefined) patch.importance = parsePriority(body.importance, "importance");
+      if (body.urgency !== undefined) patch.urgency = parsePriority(body.urgency, "urgency");
       if (body.categoryId !== undefined) patch.categoryId = String(body.categoryId);
       if (body.categoryName !== undefined) patch.categoryName = String(body.categoryName);
       if (body.stage !== undefined) patch.stage = body.stage;

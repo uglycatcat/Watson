@@ -215,8 +215,10 @@ export function ParentCardDetailModal({
     if (isDraft) return;
     try {
       await detachChild(childId);
-      await refetch();
-      if (children.length <= 1) handleClose();
+      const { data } = await refetch();
+      // 最后一张子卡离开后父卡被后端自动删除（children 归零），关闭弹窗回到管理页；
+      // 仍有子卡（含仅剩一张）时父卡保留，弹窗不关。
+      if ((data?.children?.length ?? 0) === 0) handleClose();
     } catch (err) {
       setErrors([err instanceof Error ? err.message : "移出失败"]);
     }
@@ -405,8 +407,8 @@ export function ParentCardDetailModal({
                             cardId={child.id}
                             className="mt-0.5"
                             onComplete={() => {
-                              void refetch().then(() => {
-                                if (children.length <= 1) handleClose();
+                              void refetch().then(({ data }) => {
+                                if ((data?.children?.length ?? 0) === 0) handleClose();
                               });
                             }}
                           />

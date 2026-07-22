@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, gte, ne } from "drizzle-orm";
+import { and, asc, eq, gt, ne } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { ownerPreferences, scheduleCards } from "../db/schema.js";
 import type { CardKind, CardStage, CardStatus, ScheduleCardDto } from "../types.js";
@@ -1121,7 +1121,7 @@ export class ScheduleService {
     return this.db
       .select()
       .from(scheduleCards)
-      .where(gte(scheduleCards.updatedAt, since))
+      .where(gt(scheduleCards.updatedAt, since))
       .orderBy(asc(scheduleCards.updatedAt))
       .all()
       .map((r) => this.joinCategory(r));

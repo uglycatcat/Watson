@@ -1,4 +1,4 @@
-import { eq, gte } from "drizzle-orm";
+import { eq, gt } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { categories, ownerPreferences } from "../db/schema.js";
 import type { CategoryService } from "./category.service.js";
@@ -23,7 +23,7 @@ export class SyncService {
       const prefs = this.db
         .select()
         .from(ownerPreferences)
-        .where(gte(ownerPreferences.updatedAt, since))
+        .where(gt(ownerPreferences.updatedAt, since))
         .get();
       if (prefs) {
         preferences = {
@@ -36,7 +36,7 @@ export class SyncService {
       categoriesChanged = this.db
         .select()
         .from(categories)
-        .where(gte(categories.createdAt, since))
+        .where(gt(categories.createdAt, since))
         .all()
         .map((c) => ({ id: c.id, name: c.name, isPreset: c.isPreset }));
     } else {
