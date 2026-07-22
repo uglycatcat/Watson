@@ -67,9 +67,9 @@
   --tele-critical: #ff453a;
   --tele-info: #3d9be9;
 
-  /* 字体族 */
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* 字体族 — 英文 JetBrains Mono，中文 Noto Sans Mono CJK SC(等宽,与英文绝配) */
+  --font-mono: "JetBrains Mono", "Noto Sans Mono CJK SC", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: "JetBrains Mono", "Noto Sans Mono CJK SC", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -169,6 +169,7 @@ body {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: var(--font-normal);
+  line-height: 1.55;
   background: var(--bg);
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
@@ -1707,4 +1708,146 @@ body {
 .segment-tab[aria-selected="true"] {
   color: var(--accent-bright) !important;
   font-weight: var(--font-medium) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MISSION CONTROL · 任务象限雷达 (QuadrantView redesign)
+   ═══════════════════════════════════════════════════════════ */
+.radar-panel {
+  position: relative;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 92vw);
+  max-height: 90vh;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+    var(--panel);
+  box-shadow:
+    0 30px 80px -20px rgba(0, 0, 0, 0.8),
+    0 0 0 1px var(--accent-subtle),
+    inset 0 1px 0 0 color-mix(in srgb, var(--accent) 18%, transparent);
+  animation: modal-in var(--duration-normal) var(--ease-standard);
+  overflow: hidden;
+}
+.radar-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel-raised) 60%, transparent);
+}
+.radar-panel__title { display: flex; flex-direction: column; gap: 3px; }
+.radar-panel__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: var(--muted);
+}
+.radar-panel__name {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.04em;
+  color: var(--fg-strong);
+}
+.radar-panel__meta { display: flex; align-items: center; gap: 14px; }
+.radar-panel__count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.radar-panel__count b { color: var(--accent-bright); font-weight: var(--font-semibold); }
+.radar-panel__close {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--duration-fast), border-color var(--duration-fast), background-color var(--duration-fast);
+}
+.radar-panel__close:hover {
+  color: var(--tele-critical);
+  border-color: color-mix(in srgb, var(--tele-critical) 50%, var(--border));
+  background: color-mix(in srgb, var(--tele-critical) 12%, transparent);
+}
+
+/* blip interactions */
+.radar-blip { transition: opacity var(--duration-fast); }
+.radar-blip circle { transition: r var(--duration-fast) var(--ease-standard), opacity var(--duration-fast); transform-box: fill-box; transform-origin: center; }
+.radar-blip.is-hot { animation: radar-ping 1.1s ease-out infinite; }
+@keyframes radar-ping {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+/* radar tooltip */
+.radar-tooltip {
+  position: fixed;
+  z-index: 50;
+  transform: translate(-50%, -100%);
+  max-width: 240px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--panel-raised) 96%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--accent-subtle);
+  pointer-events: none;
+  font-size: 12px;
+}
+.radar-tooltip__row { margin-bottom: 8px; }
+.radar-tooltip__row:last-child { margin-bottom: 0; }
+.radar-tooltip__title {
+  font-family: var(--font-mono);
+  font-weight: var(--font-medium);
+  color: var(--fg-strong);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.radar-tooltip__more {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* embedded radar (day view) container */
+.radar-embed {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background:
+    radial-gradient(ellipse 100% 70% at 50% 40%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 65%),
+    color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 0 0 1px var(--accent-subtle),
+    inset 0 2px 18px -8px var(--accent-glow),
+    0 10px 30px -14px rgba(0, 0, 0, 0.7);
+}
+.radar-embed__tag {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
 }

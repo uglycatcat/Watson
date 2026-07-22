@@ -93,16 +93,12 @@ export function DayView({ date, onDateChange, onCardClick, onParentClick, onCrea
           <div className="shrink-0"><DailyReportPanel date={date} /></div>
         </div>
         <div
-          className="shrink-0 rounded-xl overflow-hidden w-full max-w-[min(100%,66.666%)] mx-auto aspect-square md:mx-0 md:w-auto md:h-2/3 md:max-w-[min(100%,33.333%)] md:aspect-square md:self-center"
+          className="radar-embed shrink-0 relative overflow-hidden w-full max-w-[min(100%,66.666%)] mx-auto aspect-square md:mx-0 md:w-auto md:h-2/3 md:max-w-[min(100%,33.333%)] md:aspect-square md:self-center"
           style={{
-            background: "color-mix(in srgb, var(--panel) 72%, transparent)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "inset 0 2px 8px color-mix(in srgb, var(--fg) 12%, transparent)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)",
             transform: "translateY(calc(-100% / 7))",
           }}
         >
+          <span className="radar-embed__tag" aria-hidden>RADAR · 象限雷达</span>
           <QuadrantView cards={quadrantCards} variant="embedded" onHoverCardIds={setHighlightedCardIds} />
         </div>
       </div>
