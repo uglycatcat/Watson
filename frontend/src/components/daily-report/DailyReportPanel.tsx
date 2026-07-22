@@ -6,6 +6,11 @@ import { DailyReportField } from "./DailyReportField";
 type Snapshot = Pick<DailyReport, "goal" | "result" | "analysis">;
 const EMPTY: Snapshot = { goal: "", result: "", analysis: "" };
 
+function toSnapshot(item: DailyReport | null | undefined): Snapshot {
+  if (!item) return EMPTY;
+  return { goal: item.goal ?? "", result: item.result ?? "", analysis: item.analysis ?? "" };
+}
+
 export function DailyReportPanel({ date }: { date: string }) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
@@ -18,14 +23,19 @@ export function DailyReportPanel({ date }: { date: string }) {
   const queueRef = useRef(Promise.resolve());
   const dateRef = useRef(date);
   const loadedDateRef = useRef(date);
+  const draftRef = useRef(draft);
+  const savedRef = useRef(saved);
 
   useEffect(() => {
     dateRef.current = date;
-    const next = data?.item ?? EMPTY;
+    const next = toSnapshot(data?.item);
     const dateChanged = loadedDateRef.current !== date;
-    const hasLocalChanges = JSON.stringify(draft) !== JSON.stringify(saved);
+    const hasLocalChanges =
+      JSON.stringify(draftRef.current) !== JSON.stringify(savedRef.current);
     loadedDateRef.current = date;
     if (dateChanged || !hasLocalChanges) {
+      draftRef.current = next;
+      savedRef.current = next;
       setDraft(next);
       setSaved(next);
     }
@@ -35,14 +45,15 @@ export function DailyReportPanel({ date }: { date: string }) {
 
   const save = async () => {
     const saveDate = date;
-    const snapshot = { ...draft };
-    if (JSON.stringify(snapshot) === JSON.stringify(saved)) return;
+    const snapshot = { ...draftRef.current };
+    if (JSON.stringify(snapshot) === JSON.stringify(savedRef.current)) return;
     setStatus("saving");
     const operation = queueRef.current.then(async () => {
       try {
         const result = await api.putDailyReport(saveDate, snapshot);
         queryClient.setQueryData(["daily-report", saveDate], { item: result });
         if (dateRef.current === saveDate) {
+          savedRef.current = snapshot;
           setSaved(snapshot);
           setStatus("idle");
         }
@@ -67,7 +78,20 @@ export function DailyReportPanel({ date }: { date: string }) {
       {isError && <button type="button" className="daily-report-retry" onClick={() => void refetch()}>日报读取失败，点击重试</button>}
       <div className="daily-report-panel">
         {fields.map(([key, label]) => (
-          <DailyReportField key={key} label={label} value={draft[key]} status={status} onChange={(value) => setDraft((current) => ({ ...current, [key]: value }))} onSave={save} />
+          <DailyReportField
+            key={key}
+            label={label}
+            value={draft[key]}
+            status={status}
+            onChange={(value) => {
+              setDraft((current) => {
+                const next = { ...current, [key]: value };
+                draftRef.current = next;
+                return next;
+              });
+            }}
+            onSave={save}
+          />
         ))}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { ChatPanel } from "../components/ChatPanel/ChatPanel";
 import { useVisibilitySync } from "../hooks/useVisibilitySync";
 import { useChatPanelLayout } from "../hooks/useChatPanelLayout";
 import { ResizeHandle } from "../components/ui/ResizeHandle";
+import { SpaceBackdrop } from "../components/ui/SpaceBackdrop";
 import { CardDetailModal } from "../components/cards/CardDetailModal";
 import { ParentCardDetailModal } from "../components/cards/ParentCardDetailModal";
 import { CreateCardModal } from "../components/cards/CreateCardModal";
@@ -65,7 +66,8 @@ export function AppShell() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="app-shell h-screen flex flex-col overflow-hidden relative">
+      <SpaceBackdrop />
       <TopBar
         view={view}
         onViewChange={(v) => {
@@ -87,11 +89,8 @@ export function AppShell() {
         searchCards={searchCards}
         onSearchSelect={handleCardClick}
       />
-      <div className={`flex flex-1 min-h-0 relative ${dragging ? "select-none" : ""}`}>
-        <main
-          className="app-main relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden"
-          style={{ background: "var(--bg)" }}
-        >
+      <div className={`flex flex-1 min-h-0 relative z-[1] ${dragging ? "select-none" : ""}`}>
+        <main className="app-main relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden">
           <div className="relative flex-1 min-h-0 overflow-hidden">
             <ScheduleViewRouter
               view={view}
@@ -115,12 +114,11 @@ export function AppShell() {
           )}
         </main>
         <aside
-          className="border-l flex flex-col shrink-0 max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-20 max-md:shadow-xl max-md:w-full transition-interactive overflow-hidden"
+          className="app-shell-aside border-l flex flex-col shrink-0 max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-20 max-md:shadow-xl max-md:w-full transition-interactive overflow-hidden"
           style={{
             width: chatOpen ? width : 0,
             maxWidth: chatOpen ? "100%" : 0,
             opacity: chatOpen ? 1 : 0,
-            background: "var(--panel)",
             borderColor: "var(--border)",
             transitionDuration: "var(--duration-normal)",
             pointerEvents: chatOpen ? "auto" : "none",
@@ -143,6 +141,10 @@ export function AppShell() {
         parentId={selectedParentId}
         knownTitles={knownTitles}
         onClose={() => setSelectedParentId(null)}
+        onOpenChild={(child) => {
+          setSelectedParentId(null);
+          setSelectedCard(child);
+        }}
       />
       <CreateCardModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>

@@ -172,7 +172,13 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
               </text>
             </>
           )}
-          <text x={SIZE - PAD} y={originY + 18} textAnchor="end" fontSize={embedded ? 22 : 14} fill="var(--muted)">
+          <text
+            x={SIZE - PAD}
+            y={originY + 18 + (embedded ? 11 : 7)}
+            textAnchor="end"
+            fontSize={embedded ? 22 : 14}
+            fill="var(--muted)"
+          >
             紧急度 →
           </text>
           <text x={originX + 8} y={PAD + (embedded ? 22 : 16)} fontSize={embedded ? 22 : 14} fill="var(--muted)">

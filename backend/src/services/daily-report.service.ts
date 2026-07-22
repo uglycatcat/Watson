@@ -5,9 +5,9 @@ import type { DailyReportDto } from "../types.js";
 import { nowIso } from "../types.js";
 
 export interface DailyReportSnapshot {
-  goal: string;
-  result: string;
-  analysis: string;
+  goal?: string;
+  result?: string;
+  analysis?: string;
 }
 
 export class DailyReportService {
@@ -20,19 +20,25 @@ export class DailyReportService {
   }
 
   upsert(date: string, snapshot: DailyReportSnapshot): DailyReportDto {
+    const existing = this.get(date);
+    const merged = {
+      goal: snapshot.goal ?? existing?.goal ?? "",
+      result: snapshot.result ?? existing?.result ?? "",
+      analysis: snapshot.analysis ?? existing?.analysis ?? "",
+    };
     const now = nowIso();
     this.db
       .insert(dailyReports)
       .values({
         date,
-        ...snapshot,
+        ...merged,
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
         target: dailyReports.date,
         set: {
-          ...snapshot,
+          ...merged,
           updatedAt: now,
         },
       })

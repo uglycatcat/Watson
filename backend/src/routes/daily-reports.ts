@@ -17,9 +17,9 @@ function isCalendarDate(value: string): boolean {
 
 const snapshotSchema = z
   .object({
-    goal: z.string(),
-    result: z.string(),
-    analysis: z.string(),
+    goal: z.string().optional(),
+    result: z.string().optional(),
+    analysis: z.string().optional(),
   })
   .strict();
 

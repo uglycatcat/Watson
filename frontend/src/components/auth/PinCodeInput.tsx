@@ -87,17 +87,17 @@ export function PinCodeInput({
     }
   };
 
-  const borderColor = failed ? "#ef4444" : "rgba(255,255,255,0.65)";
-  const glow = failed ? "0 0 12px rgba(239,68,68,0.55)" : "0 0 0 1px rgba(255,255,255,0.08)";
+  const filledCount = digits.filter(Boolean).length;
 
   return (
     <div
-      className="relative flex gap-3 justify-center cursor-text"
+      className={`login-pin${failed ? " is-failed" : ""}${disabled ? " is-disabled" : ""}`}
       onClick={() => inputRef.current?.focus()}
       role="group"
       aria-label="四字符验证码"
     >
       <input
+        id="login-pin-input"
         ref={inputRef}
         type="text"
         inputMode="text"
@@ -106,24 +106,18 @@ export function PinCodeInput({
         autoCapitalize="characters"
         spellCheck={false}
         disabled={disabled}
-        className="absolute inset-0 opacity-0 w-full h-full cursor-text"
+        className="login-pin__input"
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        aria-hidden
+        aria-label="四字符验证码输入"
       />
       {digits.map((d, i) => (
         <div
           key={i}
-          className={`relative z-10 w-14 h-16 flex items-center justify-center text-2xl font-bold tracking-widest transition-interactive pointer-events-none ${
-            failed ? "animate-[shake_0.45s_ease-in-out]" : ""
+          className={`login-pin__cell${d ? " is-filled" : ""}${i === filledCount ? " is-active" : ""}${
+            failed ? " is-shake" : ""
           }`}
-          style={{
-            border: `2px solid ${borderColor}`,
-            boxShadow: glow,
-            color: "#fff",
-            background: failed ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.08)",
-            borderRadius: "var(--radius-md)",
-          }}
+          aria-hidden
         >
           {d}
         </div>

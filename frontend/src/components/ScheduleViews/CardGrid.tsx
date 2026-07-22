@@ -241,12 +241,12 @@ export function CardGrid({
           isParent && mode === "add" && c.childCount != null ? c.childCount + 1 : c.childCount;
 
         const cardClasses = [
-          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 overflow-hidden",
+          "schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 flex gap-2",
+          isParent ? "min-h-[104px] parent-card-stack" : "min-h-[88px] overflow-hidden",
           renderCardChrome ? "pb-8" : "",
           showHoverBar && !isParent ? "show-hover-bar" : "",
           overdueCardIds?.has(c.id) ? "is-overdue" : "",
           highlightedCardIds?.has(c.id) ? "is-highlighted" : "",
-          isParent ? "parent-card-stack" : "",
           isDragTarget && mode && mode !== "forbid" ? "compose-drop-target" : "",
           isDragTarget && mode === "forbid" ? "compose-drop-forbid" : "",
           flyToId === c.id ? "compose-drop-fly" : "",
@@ -334,7 +334,10 @@ export function CardGrid({
                 />
               )}
               <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <div className="font-semibold line-clamp-2 pr-16" style={{ fontSize: "var(--text-sm)" }}>
+                <div
+                  className="font-semibold line-clamp-2 pr-16"
+                  style={{ fontSize: isParent ? "var(--text-base)" : "var(--text-sm)" }}
+                >
                   {c.title}
                 </div>
                 <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>

@@ -78,8 +78,8 @@ export function TopBar({
 
   return (
     <header
-      className="h-14 flex items-center gap-3 px-4 border-b shrink-0"
-      style={{ background: "var(--panel)", borderColor: "var(--border)" }}
+      className="app-shell-topbar h-14 flex items-center gap-3 px-4 border-b shrink-0 relative z-[1]"
+      style={{ borderColor: "var(--border)" }}
     >
       {/* Left: brand + search + create */}
       <div className="flex items-center gap-2 min-w-0 shrink-0">

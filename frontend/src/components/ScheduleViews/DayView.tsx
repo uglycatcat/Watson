@@ -92,7 +92,8 @@ export function DayView({ date, onDateChange, onCardClick, onParentClick, onCrea
         <div
           className="shrink-0 rounded-xl overflow-hidden w-full max-w-[min(100%,66.666%)] mx-auto aspect-square md:mx-0 md:w-auto md:h-2/3 md:max-w-[min(100%,33.333%)] md:aspect-square md:self-center"
           style={{
-            background: "var(--bg)",
+            background: "color-mix(in srgb, var(--panel) 72%, transparent)",
+            backdropFilter: "blur(10px)",
             boxShadow: "inset 0 2px 8px color-mix(in srgb, var(--fg) 12%, transparent)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)",

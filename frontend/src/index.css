@@ -286,7 +286,9 @@ body {
   flex-direction: column;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: 10px;
   transition: border-color var(--duration-normal), box-shadow var(--duration-normal), background-color var(--duration-normal);
 }
@@ -329,6 +331,9 @@ body {
 .parent-card-stack {
   --parent-stack-offset: 3px;
   --parent-stack-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  margin-right: calc(var(--parent-stack-offset) * 2);
+  margin-bottom: calc(var(--parent-stack-offset) * 2);
+  overflow: visible;
 }
 .dark .parent-card-stack {
   --parent-stack-color: color-mix(in srgb, var(--fg) 22%, transparent);
@@ -374,8 +379,8 @@ body {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   z-index: 1;
   padding: 0;
   border: none;
@@ -390,12 +395,12 @@ body {
 .parent-fold-corner::after {
   content: "";
   position: absolute;
-  right: 2px;
-  bottom: 2px;
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid var(--parent-fold-line);
-  border-bottom: 1.5px solid var(--parent-fold-line);
+  right: 4px;
+  bottom: 4px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--parent-fold-line);
+  border-bottom: 2px solid var(--parent-fold-line);
   opacity: 0.85;
 }
 .parent-fold-corner:hover {
@@ -597,4 +602,445 @@ body {
 
 *::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* ── Shared space backdrop (login + schedule shell) ── */
+.space-backdrop {
+  --space-star: rgba(36, 55, 90, 0.55);
+  --space-star-bright: rgba(30, 48, 82, 0.7);
+  --space-horizon-glow: rgba(96, 140, 210, 0.22);
+  --space-horizon-band: rgba(170, 198, 230, 0.42);
+  --space-horizon-deep: rgba(150, 185, 225, 0.72);
+  --space-horizon-edge: rgba(255, 255, 255, 0.35);
+  --space-vignette: rgba(148, 170, 198, 0.18);
+  --space-fade: rgba(232, 240, 250, 0.92);
+
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 108%, rgba(140, 180, 230, 0.32), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 78% 8%, rgba(190, 210, 240, 0.45), transparent 60%),
+    linear-gradient(180deg, #eef4fb 0%, #e4eef8 45%, #d7e6f4 78%, #c9daf0 100%);
+}
+
+.dark .space-backdrop,
+.space-backdrop--night {
+  --space-star: rgba(255, 255, 255, 0.7);
+  --space-star-bright: rgba(255, 255, 255, 0.9);
+  --space-horizon-glow: rgba(252, 61, 33, 0.12);
+  --space-horizon-band: rgba(12, 28, 56, 0.55);
+  --space-horizon-deep: rgba(6, 12, 24, 0.9);
+  --space-horizon-edge: rgba(255, 255, 255, 0.06);
+  --space-vignette: rgba(0, 0, 0, 0.55);
+  --space-fade: rgba(7, 11, 20, 0.92);
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 108%, rgba(30, 64, 120, 0.4), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 80% 10%, rgba(20, 40, 80, 0.35), transparent 60%),
+    linear-gradient(180deg, #02040a 0%, #070b14 50%, #0a1220 82%, #05070b 100%);
+}
+
+.space-backdrop__stars {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+  background-size: 320px 320px;
+  opacity: 0.4;
+}
+
+.dark .space-backdrop__stars,
+.space-backdrop--night .space-backdrop__stars {
+  opacity: 0.55;
+}
+
+.space-backdrop__stars--a {
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, var(--space-star-bright), transparent),
+    radial-gradient(1px 1px at 80px 120px, var(--space-star), transparent),
+    radial-gradient(2px 2px at 160px 60px, var(--space-star-bright), transparent),
+    radial-gradient(1px 1px at 240px 200px, var(--space-star), transparent),
+    radial-gradient(1.5px 1.5px at 300px 90px, var(--space-star), transparent),
+    radial-gradient(1px 1px at 40px 250px, var(--space-star), transparent);
+  animation: space-stars-drift 90s linear infinite;
+}
+
+.space-backdrop__stars--b {
+  opacity: 0.28;
+  background-size: 480px 480px;
+  background-image:
+    radial-gradient(1.5px 1.5px at 60px 80px, var(--space-star), transparent),
+    radial-gradient(2px 2px at 200px 40px, var(--space-star-bright), transparent),
+    radial-gradient(1px 1px at 340px 220px, var(--space-star), transparent),
+    radial-gradient(1.5px 1.5px at 420px 160px, var(--space-star), transparent);
+  animation: space-stars-drift 140s linear infinite reverse;
+}
+
+.dark .space-backdrop__stars--b,
+.space-backdrop--night .space-backdrop__stars--b {
+  opacity: 0.35;
+}
+
+.space-backdrop__horizon {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 0;
+  height: 20%;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 100%, var(--space-horizon-glow), transparent 60%),
+    linear-gradient(180deg, transparent 0%, var(--space-horizon-band) 48%, var(--space-horizon-deep) 100%);
+  border-top: 1px solid var(--space-horizon-edge);
+  transform-origin: 50% 100%;
+  animation: space-horizon-breathe 8s ease-in-out infinite;
+}
+
+.space-backdrop__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 40%, var(--space-vignette) 100%);
+}
+
+@keyframes space-stars-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-40px, -24px, 0); }
+}
+
+@keyframes space-horizon-breathe {
+  0%, 100% { opacity: 0.85; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.03); }
+}
+
+/* Schedule shell sits on the shared backdrop */
+.app-shell {
+  background: transparent;
+}
+
+.app-shell-topbar {
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.app-shell-aside {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(1.05);
+}
+
+.app-shell .app-main {
+  background: transparent;
+}
+
+.app-shell .scroll-fade-top {
+  background: linear-gradient(var(--space-fade, var(--bg)), transparent);
+}
+
+.app-shell .scroll-fade-bottom {
+  background: linear-gradient(transparent, var(--space-fade, var(--bg)));
+}
+
+.app-shell .space-backdrop {
+  position: fixed;
+}
+
+/* Expose fade token on shell for scroll edges */
+.app-shell {
+  --space-fade: rgba(232, 240, 250, 0.92);
+}
+.dark .app-shell {
+  --space-fade: rgba(7, 11, 20, 0.92);
+}
+
+/* ── Login page (NASA / SpaceX-inspired, scoped) ── */
+.login-page {
+  --login-bg: #05070b;
+  --login-fg: #f4f4f5;
+  --login-muted: rgba(244, 244, 245, 0.55);
+  --login-line: rgba(244, 244, 245, 0.18);
+  --login-accent: #fc3d21;
+  --login-ink: #0a1628;
+  --login-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --login-body: "Barlow", "Helvetica Neue", sans-serif;
+
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--login-fg);
+  background: var(--login-bg);
+  font-family: var(--login-body);
+}
+
+.login-page__rail,
+.login-page__foot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px clamp(20px, 4vw, 40px);
+  font-family: var(--login-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--login-muted);
+}
+
+.login-page__rail {
+  border-bottom: 1px solid var(--login-line);
+}
+
+.login-page__rail-mark {
+  color: var(--login-fg);
+  letter-spacing: 0.28em;
+}
+
+.login-page__rail-sep {
+  width: 28px;
+  height: 1px;
+  background: var(--login-accent);
+  flex-shrink: 0;
+}
+
+.login-page__foot {
+  justify-content: center;
+  border-top: 1px solid var(--login-line);
+  margin-top: auto;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+}
+
+.login-page__foot-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--login-accent);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.login-page__stage {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(36px, 6vh, 56px);
+  padding: 32px 20px 48px;
+  text-align: center;
+  animation: login-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-page__brand {
+  max-width: 28rem;
+}
+
+.login-page__eyebrow {
+  margin: 0 0 14px;
+  font-family: var(--login-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--login-muted);
+}
+
+.login-page__title {
+  margin: 0;
+  font-family: var(--login-display);
+  font-weight: 700;
+  font-size: clamp(4.5rem, 16vw, 7.5rem);
+  line-height: 0.9;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  color: var(--login-fg);
+  text-transform: uppercase;
+}
+
+.login-page__rule {
+  width: 72px;
+  height: 2px;
+  margin: 22px auto 18px;
+  background: var(--login-accent);
+  transform-origin: center;
+  animation: login-rule-draw 800ms 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-page__lede {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  color: var(--login-muted);
+}
+
+.login-page__auth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 360px);
+}
+
+.login-page__auth-label {
+  font-family: var(--login-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--login-muted);
+}
+
+.login-page__auth-hint {
+  margin: 2px 0 0;
+  min-height: 1.2em;
+  font-family: var(--login-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--login-muted);
+}
+
+.login-page__auth:has(.login-pin.is-failed) .login-page__auth-hint {
+  color: #ff6b57;
+}
+
+.login-pin {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  cursor: text;
+}
+
+.login-pin__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+  border: 0;
+  background: transparent;
+}
+
+.login-pin__cell {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--login-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--login-fg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--login-line);
+  border-radius: 2px;
+  pointer-events: none;
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    background var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard);
+}
+
+.login-pin__cell.is-active {
+  border-color: rgba(244, 244, 245, 0.55);
+  border-bottom-color: var(--login-accent);
+  border-bottom-width: 2px;
+}
+
+.login-pin__cell.is-filled {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(244, 244, 245, 0.4);
+}
+
+.login-pin.is-failed .login-pin__cell {
+  border-color: rgba(252, 61, 33, 0.75);
+  background: rgba(252, 61, 33, 0.08);
+  color: #ffb4a8;
+}
+
+.login-pin__cell.is-shake {
+  animation: login-pin-shake 0.45s ease-in-out;
+}
+
+.login-pin.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes login-rule-draw {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes login-pin-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page__stage,
+  .login-page__rule,
+  .space-backdrop__stars--a,
+  .space-backdrop__stars--b,
+  .space-backdrop__horizon,
+  .login-pin__cell.is-shake {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-pin__cell {
+    width: 52px;
+    height: 62px;
+    font-size: 1.5rem;
+  }
+
+  .login-page__rail-meta {
+    display: none;
+  }
 }

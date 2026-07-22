@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   api,
   envelopeFromCards,
+  type ScheduleCard,
 } from "../../lib/api";
 import { useCardMutations } from "../../hooks/useCardMutations";
 import { Modal } from "../ui/Modal";
@@ -12,12 +14,16 @@ import {
   isoToLocalInput,
   localInputToIso,
 } from "./CardFormFields";
+import { PriorityMeter } from "./PriorityMeter";
+import { StageBadge } from "./StageBadge";
+import { getCategoryAccent } from "../../lib/categoryColor";
 import { setDragCardId } from "../dnd/dragTrash";
 
 interface ParentCardDetailModalProps {
   parentId: string | null;
   knownTitles?: string[];
   onClose: () => void;
+  onOpenChild?: (child: ScheduleCard) => void;
 }
 
 function isDuplicateTitle(title: string, knownTitles: string[], selfTitle: string): boolean {
@@ -37,8 +43,25 @@ function isNarrowerThanEnvelope(
   return new Date(startAt) > new Date(envelope.startAt) || new Date(endAt) < new Date(envelope.endAt);
 }
 
+function formatChildTime(iso: string | null) {
+  if (!iso) return "—";
+  return format(new Date(iso), "MM-dd HH:mm");
+}
 
-export function ParentCardDetailModal({ parentId, knownTitles = [], onClose }: ParentCardDetailModalProps) {
+function childSubtitle(c: ScheduleCard): string {
+  if (!c.startAt) return "未安排";
+  const start = formatChildTime(c.startAt);
+  const end = c.endAt ? formatChildTime(c.endAt) : null;
+  const time = end ? `${start} – ${end}` : start;
+  return c.categoryName ? `${time} · ${c.categoryName}` : time;
+}
+
+export function ParentCardDetailModal({
+  parentId,
+  knownTitles = [],
+  onClose,
+  onOpenChild,
+}: ParentCardDetailModalProps) {
   const { updateCard, detachChild, isUpdating, isDetaching } = useCardMutations();
   const { data: parent, isLoading, refetch } = useQuery({
     queryKey: ["cards", "detail", parentId],
@@ -239,44 +262,74 @@ export function ParentCardDetailModal({ parentId, knownTitles = [], onClose }: P
               ) : (
                 <div
                   className="grid gap-2"
-                  style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 120px), 1fr))" }}
+                  style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
                 >
-                  {children.map((child) => (
-                    <div
-                      key={child.id}
-                      draggable
-                      onDragStart={(e) => {
-                        setDragCardId(e.dataTransfer, child.id);
-                        dragOutsideRef.current = false;
-                        setDragOutside(false);
-                      }}
-                      onDrag={(e) => {
-                        const zone = childrenZoneRef.current;
-                        if (!zone) return;
-                        const rect = zone.getBoundingClientRect();
-                        const outside =
-                          e.clientX < rect.left ||
-                          e.clientX > rect.right ||
-                          e.clientY < rect.top ||
-                          e.clientY > rect.bottom;
-                        dragOutsideRef.current = outside;
-                        setDragOutside(outside);
-                      }}
-                      onDragEnd={() => {
-                        if (dragOutsideRef.current) void handleDetach(child.id);
-                        dragOutsideRef.current = false;
-                        setDragOutside(false);
-                      }}
-                      className="parent-child-mini schedule-card text-xs px-2 py-1.5 cursor-grab"
-                      style={{
-                        background: "var(--panel)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-md)",
-                      }}
-                    >
-                      <div className="font-medium line-clamp-2">{child.title}</div>
-                    </div>
-                  ))}
+                  {children.map((child) => {
+                    const openChild = () => onOpenChild?.(child);
+                    return (
+                      <div
+                        key={child.id}
+                        role="button"
+                        tabIndex={0}
+                        draggable
+                        onClick={openChild}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openChild();
+                          }
+                        }}
+                        onDragStart={(e) => {
+                          setDragCardId(e.dataTransfer, child.id);
+                          dragOutsideRef.current = false;
+                          setDragOutside(false);
+                        }}
+                        onDrag={(e) => {
+                          const zone = childrenZoneRef.current;
+                          if (!zone) return;
+                          const rect = zone.getBoundingClientRect();
+                          const outside =
+                            e.clientX < rect.left ||
+                            e.clientX > rect.right ||
+                            e.clientY < rect.top ||
+                            e.clientY > rect.bottom;
+                          dragOutsideRef.current = outside;
+                          setDragOutside(outside);
+                        }}
+                        onDragEnd={() => {
+                          if (dragOutsideRef.current) void handleDetach(child.id);
+                          dragOutsideRef.current = false;
+                          setDragOutside(false);
+                        }}
+                        className="schedule-card relative w-full text-left text-sm transition-interactive hover:opacity-95 min-h-[88px] flex gap-2 cursor-grab"
+                        style={{
+                          background: "var(--panel)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius-lg)",
+                          boxShadow: "var(--shadow-sm)",
+                          padding: "var(--space-3)",
+                          borderLeftWidth: "4px",
+                          borderLeftColor: getCategoryAccent(child.categoryColor),
+                        }}
+                      >
+                        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                          <div className="font-semibold line-clamp-2 pr-8" style={{ fontSize: "var(--text-sm)" }}>
+                            {child.title}
+                          </div>
+                          <div className="text-xs line-clamp-1" style={{ color: "var(--muted)" }}>
+                            {childSubtitle(child)}
+                          </div>
+                          <div className="flex flex-col gap-0.5 mt-0.5">
+                            <PriorityMeter label="重要" value={child.importance} compact />
+                            <PriorityMeter label="紧急" value={child.urgency} compact />
+                          </div>
+                        </div>
+                        <span className="absolute top-2 right-2">
+                          <StageBadge stage={child.stage} compact />
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
