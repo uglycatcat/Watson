@@ -41,7 +41,9 @@
 
 /*
  * MISSION CONTROL — 深色任务控制台为唯一基线。
- * :root 直接采用深空控制台配色；.dark 与之对齐。亮色主题不再单独投入。
+ * :root 与 `.console` 采用 CONSOLE（任务控制台）配色基线。
+ * `.spacex` 为第二套产品主题（原浅色位，待重塑）。
+ * 已无 light/dark 产品语义。
  * NASA 结构 × SpaceX 冷峻 × NVIDIA 绿(仅关键状态)。见 DESIGN.md。
  */
 :root {
@@ -136,8 +138,8 @@
   --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 5%, var(--panel));
 }
 
-/* 深色是唯一基线；.dark 与 :root 对齐，保证主题开关两态都落在控制台美学内。 */
-.dark {
+/* CONSOLE 基线；.console 与 :root 对齐。SPACEX 另见 .spacex（待重塑）。 */
+.console {
   --bg: #05070a;
   --bg-raised: #0a0e14;
   --panel: #0f141b;
@@ -171,6 +173,11 @@
   --parent-fold-line: color-mix(in srgb, var(--accent) 78%, var(--fg));
   --parent-cover-bg: color-mix(in srgb, var(--accent) 9%, var(--panel));
   --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 6%, var(--panel));
+}
+
+/* SPACEX theme slot — inherits :root for now; full restyle comes next. */
+.spacex {
+  color-scheme: light;
 }
 
 html {
@@ -1208,7 +1215,7 @@ h1, h2, h3,
     linear-gradient(180deg, #eef4fb 0%, #e4eef8 45%, #d7e6f4 78%, #c9daf0 100%);
 }
 
-.dark .space-backdrop,
+.console .space-backdrop,
 .space-backdrop--night {
   --space-star: rgba(255, 255, 255, 0.7);
   --space-star-bright: rgba(255, 255, 255, 0.9);
@@ -1232,7 +1239,7 @@ h1, h2, h3,
   opacity: 0.4;
 }
 
-.dark .space-backdrop__stars,
+.console .space-backdrop__stars,
 .space-backdrop--night .space-backdrop__stars {
   opacity: 0.55;
 }
@@ -1259,7 +1266,7 @@ h1, h2, h3,
   animation: space-stars-drift 140s linear infinite reverse;
 }
 
-.dark .space-backdrop__stars--b,
+.console .space-backdrop__stars--b,
 .space-backdrop--night .space-backdrop__stars--b {
   opacity: 0.35;
 }
@@ -1350,7 +1357,7 @@ h1, h2, h3,
 .app-shell {
   --space-fade: rgba(5, 7, 10, 0.94);
 }
-.dark .app-shell {
+.console .app-shell {
   --space-fade: rgba(5, 7, 10, 0.94);
 }
 

@@ -67,9 +67,9 @@ export const dailyReports = sqliteTable(
 export const ownerPreferences = sqliteTable("owner_preferences", {
   id: integer("id").primaryKey(),
   dueSoonDays: integer("due_soon_days").notNull().default(7),
-  theme: text("theme", { enum: ["light", "dark", "system"] })
+  theme: text("theme", { enum: ["console", "spacex", "light", "dark", "system"] })
     .notNull()
-    .default("system"),
+    .default("console"),
   timezone: text("timezone").notNull().default("Asia/Shanghai"),
   updatedAt: text("updated_at").notNull(),
 });

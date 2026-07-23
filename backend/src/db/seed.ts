@@ -86,7 +86,7 @@ export function seedDatabase(db: Db) {
       .values({
         id: 1,
         dueSoonDays: 7,
-        theme: "system",
+        theme: "console",
         timezone: "Asia/Shanghai",
         updatedAt: now,
       })

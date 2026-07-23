@@ -1,4 +1,4 @@
-/** Shared deep-space backdrop (stars + horizon). Theme follows `.dark` unless `tone="night"`. */
+/** Shared deep-space backdrop (stars + horizon). Theme follows `.console` unless `tone="night"`. */
 export function SpaceBackdrop({ tone = "auto" }: { tone?: "auto" | "night" }) {
   return (
     <div

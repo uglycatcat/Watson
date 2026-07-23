@@ -2,10 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../lib/api";
 
-export type Theme = "light" | "dark";
+/** Product themes — not light/dark. CONSOLE = current mission-control look; SPACEX = upcoming. */
+export type Theme = "console" | "spacex";
 
+/** Map legacy prefs + current ids onto the two product themes. */
 function normalizeTheme(raw?: string): Theme {
-  return raw === "dark" ? "dark" : "light";
+  if (raw === "spacex" || raw === "light") return "spacex";
+  // console | dark | system | unknown → console (default product theme)
+  return "console";
 }
 
 export function useTheme() {
@@ -23,11 +27,13 @@ export function useTheme() {
   });
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const root = document.documentElement;
+    root.classList.remove("dark", "light", "console", "spacex");
+    root.classList.add(theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    mutation.mutate(theme === "light" ? "dark" : "light");
+    mutation.mutate(theme === "console" ? "spacex" : "console");
   };
 
   return { theme, toggleTheme };

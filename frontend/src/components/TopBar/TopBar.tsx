@@ -247,7 +247,7 @@ export function TopBar({
             style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)", letterSpacing: "0.08em" }}
             title="切换主题"
           >
-            {theme === "dark" ? "DARK" : "LIGHT"}
+            {theme === "console" ? "CONSOLE" : "SPACEX"}
           </button>
           {onToggleChat && (
             <button

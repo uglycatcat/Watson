@@ -79,7 +79,7 @@ export interface ChatMessage {
 
 export interface OwnerPreferences {
   dueSoonDays: number;
-  theme: "light" | "dark" | "system";
+  theme: "console" | "spacex" | "light" | "dark" | "system";
   timezone: string;
   updatedAt: string;
 }
