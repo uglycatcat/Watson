@@ -247,7 +247,9 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
           </div>
         </div>
       )}
-      <div className="relative flex-1 min-h-0">{svg}</div>
+      <div className={embedded ? "relative flex-1 min-h-0" : "relative flex-1 min-h-0 flex items-center justify-center"}>
+        {svg}
+      </div>
     </div>
   );
 

@@ -105,7 +105,12 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
 
   return (
     <div className="h-full flex flex-col min-h-0">
-      <h2 className="text-lg font-semibold mb-3 shrink-0 view-title">垃圾箱</h2>
+      <h2
+        className="view-title font-semibold leading-none mb-3 shrink-0"
+        style={{ fontSize: "1.5rem", color: "var(--fg-strong)" }}
+      >
+        垃圾箱
+      </h2>
       <div className="flex-1 min-h-0 overflow-auto">
         {isLoading ? (
           <SkeletonCardGrid />

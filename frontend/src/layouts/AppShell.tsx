@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { isParentCard, type ScheduleCard } from "../lib/api";
 import { api } from "../lib/api";
 import { TopBar } from "../components/TopBar/TopBar";
-import { ShellMotto } from "../components/ShellMotto";
 import { ScheduleViewRouter, useTodayStr, type ViewMode } from "../components/ScheduleViews/ScheduleViewRouter";
 import { ChatPanel } from "../components/ChatPanel/ChatPanel";
 import { useVisibilitySync } from "../hooks/useVisibilitySync";
@@ -117,8 +116,7 @@ export function AppShell() {
         searchCards={searchCards}
         onSearchSelect={handleCardClick}
       />
-      <ShellMotto />
-      <div className={`flex flex-1 min-h-0 relative z-[1] ${dragging ? "select-none" : ""}`}>
+      <div className={`flex flex-1 min-h-0 relative z-0 ${dragging ? "select-none" : ""}`}>
         <main className="app-main relative flex-1 min-w-[320px] min-h-0 flex flex-col overflow-hidden">
           <div className="relative flex-1 min-h-0 overflow-hidden">
             <ScheduleViewRouter

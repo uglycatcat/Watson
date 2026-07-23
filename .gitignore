@@ -8,6 +8,7 @@ config.yaml
 
 # === Cursor agent folder (may store credentials/tokens — Spec Kit advisory) ===
 .cursor/
+.vscode/
 
 # === OS / editor ===
 .DS_Store

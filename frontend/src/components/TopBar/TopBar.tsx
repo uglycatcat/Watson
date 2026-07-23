@@ -85,7 +85,7 @@ export function TopBar({
 
   return (
     <header
-      className="app-shell-topbar h-16 grid items-center gap-3 px-5 border-b shrink-0 relative z-[1]"
+      className="app-shell-topbar h-16 grid items-center gap-3 px-5 border-b shrink-0 relative z-30"
       style={{
         borderColor: "var(--border)",
         gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",

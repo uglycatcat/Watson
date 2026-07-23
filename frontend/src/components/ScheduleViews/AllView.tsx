@@ -9,6 +9,7 @@ import { QuadrantView } from "./QuadrantView";
 import { EmptyState } from "../ui/EmptyState";
 import { SkeletonCardGrid } from "../ui/Skeleton";
 import { ConsoleSelect } from "../ui/ConsoleSelect";
+import { ShellMotto } from "../ShellMotto";
 
 interface AllViewProps {
   onCardClick: (card: ScheduleCard) => void;
@@ -118,6 +119,7 @@ export function AllView({
             全部视图
           </h2>
         </div>
+        <ShellMotto />
         <span className="flex-1" />
         <button
           type="button"

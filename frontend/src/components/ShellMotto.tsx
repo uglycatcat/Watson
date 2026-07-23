@@ -1,4 +1,4 @@
-/** 导航栏下方左侧座右铭 */
+/** 全部视图标题右侧座右铭 */
 const MOTTO = "在坚冰还盖着北海的时候，我看到了怒放的梅花。";
 
 export function ShellMotto() {

@@ -642,9 +642,12 @@ h1, h2, h3,
 .scroll-fade-top { top: 0; background: linear-gradient(var(--bg), transparent); }
 .scroll-fade-bottom { bottom: 0; background: linear-gradient(transparent, var(--bg)); }
 
-.app-main { padding: var(--space-8); }
+.app-main {
+  padding: var(--space-8);
+  padding-top: var(--space-5); /* 20px — closer to topbar */
+}
 @media (max-width: 1024px) {
-  .app-main { padding: var(--space-6); }
+  .app-main { padding: var(--space-6); padding-top: var(--space-5); }
 }
 @media (max-width: 640px) {
   .app-main { padding: var(--space-4); }
@@ -1385,18 +1388,12 @@ h1, h2, h3,
   box-shadow: 0 1px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
-/* 导航栏下左侧座右铭 */
+/* 全部视图标题右侧座右铭 */
 .shell-motto {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 6px 20px 8px;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-left: 1.25rem;
   pointer-events: none;
-  background: color-mix(in srgb, var(--panel) 40%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .shell-motto__text {
@@ -1404,7 +1401,7 @@ h1, h2, h3,
   max-width: min(100%, 42rem);
   font-family: var(--font-quote);
   font-size: clamp(0.95rem, 1.15vw + 0.55rem, 1.2rem);
-  line-height: 1.55;
+  line-height: 1;
   letter-spacing: 0.06em;
   color: var(--quote-silver);
   text-shadow:
@@ -1416,9 +1413,8 @@ h1, h2, h3,
 }
 
 @media (max-width: 640px) {
-  .shell-motto__text {
-    white-space: normal;
-    line-height: 1.45;
+  .shell-motto {
+    display: none;
   }
 }
 

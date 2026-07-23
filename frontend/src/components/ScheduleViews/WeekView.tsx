@@ -49,7 +49,12 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   return (
     <div className="h-full flex flex-col min-h-0 px-1 pb-8">
       <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
-        <h2 className="text-lg font-semibold flex-1 view-title">周视图</h2>
+        <h2
+          className="view-title font-semibold leading-none flex-1"
+          style={{ fontSize: "1.5rem", color: "var(--fg-strong)" }}
+        >
+          周视图
+        </h2>
         <ViewTimeNav grain="week" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
       {isLoading ? (
