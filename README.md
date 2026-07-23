@@ -14,7 +14,7 @@ git clone <repo> && cd watson
 npm install                     # 根目录一次装齐（npm workspaces，前后端共用 node_modules）
 cp .env.example .env            # 填入 LLM_API_KEY 等，见 §4
 npm run dev                     # 前后端并行热重载：后端 :3001，前端 :5173
-# 打开 http://localhost:5173，输入验证码 ANNA 登录
+# 打开 http://localhost:5173，输入验证码 SHER 登录
 ```
 
 生产：`npm run build` 后 `npm start`——后端 `:3001` 同时托管前端静态产物（单端口部署）。
@@ -123,7 +123,7 @@ watson/
 
 ## 5. 认证与请求流
 
-- **登录**：前端提交四字验证码 → `POST /api/auth/login` → `verifyAccessCode` 校验（默认 `ANNA`，生产用 `WATSON_ACCESS_CODE` 覆盖）→ 通过则种下 **HttpOnly + SameSite=strict** 的 `watson_session` cookie。登录接口带**限流**（30 次/分钟）。
+- **登录**：前端提交四字验证码 → `POST /api/auth/login` → `verifyAccessCode` 校验（默认 `SHER`，生产用 `WATSON_ACCESS_CODE` 覆盖）→ 通过则种下 **HttpOnly + SameSite=strict** 的 `watson_session` cookie。登录接口带**限流**（30 次/分钟）。
 - **会话**：cookie 里是 base64url 编码的 `{authenticated, authenticatedAt}`；每个请求经 `onRequest` 钩子解码挂到 `request.session`。
 - **鉴权**：`middleware/auth.ts` 全局钩子拦截，除 `/api/health`、`/api/auth/login` 等白名单外都要求已登录。
 - **早期的长随机令牌 + `watson:init` 初始化流程已移除**——只保留验证码登录。
