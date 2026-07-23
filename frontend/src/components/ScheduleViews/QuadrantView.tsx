@@ -174,6 +174,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
           const r = radiusForCount(b.cards.length, maxCount);
           const tone = blipTone(b.urgency, b.importance);
           const isHot = hover === b;
+          const hitR = Math.max(r + 10, MAX_RADIUS + 6);
           return (
             <g
               key={`${b.urgency}-${b.importance}`}
@@ -191,16 +192,17 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
               onClick={(e) => e.stopPropagation()}
               style={{ cursor: "pointer" }}
             >
-              {/* outer glow ring */}
-              <circle cx={cx} cy={cy} r={r + 5} fill={tone} opacity={isHot ? 0.22 : 0.12} />
-              {/* core */}
-              <circle cx={cx} cy={cy} r={r} fill={tone} opacity={0.92} filter={`url(#${glowId})`} />
-              {/* count */}
-              {b.cards.length > 1 && (
-                <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700} fill="#05070a">
-                  {b.cards.length}
-                </text>
-              )}
+              {/* Stable hit target — size does not change on hover */}
+              <circle className="radar-blip__hit" cx={cx} cy={cy} r={hitR} />
+              <g className="radar-blip__viz">
+                <circle className="radar-blip__ring" cx={cx} cy={cy} r={r + 5} fill={tone} opacity={0.12} />
+                <circle className="radar-blip__core" cx={cx} cy={cy} r={r} fill={tone} opacity={0.92} filter={`url(#${glowId})`} />
+                {b.cards.length > 1 && (
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700} fill="#05070a">
+                    {b.cards.length}
+                  </text>
+                )}
+              </g>
             </g>
           );
         })}

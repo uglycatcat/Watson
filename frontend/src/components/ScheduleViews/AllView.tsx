@@ -112,8 +112,8 @@ export function AllView({
             ALL RECORDS
           </span>
           <h2
-            className="font-semibold leading-none"
-            style={{ fontSize: "1.5rem", color: "var(--fg-strong)", letterSpacing: "0.01em", marginTop: "4px" }}
+            className="view-title font-semibold leading-none"
+            style={{ fontSize: "1.5rem", color: "var(--fg-strong)", marginTop: "4px" }}
           >
             全部视图
           </h2>

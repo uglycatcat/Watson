@@ -41,28 +41,25 @@ export function Modal({ open, onClose, title, children, className = "max-w-lg" }
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className={`absolute inset-0 bg-black/50 ${exiting ? "modal-backdrop-exit" : "modal-backdrop-enter"}`}
+        className={`absolute inset-0 console-modal-backdrop ${exiting ? "modal-backdrop-exit" : "modal-backdrop-enter"}`}
         onClick={onClose}
         aria-hidden
       />
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full max-h-[90vh] overflow-auto p-5 ${exiting ? "modal-panel-exit" : "modal-panel-enter"} ${className}`}
-        style={{
-          background: "var(--panel)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-lg)",
-          boxShadow: "var(--shadow-lg)",
-          color: "var(--fg)",
-        }}
+        className={`console-modal relative w-full max-h-[90vh] overflow-auto ${exiting ? "modal-panel-exit" : "modal-panel-enter"} ${className}`}
+        style={{ color: "var(--fg)" }}
       >
+        <span className="console-modal__scan" aria-hidden />
+        <span className="console-modal__corners" aria-hidden />
         {title && (
-          <h2 className="text-lg font-semibold mb-4" style={{ fontWeight: "var(--font-semibold)" }}>
-            {title}
-          </h2>
+          <header className="console-modal__head">
+            <span className="console-modal__eyebrow">MISSION RECORD</span>
+            <h2 className="console-modal__title">{title}</h2>
+          </header>
         )}
-        {children}
+        <div className="console-modal__body">{children}</div>
       </div>
     </div>,
     document.body,

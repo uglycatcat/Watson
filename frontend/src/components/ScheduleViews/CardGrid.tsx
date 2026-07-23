@@ -289,7 +289,7 @@ export function CardGrid({
               }}
               className={cardClasses}
               style={{
-                background: isParent ? "var(--parent-cover-bg)" : "var(--panel)",
+                backgroundColor: isParent ? "var(--parent-cover-bg)" : "var(--panel)",
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius-lg)",
                 boxShadow: "var(--shadow-sm)",
@@ -360,15 +360,15 @@ export function CardGrid({
                 <>
                   <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <div
-                      className="font-semibold line-clamp-1"
-                      style={{ fontSize: "var(--text-sm)", color: "var(--fg-strong)", letterSpacing: "0.01em" }}
+                      className="card-title font-semibold line-clamp-1"
+                      style={{ fontSize: "var(--text-sm)", color: "var(--fg-strong)" }}
                     >
                       {c.title}
                     </div>
                     <div className="flex items-center gap-1.5 min-w-0">
                       <div
                         className="text-xs line-clamp-1 min-w-0 flex-1"
-                        style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}
+                        style={{ color: "var(--muted)", fontFamily: "var(--font-sans)", letterSpacing: "0.01em" }}
                       >
                         {cardDateSubtitle(c)}
                       </div>

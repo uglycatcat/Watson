@@ -85,11 +85,14 @@ export function TopBar({
 
   return (
     <header
-      className="app-shell-topbar h-16 flex items-center gap-4 px-5 border-b shrink-0 relative z-[1]"
-      style={{ borderColor: "var(--border)" }}
+      className="app-shell-topbar h-16 grid items-center gap-3 px-5 border-b shrink-0 relative z-[1]"
+      style={{
+        borderColor: "var(--border)",
+        gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+      }}
     >
       {/* Left: brand + telemetry + search + create */}
-      <div className="flex items-center gap-3 min-w-0 shrink-0">
+      <div className="flex items-center gap-3 min-w-0 justify-self-start">
         <span
           className="shrink-0 inline-flex items-center gap-2.5 select-none"
           style={{ fontFamily: "var(--font-mono)" }}
@@ -124,7 +127,6 @@ export function TopBar({
           </span>
         </span>
 
-        {/* Telemetry readout */}
         <div className="hud-telemetry max-lg:hidden" aria-hidden>
           <span className="hud-telemetry__dot" />
           <span className="hud-telemetry__num">{String(activeCount).padStart(2, "0")}</span>
@@ -154,8 +156,8 @@ export function TopBar({
         )}
       </div>
 
-      {/* Center: segmented views + anchor date */}
-      <div className="flex items-center gap-3 flex-1 justify-center min-w-0 flex-wrap">
+      {/* True horizontal center: view segment only */}
+      <div className="justify-self-center">
         {onViewChange && (
           <SegmentedControl
             value={segmentValue}
@@ -163,13 +165,14 @@ export function TopBar({
             onChange={(id) => onViewChange(id as ViewMode)}
           />
         )}
+      </div>
+
+      {/* Right: calendar stays just after the center lane; tools flush end */}
+      <div className="flex items-center gap-2 min-w-0 justify-self-stretch">
         {anchorDate && onDateChange && (
           <AnchorDateControl value={anchorDate} onChange={onDateChange} />
         )}
-      </div>
-
-      {/* Right: trash | preferences */}
-      <div className="flex items-center gap-2 shrink-0">
+        <span className="flex-1 min-w-0" aria-hidden />
         {dropError && (
           <span
             className="text-xs shrink-0 max-w-[160px] truncate"
@@ -180,7 +183,7 @@ export function TopBar({
           </span>
         )}
         <div
-          className="flex items-center gap-1 pr-3 mr-1"
+          className="flex items-center gap-1 pr-3 mr-1 shrink-0"
           style={{ borderRight: "1px solid var(--border)" }}
         >
           <button
@@ -236,7 +239,7 @@ export function TopBar({
             🗑
           </button>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={toggleTheme}

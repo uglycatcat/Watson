@@ -45,7 +45,7 @@ export function DayScheduleDrawer({ date, cards, onClose, onCardClick }: DaySche
                   }}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium">{c.title}</span>
+                    <span className="font-medium card-title">{c.title}</span>
                     <StageBadge stage={c.stage} compact />
                   </div>
                   <div style={{ color: "var(--muted)" }}>{timeLabel(c)}</div>

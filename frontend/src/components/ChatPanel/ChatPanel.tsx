@@ -131,7 +131,7 @@ export function ChatPanel() {
         {messages.map((m) => (
           <div
             key={m.id}
-            className={`max-w-[90%] p-2.5 transition-interactive ${m.role === "user" ? "ml-auto" : ""}`}
+            className={`max-w-[90%] p-2.5 transition-interactive font-body ${m.role === "user" ? "ml-auto" : ""}`}
             style={{
               background: m.role === "user" ? "var(--accent)" : "var(--panel-raised)",
               color: m.role === "user" ? "#05070a" : "var(--fg)",

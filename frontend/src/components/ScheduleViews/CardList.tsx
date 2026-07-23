@@ -34,7 +34,7 @@ export function CardList({ cards, onCardClick, emptyMessage = "暂无日程" }: 
                 cursor: onCardClick ? "pointer" : "default",
               }}
             >
-              <div className="font-semibold mb-1">{c.title}</div>
+              <div className="card-title font-semibold mb-1">{c.title}</div>
               <div className="text-xs mb-2" style={{ color: "var(--muted)" }}>
                 {c.startAt
                   ? `${formatTime(c.startAt)}${c.endAt ? ` – ${formatTime(c.endAt)}` : ""}`

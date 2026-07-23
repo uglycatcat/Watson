@@ -54,7 +54,7 @@ export function DayView({ date, onDateChange, onCardClick, onParentClick, onCrea
   return (
     <div className="h-full flex flex-col min-h-0">
       <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
-        <h2 className="text-lg font-semibold flex-1 min-w-[8rem]">日视图 — {date}</h2>
+        <h2 className="text-lg font-semibold flex-1 min-w-[8rem] view-title">日视图 — {date}</h2>
         <ViewTimeNav grain="day" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
       <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 items-stretch overflow-auto md:overflow-hidden">

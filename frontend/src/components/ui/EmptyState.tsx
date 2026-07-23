@@ -22,13 +22,13 @@ export function EmptyState({ icon, title, description, action, compact = false }
         </div>
       )}
       <h3
-        className={compact ? "text-sm font-medium mb-1" : "text-base font-semibold mb-2"}
+        className={`empty-state-title ${compact ? "text-sm font-medium mb-1" : "text-base font-semibold mb-2"}`}
         style={{ color: "var(--fg)" }}
       >
         {title}
       </h3>
       {description && (
-        <p className={`max-w-sm ${compact ? "text-xs mb-2" : "text-sm mb-4"}`} style={{ color: "var(--muted)" }}>
+        <p className={`font-body max-w-sm ${compact ? "text-xs mb-2" : "text-sm mb-4"}`} style={{ color: "var(--muted)" }}>
           {description}
         </p>
       )}
@@ -36,7 +36,7 @@ export function EmptyState({ icon, title, description, action, compact = false }
         <button
           type="button"
           onClick={action.onClick}
-          className="transition-interactive text-sm px-4 py-2 rounded-md text-white"
+          className="transition-interactive text-sm px-4 py-2 rounded-md text-white font-body"
           style={{ background: "var(--accent)" }}
         >
           {action.label}

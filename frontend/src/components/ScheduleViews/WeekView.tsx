@@ -49,7 +49,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   return (
     <div className="h-full flex flex-col min-h-0 px-1 pb-8">
       <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
-        <h2 className="text-lg font-semibold flex-1">周视图</h2>
+        <h2 className="text-lg font-semibold flex-1 view-title">周视图</h2>
         <ViewTimeNav grain="week" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
       {isLoading ? (
@@ -74,7 +74,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                   padding: "var(--space-3) var(--space-2)",
                 }}
               >
-                <div className="text-sm font-semibold mb-2.5 shrink-0 leading-5">{weekDayLabel(cell.date, tz)}</div>
+                <div className="text-sm font-semibold mb-2.5 shrink-0 leading-5 week-day-label">{weekDayLabel(cell.date, tz)}</div>
                 <div className="space-y-1 flex-1 min-h-0 overflow-y-auto" style={{ paddingTop: spanBand }}>
                   {visible.length === 0 && !hasSpan ? (
                     <p className="text-[10px]" style={{ color: "var(--muted)" }}>

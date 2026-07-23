@@ -24,7 +24,7 @@ export function PriorityMeter({ label, value, showNumber = true, compact = false
     <div className={`flex items-center gap-1.5 min-w-0 ${compact ? "text-[10px]" : "text-xs"}`}>
       <span
         className="shrink-0 w-6"
-        style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}
+        style={{ color: "var(--muted)", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}
       >
         {label}
       </span>

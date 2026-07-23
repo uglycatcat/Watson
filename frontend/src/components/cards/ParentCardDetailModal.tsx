@@ -378,7 +378,7 @@ export function ParentCardDetailModal({
                           isDraft ? "" : "cursor-grab"
                         }${!isDraft && isOverdueCard(child) ? " is-overdue" : ""}`}
                         style={{
-                          background: "var(--panel)",
+                          backgroundColor: "var(--panel)",
                           border: "1px solid var(--border)",
                           borderRadius: "var(--radius-lg)",
                           boxShadow: "var(--shadow-sm)",
@@ -389,7 +389,7 @@ export function ParentCardDetailModal({
                       >
                         <span className="card-hover-bar" aria-hidden />
                         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                          <div className="font-semibold line-clamp-1" style={{ fontSize: "var(--text-sm)" }}>
+                          <div className="card-title font-semibold line-clamp-1" style={{ fontSize: "var(--text-sm)" }}>
                             {child.title}
                           </div>
                           <div className="flex items-center gap-1.5 min-w-0">
