@@ -14,7 +14,7 @@ git clone <repo> && cd watson
 npm install                     # 根目录一次装齐（npm workspaces，前后端共用 node_modules）
 cp .env.example .env            # 填入 LLM_API_KEY 等，见 §4
 npm run dev                     # 前后端并行热重载：后端 :3001，前端 :5173
-# 打开 http://localhost:5173，输入验证码 ANNA 登录
+# 打开 http://localhost:5173，输入验证码 SHER 登录
 ```
 
 生产：`npm run build` 后 `npm start`——后端 `:3001` 同时托管前端静态产物（单端口部署）。
@@ -32,53 +32,42 @@ npm run dev                     # 前后端并行热重载：后端 :3001，前�
 | **校验** | `zod`（配置 & 输入） |
 | **构建/运行** | 根 `concurrently` 并行起前后端；后端 `tsx` 热重载 |
 
-代码量：约 **8.4k 行** TS/TSX（不含依赖）。
+只想看界面、不用 AI？`SESSION_SECRET` 随便填一串就能跑，其他留空也行。
+
+### 第三步：启动（开发预览）
+```bash
+npm run dev
+```
+启动后浏览器打开 **http://localhost:5173** —— 这就是开发预览地址（改代码会自动刷新）。
+
+登录页输入验证码 **`SHER`** 即可进入。
+
+### 想看「正式上线」的效果？
+```bash
+npm run build        # 打包前后端
+npm start            # 启动
+# 然后浏览器打开 http://localhost:3001
+```
+这种方式前后端合并在一个端口（3001），更接近真实部署的样子。
 
 ---
 
 ## 2. 目录结构
 
-```
-watson/
-├── package.json          # npm workspaces 根：dev / build / start / db:migrate
-├── .env / .env.example   # 后端配置（不入版本库）
-├── data/watson.db        # 运行时 SQLite 库（+ -wal / -shm）
-│
-├── backend/  (@watson/backend)
-│   └── src/
-│       ├── index.ts              # 进程入口：buildApp() → listen
-│       ├── app.ts                # 组装 Fastify：中间件 + 会话 cookie + 路由 + 静态托管
-│       ├── config/index.ts       # zod 校验的配置装载（从 .env 读，见 §4）
-│       ├── db/
-│       │   ├── schema.ts         # Drizzle 表定义（§3）
-│       │   ├── index.ts          # getDb() / runMigrations()
-│       │   ├── migrate.ts        # 独立迁移入口（npm run db:migrate）
-│       │   └── seed.ts           # 预置分类等种子数据
-│       ├── auth/access-code.ts   # 四字验证码校验
-│       ├── middleware/           # auth 鉴权钩子 + 全局错误处理
-│       ├── routes/               # HTTP 层：cards/categories/chat/daily-reports/preferences/sync/auth
-│       └── services/             # 业务层：schedule / category / chat / daily-report / sync
-│           └── llm/              # provider 抽象（openai-compatible / anthropic）+ tools（见 §6）
-│   └── drizzle/                  # 0000→0011 迁移 SQL
-│
-└── frontend/ (@watson/frontend)
-    └── src/
-        ├── main.tsx / App.tsx        # 入口 + 路由 + Provider
-        ├── pages/                    # LoginPage / HomePage
-        ├── layouts/AppShell.tsx      # 顶栏 + 视图区 + 侧边聊天栏 的整体骨架
-        ├── components/
-        │   ├── ScheduleViews/        # Day/Week/Month/All/Quadrant/Trash 视图 + 时间导航
-        │   ├── calendar/             # 纯函数：网格排布、跨天条、时区换算（可单测）
-        │   ├── cards/                # 卡片：详情/创建弹窗、父卡片、优先级、阶段、完成勾选
-        │   ├── ChatPanel/            # AI 聊天栏
-        │   ├── daily-report/         # 每日报告（目标/结果/复盘）
-        │   ├── search/               # 全局搜索
-        │   ├── dnd/                  # 拖拽到回收站
-        │   ├── TopBar/ + ui/         # 顶栏、通用 UI（Modal/Toast/Drawer…）
-        │   └── auth/PinCodeInput.tsx
-        ├── hooks/                    # useAuth / useCardMutations / useTheme / useVisibilitySync…
-        └── lib/api.ts                # 唯一的后端调用封装
-```
+**Q: 登录验证码是什么？**
+A: 默认 `SHER`。正式部署时可以用环境变量 `WATSON_ACCESS_CODE` 改成你自己的。
+
+**Q: 一定要配 AI 密钥吗？**
+A: 不用。不配的话日程管理全部功能都能用，只是右侧 AI 聊天栏不能聊。
+
+**Q: 支持哪些 AI？**
+A: OpenAI、DeepSeek、Anthropic（Claude），以及任何 OpenAI 兼容接口。在 `.env` 里切换。
+
+**Q: 数据存在哪？**
+A: 本地 `data/watson.db`（SQLite 文件），全部在你自己机器上，不会上传到任何地方。
+
+**Q: 手机上能用吗？**
+A: 能。部署到公网服务器后，手机/平板/电脑用浏览器打开同一个地址即可，无需装 App。
 
 ---
 
@@ -123,7 +112,7 @@ watson/
 
 ## 5. 认证与请求流
 
-- **登录**：前端提交四字验证码 → `POST /api/auth/login` → `verifyAccessCode` 校验（默认 `ANNA`，生产用 `WATSON_ACCESS_CODE` 覆盖）→ 通过则种下 **HttpOnly + SameSite=strict** 的 `watson_session` cookie。登录接口带**限流**（30 次/分钟）。
+- **登录**：前端提交四字验证码 → `POST /api/auth/login` → `verifyAccessCode` 校验（默认 `SHER`，生产用 `WATSON_ACCESS_CODE` 覆盖）→ 通过则种下 **HttpOnly + SameSite=strict** 的 `watson_session` cookie。登录接口带**限流**（30 次/分钟）。
 - **会话**：cookie 里是 base64url 编码的 `{authenticated, authenticatedAt}`；每个请求经 `onRequest` 钩子解码挂到 `request.session`。
 - **鉴权**：`middleware/auth.ts` 全局钩子拦截，除 `/api/health`、`/api/auth/login` 等白名单外都要求已登录。
 - **早期的长随机令牌 + `watson:init` 初始化流程已移除**——只保留验证码登录。
