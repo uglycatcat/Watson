@@ -32,6 +32,14 @@
   font-display: swap;
   src: url("/fonts/SmileySans-Oblique.woff2") format("woff2");
 }
+/* CJK quote: 马善政毛笔楷书 — 苍劲有力（仅含座右铭字形子集） */
+@font-face {
+  font-family: "Ma Shan Zheng";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/MaShanZheng-Quote.ttf") format("truetype");
+}
 
 @theme inline {
   --radius-sm: var(--radius-sm);
@@ -87,6 +95,9 @@
   --font-mono: "JetBrains Mono", "Noto Sans SC", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --font-sans: "Noto Sans SC", "JetBrains Mono", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Smiley Sans", "Noto Sans SC", "JetBrains Mono", sans-serif;
+  /* 座右铭专用：毛笔楷书 */
+  --font-quote: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", serif;
+  --quote-silver: #e8eef6;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -1372,6 +1383,43 @@ h1, h2, h3,
   backdrop-filter: blur(16px) saturate(1.15);
   -webkit-backdrop-filter: blur(16px) saturate(1.15);
   box-shadow: 0 1px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* 导航栏下左侧座右铭 */
+.shell-motto {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 20px 8px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--panel) 40%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.shell-motto__text {
+  margin: 0;
+  max-width: min(100%, 42rem);
+  font-family: var(--font-quote);
+  font-size: clamp(0.95rem, 1.15vw + 0.55rem, 1.2rem);
+  line-height: 1.55;
+  letter-spacing: 0.06em;
+  color: var(--quote-silver);
+  text-shadow:
+    0 0 1px color-mix(in srgb, var(--quote-silver) 55%, transparent),
+    0 1px 0 rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .shell-motto__text {
+    white-space: normal;
+    line-height: 1.45;
+  }
 }
 
 .app-shell-aside {
