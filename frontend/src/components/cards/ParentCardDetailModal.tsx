@@ -462,8 +462,8 @@ export function ParentCardDetailModal({
                   ? !canConfirmDraft || isComposing
                   : isUpdating || isDetaching
               }
-              className={`${actionBtnClass} btn-accent text-white disabled:opacity-40`}
-              style={{ ...actionBtnStyle, background: "var(--accent)", borderColor: "var(--accent)" }}
+              className={`${actionBtnClass} btn-accent disabled:opacity-40`}
+              style={{ ...actionBtnStyle, background: "var(--accent)", borderColor: "var(--accent)", color: "var(--on-accent)" }}
             >
               {isDraft ? (isComposing ? "创建中…" : "确认") : isUpdating ? "保存中…" : "确认"}
             </button>

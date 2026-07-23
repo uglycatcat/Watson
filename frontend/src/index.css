@@ -40,11 +40,9 @@
 }
 
 /*
- * MISSION CONTROL — 深色任务控制台为唯一基线。
- * :root 与 `.console` 采用 CONSOLE（任务控制台）配色基线。
- * `.spacex` 为第二套产品主题（原浅色位，待重塑）。
- * 已无 light/dark 产品语义。
- * NASA 结构 × SpaceX 冷峻 × NVIDIA 绿(仅关键状态)。见 DESIGN.md。
+ * Product themes:
+ *   CONSOLE (.console / :root) — NVIDIA-green mission control HUD
+ *   SPACEX  (.spacex)         — spacex.com black/white monochrome
  */
 :root {
   color-scheme: dark;
@@ -72,6 +70,8 @@
   --accent-dim: #5a8c00;
   --accent-subtle: color-mix(in srgb, var(--accent) 12%, transparent);
   --accent-glow: color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Text/icon color on solid accent fills */
+  --on-accent: #05070a;
 
   /* 遥测状态色 */
   --tele-nominal: #76b900;
@@ -150,6 +150,7 @@
   --accent-hover: #8ed600;
   --accent-active: #5a8c00;
   --accent-subtle: color-mix(in srgb, var(--accent) 14%, transparent);
+  --on-accent: #05070a;
   --muted: #6b7684;
   --fg: #c4ccd6;
   --fg-strong: #f0f4f8;
@@ -175,9 +176,69 @@
   --parent-cover-meta-bg: color-mix(in srgb, var(--accent) 6%, var(--panel));
 }
 
-/* SPACEX theme slot — inherits :root for now; full restyle comes next. */
+/*
+ * SPACEX — visual DNA from SpaceX brand photography/UI:
+ * black·white contrast, cinematic dark field, restrained motion.
+ * Still Watson product UI — not a spacex.com layout clone.
+ */
 .spacex {
-  color-scheme: light;
+  color-scheme: dark;
+
+  --bg: #000000;
+  --bg-raised: #0b0b0b;
+  --panel: #121212;
+  --panel-raised: #1c1c1c;
+  --border: #2c2c2c;
+  --border-strong: #404040;
+  --grid-line: rgba(255, 255, 255, 0.035);
+
+  --fg-strong: #ffffff;
+  --fg: #b8b8b8;
+  --muted: #707070;
+  --muted-dim: #4c4c4c;
+
+  --accent: #ffffff;
+  --accent-hover: #f2f2f2;
+  --accent-active: #d0d0d0;
+  --accent-bright: #ffffff;
+  --accent-dim: #a8a8a8;
+  --accent-subtle: rgba(255, 255, 255, 0.09);
+  --accent-glow: rgba(255, 255, 255, 0.18);
+  --on-accent: #000000;
+
+  --tele-nominal: #cfcfcf;
+  --tele-caution: #c4a35a;
+  --tele-critical: #e5484d;
+  --tele-info: #8f8f8f;
+
+  --font-mono: "JetBrains Mono", "Noto Sans SC", ui-monospace, monospace;
+  --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+
+  /* Keep product radii — avoid marketing-site sharp corners */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.7);
+
+  --quadrant-q1: color-mix(in srgb, var(--tele-critical) 12%, var(--panel));
+  --quadrant-q2: color-mix(in srgb, var(--tele-caution) 12%, var(--panel));
+  --quadrant-q3: color-mix(in srgb, var(--tele-info) 10%, var(--panel));
+  --quadrant-q4: color-mix(in srgb, #ffffff 6%, var(--panel));
+  --stage-not-started-bg: #1a1a1a;
+  --stage-not-started-fg: #8a8a8a;
+  --stage-progress-bg: #222222;
+  --stage-progress-fg: #e6e6e6;
+  --stage-wrapping-bg: color-mix(in srgb, var(--tele-caution) 18%, var(--panel));
+  --stage-wrapping-fg: #e6d5a8;
+  --overdue-wash: color-mix(in srgb, var(--tele-critical) 22%, transparent);
+  --parent-fold-bg: color-mix(in srgb, #ffffff 10%, var(--panel));
+  --parent-fold-line: color-mix(in srgb, #ffffff 55%, var(--fg));
+  --parent-cover-bg: color-mix(in srgb, #ffffff 5%, var(--panel));
+  --parent-cover-meta-bg: color-mix(in srgb, #ffffff 3%, var(--panel));
 }
 
 html {
@@ -267,7 +328,7 @@ h1, h2, h3,
 
 .btn-accent {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn-accent:hover:not(:disabled) {
@@ -354,7 +415,7 @@ h1, h2, h3,
 .nav-time-btn:active:not(:disabled) {
   border-color: var(--accent-active);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   transform: translateY(1px) scale(0.96);
   box-shadow: inset 0 2px 6px color-mix(in srgb, #000 28%, transparent);
 }
@@ -654,7 +715,7 @@ h1, h2, h3,
   padding: 1px 5px;
   border-radius: 999px;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
   font-size: 10px;
   line-height: 1.2;
   pointer-events: none;
@@ -662,7 +723,7 @@ h1, h2, h3,
 .priority-range-ticks { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: var(--muted); }
 .category-inline-action { color: var(--accent); font-size: 10px; }
 .category-inline-action.danger { color: #dc2626; }
-.category-add-button { padding: 0 8px; border-radius: var(--radius-md); background: var(--accent); color: white; font-size: 11px; }
+.category-add-button { padding: 0 8px; border-radius: var(--radius-md); background: var(--accent); color: var(--on-accent); font-size: 11px; }
 
 .quadrant-dot { transition: transform var(--duration-fast), filter var(--duration-fast), opacity var(--duration-fast); transform-box: fill-box; }
 .quadrant-dot.is-hovered { transform: scale(1.3); filter: drop-shadow(0 0 4px var(--accent)); opacity: 1; }
@@ -917,7 +978,7 @@ h1, h2, h3,
 
 @keyframes card-enter { from { opacity: 0; transform: translateY(5px); } }
 @keyframes empty-breathe { 50% { transform: scale(1.035); opacity: .88; } }
-@keyframes trash-accepted { 50% { transform: scale(.86); background: var(--accent); color: white; } }
+@keyframes trash-accepted { 50% { transform: scale(.86); background: var(--accent); color: var(--on-accent); } }
 @keyframes drawer-left-in { from { transform: translateX(-100%); } }
 @keyframes drawer-right-in { from { transform: translateX(100%); } }
 
@@ -1361,15 +1422,20 @@ h1, h2, h3,
   --space-fade: rgba(5, 7, 10, 0.94);
 }
 
-/* ── Login page (NASA / SpaceX-inspired, scoped) ── */
+/* ── Login page (scoped · theme-independent · do not restyle via .spacex/.console) ── */
 .login-page {
+  /* Freeze type tokens so product themes cannot bleed into login */
+  --font-mono: "JetBrains Mono", "Noto Sans SC", ui-monospace, monospace;
+  --font-sans: "Noto Sans SC", "JetBrains Mono", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Smiley Sans", "Noto Sans SC", "JetBrains Mono", sans-serif;
+
   --login-bg: #05070a;
   --login-fg: #f0f4f8;
   --login-muted: rgba(196, 204, 214, 0.6);
   --login-line: rgba(196, 204, 214, 0.16);
   --login-accent: #76b900;
   --login-ink: #0a1628;
-  --login-display: var(--font-display);
+  --login-display: var(--font-mono);
   --login-body: var(--font-sans);
 
   position: relative;
@@ -1556,10 +1622,11 @@ h1, h2, h3,
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--login-display);
+  font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-style: normal;
   font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--login-fg);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--login-line);
@@ -2139,4 +2206,171 @@ h1, h2, h3,
   text-transform: uppercase;
   color: var(--muted);
   pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * SPACEX surfaces — same Watson chrome, SpaceX visual effects
+ * (palette in `.spacex { }` above; CONSOLE untouched)
+ * ═══════════════════════════════════════════════════════════ */
+
+.spacex .font-display,
+.spacex h1,
+.spacex h2,
+.spacex h3,
+.spacex .card-title,
+.spacex .parent-cover-title,
+.spacex .console-modal__title,
+.spacex .day-section-heading h3,
+.spacex .view-title,
+.spacex .empty-state-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Cinematic black field — only inside app shell (login backdrop stays unchanged) */
+.spacex .app-shell .space-backdrop,
+.spacex .app-shell .space-backdrop--night {
+  --space-star: rgba(255, 255, 255, 0.5);
+  --space-star-bright: rgba(255, 255, 255, 0.8);
+  --space-horizon-glow: rgba(255, 255, 255, 0.07);
+  --space-horizon-band: rgba(18, 18, 18, 0.75);
+  --space-horizon-deep: rgba(0, 0, 0, 0.96);
+  --space-horizon-edge: rgba(255, 255, 255, 0.1);
+  --space-vignette: rgba(0, 0, 0, 0.6);
+  --space-fade: rgba(0, 0, 0, 0.94);
+  background:
+    radial-gradient(ellipse 90% 35% at 50% 110%, rgba(255, 255, 255, 0.05), transparent 55%),
+    #000000;
+}
+
+.spacex .app-shell {
+  --space-fade: rgba(0, 0, 0, 0.94);
+}
+
+.spacex .app-shell-topbar {
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.spacex .app-shell-aside {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+.spacex .app-shell .app-main::before {
+  opacity: 0.25;
+}
+
+.spacex .hud-brand-mark {
+  color: var(--fg-strong);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+
+.spacex .hud-telemetry {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.spacex .hud-telemetry__dot {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+}
+
+.spacex .shell-btn:hover:not(:disabled) {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.spacex .segment-indicator {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+/* Cards stay product cards — only recolor interaction */
+.spacex .schedule-card {
+  background-color: var(--panel);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 42%);
+}
+
+.spacex .schedule-card[role="button"]:hover {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    var(--shadow-md) !important;
+}
+
+.spacex .schedule-card[role="button"]:focus-visible {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) !important;
+}
+
+.spacex .card-hover-bar,
+.spacex .parent-cover-topband {
+  background: #ffffff;
+}
+
+.spacex .filter-console {
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.spacex .filter-console::before {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.spacex .console-select__trigger:hover,
+.spacex .console-select__trigger.is-open {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.spacex .quadrant-launch {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.spacex .quadrant-launch:hover {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Modal: high-contrast panel, drop HUD corner theatrics */
+.spacex .console-modal {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: var(--panel-raised);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 72px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    var(--shadow-lg);
+}
+
+.spacex .console-modal__scan {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ffffff 30%, #ffffff 70%, transparent);
+  box-shadow: none;
+  opacity: 0.85;
+}
+
+.spacex .console-modal__corners {
+  display: none;
+}
+
+.spacex .console-modal__eyebrow {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.spacex .console-modal-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.spacex .radar-embed {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: none;
+}
+
+.spacex .btn-accent,
+.spacex .category-add-button,
+.spacex .empty-state button {
+  color: var(--on-accent) !important;
 }

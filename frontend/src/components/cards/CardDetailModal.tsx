@@ -137,7 +137,7 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
           {readOnly && (
             <div className="mb-3 flex gap-2 text-xs">
               {card.status === "completed" && (
-                <span className="px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "#fff" }}>
+                <span className="px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
                   已完成
                 </span>
               )}
@@ -193,8 +193,8 @@ export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalPro
                   type="button"
                   onClick={() => void handleSave()}
                   disabled={isUpdating}
-                  className={`${actionBtnClass} btn-accent text-white disabled:opacity-40`}
-                  style={{ ...actionBtnStyle, background: "var(--accent)", borderColor: "var(--accent)" }}
+                  className={`${actionBtnClass} btn-accent disabled:opacity-40`}
+                  style={{ ...actionBtnStyle, background: "var(--accent)", borderColor: "var(--accent)", color: "var(--on-accent)" }}
                 >
                   {isUpdating ? "保存中…" : "确认"}
                 </button>

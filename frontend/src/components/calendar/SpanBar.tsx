@@ -58,7 +58,7 @@ export function SpanBar({
           : parent
             ? "var(--accent-subtle)"
             : "var(--accent)",
-        color: parent ? "var(--fg)" : "#fff",
+        color: parent ? "var(--fg)" : "var(--on-accent)",
         opacity: 0.95,
         zIndex: 2,
         cursor: draggable ? "grab" : "pointer",

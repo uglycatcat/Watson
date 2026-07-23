@@ -18,8 +18,8 @@ function TrashBadge({ card }: { card: ScheduleCard }) {
   if (card.status === "completed") {
     return (
       <span
-        className="absolute top-2 right-2 w-4 h-4 flex items-center justify-center rounded text-[10px] text-white"
-        style={{ background: "var(--accent)", borderRadius: "var(--radius-sm)" }}
+        className="absolute top-2 right-2 w-4 h-4 flex items-center justify-center rounded text-[10px]"
+        style={{ background: "var(--accent)", color: "var(--on-accent)", borderRadius: "var(--radius-sm)" }}
         title="已完成"
       >
         ✓

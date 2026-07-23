@@ -36,8 +36,8 @@ export function EmptyState({ icon, title, description, action, compact = false }
         <button
           type="button"
           onClick={action.onClick}
-          className="transition-interactive text-sm px-4 py-2 rounded-md text-white font-body"
-          style={{ background: "var(--accent)" }}
+          className="transition-interactive text-sm px-4 py-2 rounded-md font-body"
+          style={{ background: "var(--accent)", color: "var(--on-accent)" }}
         >
           {action.label}
         </button>

@@ -102,7 +102,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                                   : parent
                                     ? "var(--accent-subtle)"
                                     : "var(--accent)",
-                                color: parent ? "var(--fg)" : "#fff",
+                                color: parent ? "var(--fg)" : "var(--on-accent)",
                                 paddingTop: multi ? 3 : 2,
                                 paddingBottom: multi ? 3 : 2,
                                 marginLeft: multi ? -2 : 0,

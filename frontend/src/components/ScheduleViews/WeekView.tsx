@@ -98,7 +98,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                             : parent
                               ? "var(--accent-subtle)"
                               : "var(--accent)",
-                          color: parent ? "var(--fg)" : "#fff",
+                          color: parent ? "var(--fg)" : "var(--on-accent)",
                           cursor: "grab",
                           borderRadius: "var(--radius-sm)",
                           border: parent ? "1px solid var(--border)" : undefined,

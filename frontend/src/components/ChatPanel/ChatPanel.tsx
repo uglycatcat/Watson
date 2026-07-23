@@ -134,7 +134,7 @@ export function ChatPanel() {
             className={`max-w-[90%] p-2.5 transition-interactive font-body ${m.role === "user" ? "ml-auto" : ""}`}
             style={{
               background: m.role === "user" ? "var(--accent)" : "var(--panel-raised)",
-              color: m.role === "user" ? "#05070a" : "var(--fg)",
+              color: m.role === "user" ? "var(--on-accent)" : "var(--fg)",
               border: m.role === "user" ? "none" : "1px solid var(--border)",
               opacity: m.id.startsWith("pending-") ? 0.7 : 1,
               borderRadius: "var(--radius-md)",
@@ -166,7 +166,7 @@ export function ChatPanel() {
           className="px-3 py-2 rounded-md text-sm disabled:opacity-50 transition-interactive shell-btn"
           style={{
             background: "var(--accent)",
-            color: "#05070a",
+            color: "var(--on-accent)",
             border: "1px solid var(--accent)",
             fontFamily: "var(--font-mono)",
             fontWeight: "var(--font-semibold)",

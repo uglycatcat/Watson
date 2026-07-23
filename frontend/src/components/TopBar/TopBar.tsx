@@ -227,7 +227,7 @@ export function TopBar({
                   : dragOverTrash
                     ? "var(--accent-subtle)"
                     : undefined,
-              color: view === "trash" ? "#05070a" : "var(--fg)",
+              color: view === "trash" ? "var(--on-accent)" : "var(--fg)",
               outline: dragOverTrash ? "2px solid var(--accent)" : undefined,
               transform: dragOverTrash ? "scale(1.08)" : undefined,
               boxShadow: dragOverTrash ? "var(--shadow-sm)" : undefined,
@@ -244,7 +244,13 @@ export function TopBar({
             type="button"
             onClick={toggleTheme}
             className={`${TOOL_BTN} px-3`}
-            style={{ ...TOOL_BTN_STYLE, borderColor: "var(--border)", letterSpacing: "0.08em" }}
+            style={{
+              ...TOOL_BTN_STYLE,
+              borderColor: "var(--border)",
+              letterSpacing: "0.08em",
+              width: "6.75rem",
+              justifyContent: "center",
+            }}
             title="切换主题"
           >
             {theme === "console" ? "CONSOLE" : "SPACEX"}
@@ -258,7 +264,7 @@ export function TopBar({
                 ...TOOL_BTN_STYLE,
                 borderColor: chatOpen ? "var(--accent)" : "var(--border)",
                 background: chatOpen ? "var(--accent)" : undefined,
-                color: chatOpen ? "#05070a" : "var(--fg)",
+                color: chatOpen ? "var(--on-accent)" : "var(--fg)",
                 letterSpacing: "0.1em",
                 fontWeight: "var(--font-semibold)",
               }}

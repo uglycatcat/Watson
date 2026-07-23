@@ -198,7 +198,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
                 <circle className="radar-blip__ring" cx={cx} cy={cy} r={r + 5} fill={tone} opacity={0.12} />
                 <circle className="radar-blip__core" cx={cx} cy={cy} r={r} fill={tone} opacity={0.92} filter={`url(#${glowId})`} />
                 {b.cards.length > 1 && (
-                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700} fill="#05070a">
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700} fill="var(--on-accent)">
                     {b.cards.length}
                   </text>
                 )}

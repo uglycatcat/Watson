@@ -33,7 +33,7 @@ export function CompleteCheckbox({ cardId, onComplete, className = "" }: Complet
       style={{
         borderColor: checked ? "var(--accent)" : "var(--border)",
         background: checked ? "var(--accent)" : "var(--bg)",
-        color: checked ? "#fff" : "transparent",
+        color: checked ? "var(--on-accent)" : "transparent",
         animation: animating ? "check-pop 280ms var(--ease-standard)" : undefined,
       }}
       onMouseEnter={(e) => {
