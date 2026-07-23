@@ -451,38 +451,6 @@ h1, h2, h3,
       color-mix(in srgb, var(--grid-line) 80%, transparent) 10px
     );
 }
-/* HUD corner brackets — behind content */
-.schedule-card::before {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.55;
-  background:
-    linear-gradient(var(--border-strong), var(--border-strong)) top left / 11px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) top left / 1px 11px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) top right / 11px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) top right / 1px 11px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) bottom left / 11px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) bottom left / 1px 11px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) bottom right / 11px 1px no-repeat,
-    linear-gradient(var(--border-strong), var(--border-strong)) bottom right / 1px 11px no-repeat;
-  transition: opacity var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
-}
-.schedule-card[role="button"]:hover::before {
-  opacity: 1;
-  filter: drop-shadow(0 0 3px var(--accent-glow));
-  background:
-    linear-gradient(var(--accent), var(--accent)) top left / 12px 1px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) top left / 1px 12px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) top right / 12px 1px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) top right / 1px 12px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) bottom left / 12px 1px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) bottom left / 1px 12px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) bottom right / 12px 1px no-repeat,
-    linear-gradient(var(--accent), var(--accent)) bottom right / 1px 12px no-repeat;
-}
 /* Mission-control panel hover: green edge + glow + slight lift */
 .schedule-card[role="button"]:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border)) !important;
