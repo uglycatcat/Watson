@@ -6,7 +6,16 @@ import { ThemeSync } from "./components/ThemeSync";
 import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Multi-device freshness is handled by useVisibilitySync (/api/sync).
+      // Avoid treating every focus/mount as "must refetch all lists".
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authenticated } = useAuth();

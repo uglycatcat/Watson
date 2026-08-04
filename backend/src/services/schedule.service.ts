@@ -1135,6 +1135,16 @@ export class ScheduleService {
       .all()
       .map((r) => this.joinCategory(r));
   }
+
+  /** Compact fingerprint so clients can detect permanent deletes (no tombstone rows). */
+  cardSyncMeta(): { count: number; maxUpdatedAt: string | null } {
+    const rows = this.db.select({ updatedAt: scheduleCards.updatedAt }).from(scheduleCards).all();
+    let maxUpdatedAt: string | null = null;
+    for (const row of rows) {
+      if (!maxUpdatedAt || row.updatedAt > maxUpdatedAt) maxUpdatedAt = row.updatedAt;
+    }
+    return { count: rows.length, maxUpdatedAt };
+  }
 }
 
 function sortKey(c: ScheduleCardDto): string {

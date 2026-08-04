@@ -2,17 +2,8 @@ import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { Db } from "../db/index.js";
 import { ownerPreferences } from "../db/schema.js";
+import { persistTheme, type ThemeId } from "../lib/theme.js";
 import { nowIso } from "../types.js";
-
-type ThemeId = "console" | "spacex" | "light" | "dark" | "system";
-
-/** Persist only product theme ids; map legacy light/dark/system. */
-function persistTheme(raw?: ThemeId): "console" | "spacex" | undefined {
-  if (!raw) return undefined;
-  if (raw === "spacex" || raw === "light") return "spacex";
-  if (raw === "console" || raw === "dark" || raw === "system") return "console";
-  return undefined;
-}
 
 export async function preferencesRoutes(app: FastifyInstance, db: Db) {
   app.get("/api/preferences", async () => {
@@ -20,7 +11,7 @@ export async function preferencesRoutes(app: FastifyInstance, db: Db) {
     if (!prefs) return { dueSoonDays: 7, theme: "console", timezone: "Asia/Shanghai", updatedAt: nowIso() };
     return {
       dueSoonDays: prefs.dueSoonDays,
-      theme: persistTheme(prefs.theme as ThemeId) ?? "console",
+      theme: persistTheme(prefs.theme) ?? "console",
       timezone: prefs.timezone,
       updatedAt: prefs.updatedAt,
     };
@@ -36,7 +27,7 @@ export async function preferencesRoutes(app: FastifyInstance, db: Db) {
     if (!existing) return reply.status(404).send({ error: "Not found" });
 
     const nextTheme =
-      persistTheme(body.theme) ?? persistTheme(existing.theme as ThemeId) ?? "console";
+      persistTheme(body.theme) ?? persistTheme(existing.theme) ?? "console";
 
     const updated = {
       dueSoonDays: body.dueSoonDays ?? existing.dueSoonDays,

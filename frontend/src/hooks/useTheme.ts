@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { api } from "../lib/api";
+import { useAuth } from "./useAuth";
 
 /** Product themes — not light/dark. CONSOLE = current mission-control look; SPACEX = upcoming. */
 export type Theme = "console" | "spacex";
@@ -14,9 +15,11 @@ function normalizeTheme(raw?: string): Theme {
 
 export function useTheme() {
   const qc = useQueryClient();
+  const { authenticated } = useAuth();
   const { data: prefs } = useQuery({
     queryKey: ["preferences"],
     queryFn: api.getPreferences,
+    enabled: authenticated === true,
   });
 
   const theme = normalizeTheme(prefs?.theme);

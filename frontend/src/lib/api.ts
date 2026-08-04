@@ -93,6 +93,12 @@ export interface OwnerPreferences {
   updatedAt: string;
 }
 
+/** Fingerprint for card set; count drops on permanent delete even with empty upserts. */
+export interface SyncCardMeta {
+  count: number;
+  maxUpdatedAt: string | null;
+}
+
 export interface ScheduleCardInput {
   title: string;
   description?: string | null;
@@ -220,7 +226,11 @@ export const api = {
       serverTime: string;
       cards: ScheduleCard[];
       preferences: OwnerPreferences | null;
-      categories: Category[] | null;
+      categories: Category[];
+      dailyReports: DailyReport[];
+      monthlyReports: MonthlyReport[];
+      /** Detects permanent deletes (and any count/maxUpdatedAt shift) without tombstones. */
+      cardMeta: SyncCardMeta;
     }>(`/api/sync${since ? `?since=${encodeURIComponent(since)}` : ""}`),
   createChatSession: () => request<{ id: string }>("/api/chat/sessions", { method: "POST" }),
   getChatMessages: (sessionId: string) =>
