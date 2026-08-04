@@ -14,7 +14,7 @@ import { buildWeekDays, DEFAULT_TIMEZONE, todayInTz, weekDayLabel } from "../cal
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
-import { setDragCardId } from "../dnd/dragTrash";
+import { clearDragCardId, setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 
 interface WeekViewProps {
@@ -95,6 +95,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
                         type="button"
                         draggable
                         onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
+                        onDragEnd={() => clearDragCardId()}
                         onClick={() => onCardClick(c)}
                         className={`cal-chip relative z-10 w-full text-left truncate px-1 py-0.5 rounded text-[10px] transition-interactive ${parent ? "parent-chip" : ""} ${overdue ? "is-overdue" : ""}`}
                         style={{

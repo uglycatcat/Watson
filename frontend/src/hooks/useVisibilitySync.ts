@@ -13,6 +13,7 @@ export function useVisibilitySync(enabled: boolean) {
         queryClient.refetchQueries({ queryKey: ["cards"], type: "active" }),
         queryClient.refetchQueries({ queryKey: ["categories"], type: "active" }),
         queryClient.refetchQueries({ queryKey: ["daily-report"], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["monthly-report"], type: "active" }),
       ]);
     };
 

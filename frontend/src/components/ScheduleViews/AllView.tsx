@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, isParentCard, type CardStage, type ScheduleCard } from "../../lib/api";
 import { useCardMutations } from "../../hooks/useCardMutations";
@@ -38,6 +38,16 @@ export function AllView({
   const [urgency, setUrgency] = useState("");
   const [stage, setStage] = useState<"" | CardStage>("");
   const [quadrantOpen, setQuadrantOpen] = useState(false);
+  const [scrollEdges, setScrollEdges] = useState({ top: false, bottom: false });
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const updateScrollEdges = () => {
+    const element = scrollRef.current;
+    if (!element) return;
+    setScrollEdges({
+      top: element.scrollTop > 2,
+      bottom: element.scrollTop + element.clientHeight < element.scrollHeight - 2,
+    });
+  };
 
   const { data: catData } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
@@ -96,6 +106,11 @@ export function AllView({
     ["已安排", sections.scheduled],
     ["未安排", sections.unscheduled],
   ] as const;
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(updateScrollEdges);
+    return () => cancelAnimationFrame(frame);
+  }, [cards.length, categoryId, importance, urgency, stage]);
 
   return (
     <div className="h-full flex flex-col min-h-0">
@@ -182,52 +197,60 @@ export function AllView({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-auto">
-        {isLoading ? (
-          <SkeletonCardGrid />
-        ) : filteredEmpty ? (
-          <EmptyState
-            icon="📋"
-            title="还没有日程"
-            description="创建第一条日程，或调整上方筛选条件"
-            action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
-          />
-        ) : (
-          <div className="day-sections">
-            {allSections.map(([title, sectionCards]) => (
-              <section className="day-section" key={title}>
-                <div className="day-section-heading">
-                  <h3>{title}</h3>
-                  <span>{sectionCards.length}</span>
-                </div>
-                {sectionCards.length ? (
-                  <CardGrid
-                    cards={sectionCards}
-                    onCardClick={onCardClick}
-                    onParentClick={onParentClick}
-                    showComplete
-                    draggableCards
-                    sortMode="stageThenCreatedAtDesc"
-                    showHoverBar
-                    overdueCardIds={overdueCardIds}
-                    enableComposeDrop
-                    composeCardLookup={composeLookup}
-                    composeSuccessAnim={composeSuccessAnim}
-                    onComposePair={(a, b) => onComposeDraft?.(a, b)}
-                    onAddToParent={async (childId, parentId) => {
-                      await addChildToParent({ parentId, cardId: childId });
-                    }}
-                    onMergeParents={async (sourceId, targetId) => {
-                      await mergeParents({ targetId, sourceId });
-                    }}
-                  />
-                ) : (
-                  <p className="day-section-empty">本章节暂无日程</p>
-                )}
-              </section>
-            ))}
-          </div>
-        )}
+      <div className="relative flex-1 min-h-0">
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollEdges}
+          className="h-full min-h-0 overflow-auto"
+        >
+          {isLoading ? (
+            <SkeletonCardGrid />
+          ) : filteredEmpty ? (
+            <EmptyState
+              icon="📋"
+              title="还没有日程"
+              description="创建第一条日程，或调整上方筛选条件"
+              action={onCreateClick ? { label: "新建日程", onClick: onCreateClick } : undefined}
+            />
+          ) : (
+            <div className="day-sections">
+              {allSections.map(([title, sectionCards]) => (
+                <section className="day-section" key={title}>
+                  <div className="day-section-heading">
+                    <h3>{title}</h3>
+                    <span>{sectionCards.length}</span>
+                  </div>
+                  {sectionCards.length ? (
+                    <CardGrid
+                      cards={sectionCards}
+                      onCardClick={onCardClick}
+                      onParentClick={onParentClick}
+                      showComplete
+                      draggableCards
+                      sortMode="stageThenCreatedAtDesc"
+                      showHoverBar
+                      overdueCardIds={overdueCardIds}
+                      enableComposeDrop
+                      composeCardLookup={composeLookup}
+                      composeSuccessAnim={composeSuccessAnim}
+                      onComposePair={(a, b) => onComposeDraft?.(a, b)}
+                      onAddToParent={async (childId, parentId) => {
+                        await addChildToParent({ parentId, cardId: childId });
+                      }}
+                      onMergeParents={async (sourceId, targetId) => {
+                        await mergeParents({ targetId, sourceId });
+                      }}
+                    />
+                  ) : (
+                    <p className="day-section-empty">本章节暂无日程</p>
+                  )}
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className={`scroll-fade scroll-fade-top ${scrollEdges.top ? "is-visible" : ""}`} />
+        <span className={`scroll-fade scroll-fade-bottom ${scrollEdges.bottom ? "is-visible" : ""}`} />
       </div>
       {quadrantOpen && <QuadrantView cards={quadrantCards} onClose={() => setQuadrantOpen(false)} />}
     </div>

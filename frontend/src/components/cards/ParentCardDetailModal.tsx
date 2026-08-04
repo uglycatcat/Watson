@@ -19,7 +19,7 @@ import { StageBadge } from "./StageBadge";
 import { CategoryBadge } from "./CategoryBadge";
 import { CompleteCheckbox } from "./CompleteCheckbox";
 import { getCategoryAccent } from "../../lib/categoryColor";
-import { setDragCardId } from "../dnd/dragTrash";
+import { clearDragCardId, setDragCardId } from "../dnd/dragTrash";
 
 interface ParentCardDetailModalProps {
   parentId: string | null;
@@ -369,6 +369,7 @@ export function ParentCardDetailModal({
                           isDraft
                             ? undefined
                             : () => {
+                                clearDragCardId();
                                 if (dragOutsideRef.current) void handleDetach(child.id);
                                 dragOutsideRef.current = false;
                                 setDragOutside(false);

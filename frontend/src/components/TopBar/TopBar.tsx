@@ -64,12 +64,12 @@ export function TopBar({
   const [dropAccepted, setDropAccepted] = useState(false);
   const viewBeforeTrash = useRef<Exclude<ViewMode, "trash">>("day");
 
-  // Live telemetry: count of active cards for the HUD readout.
-  const { data: activeData } = useQuery({
-    queryKey: ["cards", "all", { view: "all" }],
-    queryFn: () => api.getCards({ view: "all" }),
+  // Live telemetry: every active standard (incl. parent members). Shares AppShell cache.
+  const { data: activeStandardsData } = useQuery({
+    queryKey: ["cards", "active-standards"],
+    queryFn: () => api.getCards({ view: "day" }),
   });
-  const activeCount = activeData?.items?.length ?? 0;
+  const activeCount = activeStandardsData?.items?.length ?? 0;
 
   const segmentValue = view === "trash" ? viewBeforeTrash.current : view;
 

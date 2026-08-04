@@ -5,7 +5,7 @@ import { cardDateSubtitle, sortByStageThenCreatedAtDesc } from "../../lib/cardDi
 import { CompleteCheckbox } from "../cards/CompleteCheckbox";
 import { PriorityMeter } from "../cards/PriorityMeter";
 import { getCategoryAccent } from "../../lib/categoryColor";
-import { getDragCardId, isCardDrag, setDragCardId } from "../dnd/dragTrash";
+import { clearDragCardId, getDragCardId, isCardDrag, setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 import { CategoryBadge } from "../cards/CategoryBadge";
 
@@ -182,6 +182,7 @@ export function CardGrid({
     setDragOverId(null);
     setDropMode(null);
     dragSourceIdRef.current = null;
+    clearDragCardId();
 
     if (!source || !mode || mode === "forbid") return;
 
@@ -271,6 +272,7 @@ export function CardGrid({
               onDragEnd={(e) => {
                 e.currentTarget.classList.remove("is-dragging");
                 dragSourceIdRef.current = null;
+                clearDragCardId();
                 setDragOverId(null);
                 setDropMode(null);
               }}

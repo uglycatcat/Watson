@@ -8,12 +8,13 @@ import {
   cardsForDay,
   isMultiDay,
 } from "../calendar/cardPlacement";
-import { buildMonthGrid, DEFAULT_TIMEZONE, monthLabel, todayInTz } from "../calendar/tz";
+import { buildMonthGrid, DEFAULT_TIMEZONE, monthKey, monthLabel, todayInTz } from "../calendar/tz";
 import { DayScheduleDrawer } from "./DayScheduleDrawer";
 import { ViewTimeNav } from "./ViewTimeNav";
 import { SkeletonWeekMonth } from "../ui/Skeleton";
-import { setDragCardId } from "../dnd/dragTrash";
+import { clearDragCardId, setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
+import { MonthlyGraiSheet } from "../monthly-grai/MonthlyGraiSheet";
 
 interface MonthViewProps {
   date: string;
@@ -25,28 +26,52 @@ const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
   const [drawerDate, setDrawerDate] = useState<string | null>(null);
+  const [graiOpen, setGraiOpen] = useState(false);
   const { data: prefs } = useQuery({ queryKey: ["preferences"], queryFn: api.getPreferences });
   const tz = prefs?.timezone ?? DEFAULT_TIMEZONE;
   const today = todayInTz(tz);
+  const month = monthKey(date, tz);
+  const title = monthLabel(date, tz);
 
   const { data, isLoading } = useQuery({
     queryKey: ["cards", "month", date],
     queryFn: () => api.getCards({ view: "month", date }),
   });
 
+  const { data: monthlyReportData } = useQuery({
+    queryKey: ["monthly-report", month],
+    queryFn: () => api.getMonthlyReport(month),
+  });
+
+  const hasMonthlyContent = useMemo(() => {
+    const item = monthlyReportData?.item;
+    if (!item) return false;
+    return Boolean(item.goal.trim() || item.result.trim() || item.analysis.trim());
+  }, [monthlyReportData?.item]);
+
   const cards = data?.items ?? [];
   const weeks = useMemo(() => buildMonthGrid(date, tz, today), [date, tz, today]);
   const multiDayIds = useMemo(() => new Set(cards.filter((c) => isMultiDay(c, tz)).map((c) => c.id)), [cards, tz]);
   const drawerCards = drawerDate ? cardsForDay(cards, drawerDate, tz) : [];
 
+  const openGrai = () => {
+    setDrawerDate(null);
+    setGraiOpen(true);
+  };
+
+  const openDrawer = (day: string) => {
+    setGraiOpen(false);
+    setDrawerDate(day);
+  };
+
   return (
-    <div className="h-full flex flex-col min-h-0 px-1 pb-8">
+    <div className="relative h-full flex flex-col min-h-0 px-1 pb-8">
       <div className="flex items-center gap-2 mb-3 shrink-0 flex-wrap">
         <h2
           className="view-title font-semibold leading-none flex-1"
           style={{ fontSize: "1.5rem", color: "var(--fg-strong)" }}
         >
-          {monthLabel(date, tz)}
+          {title}
         </h2>
         <ViewTimeNav grain="month" anchorDate={date} onDateChange={onDateChange} timezone={tz} />
       </div>
@@ -73,8 +98,8 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                       key={cell.date}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setDrawerDate(cell.date)}
-                      onKeyDown={(e) => e.key === "Enter" && setDrawerDate(cell.date)}
+                      onClick={() => openDrawer(cell.date)}
+                      onKeyDown={(e) => e.key === "Enter" && openDrawer(cell.date)}
                       className="h-full min-h-0 p-1 border cursor-pointer flex flex-col overflow-hidden transition-interactive"
                       style={{
                         background: cell.inMonth ? "var(--panel)" : "var(--bg)",
@@ -96,6 +121,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                               type="button"
                               draggable
                               onDragStart={(e) => setDragCardId(e.dataTransfer, c.id)}
+                              onDragEnd={() => clearDragCardId()}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onCardClick(c);
@@ -136,7 +162,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDrawerDate(cell.date);
+                              openDrawer(cell.date);
                             }}
                             className="relative z-10 text-[10px] text-[var(--accent)]"
                           >
@@ -152,11 +178,27 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
           </div>
         </>
       )}
+      <button
+        type="button"
+        className="monthly-grai-grip"
+        onClick={openGrai}
+        aria-label="打开月度 GRAI 复盘"
+      >
+        <span className="monthly-grai-grip__bar" aria-hidden />
+        GRAI
+        {hasMonthlyContent && <span className="monthly-grai-entry__dot" aria-hidden />}
+      </button>
       <DayScheduleDrawer
         date={drawerDate}
         cards={drawerCards}
         onClose={() => setDrawerDate(null)}
         onCardClick={onCardClick}
+      />
+      <MonthlyGraiSheet
+        open={graiOpen}
+        month={month}
+        monthTitle={title}
+        onClose={() => setGraiOpen(false)}
       />
     </div>
   );

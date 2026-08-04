@@ -1,7 +1,7 @@
 import type { ScheduleCard } from "../../lib/api";
 import { isParentCard } from "../../lib/api";
 import { isOverdueCard } from "../../lib/cardDisplay";
-import { setDragCardId } from "../dnd/dragTrash";
+import { clearDragCardId, setDragCardId } from "../dnd/dragTrash";
 import { StageBadge } from "../cards/StageBadge";
 
 interface SpanBarProps {
@@ -43,6 +43,7 @@ export function SpanBar({
         e.dataTransfer.setDragImage(preview, 24, 20);
         requestAnimationFrame(() => preview.remove());
       }}
+      onDragEnd={() => clearDragCardId()}
       onClick={(e) => {
         e.stopPropagation();
         onClick(card);

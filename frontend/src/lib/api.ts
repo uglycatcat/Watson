@@ -11,6 +11,15 @@ export interface DailyReport {
   updatedAt: string;
 }
 
+export interface MonthlyReport {
+  month: string;
+  goal: string;
+  result: string;
+  analysis: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -193,6 +202,13 @@ export const api = {
     request<{ item: DailyReport | null }>(`/api/daily-reports/${encodeURIComponent(date)}`),
   putDailyReport: (date: string, snapshot: Pick<DailyReport, "goal" | "result" | "analysis">) =>
     request<DailyReport>(`/api/daily-reports/${encodeURIComponent(date)}`, {
+      method: "PUT",
+      body: JSON.stringify(snapshot),
+    }),
+  getMonthlyReport: (month: string) =>
+    request<{ item: MonthlyReport | null }>(`/api/monthly-reports/${encodeURIComponent(month)}`),
+  putMonthlyReport: (month: string, snapshot: Pick<MonthlyReport, "goal" | "result" | "analysis">) =>
+    request<MonthlyReport>(`/api/monthly-reports/${encodeURIComponent(month)}`, {
       method: "PUT",
       body: JSON.stringify(snapshot),
     }),

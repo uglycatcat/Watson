@@ -66,7 +66,7 @@ export function ScheduleViewRouter({
         <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
         </div>
-        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
+        <div className="h-full min-h-0 shrink-0 overflow-hidden" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
           <AllView
             onCardClick={onCardClick}
             onParentClick={onParentClick}

@@ -106,7 +106,7 @@ export function TrashView({ onCardClick, onLeaveTrash }: TrashViewProps) {
   return (
     <div className="h-full flex flex-col min-h-0">
       <h2
-        className="view-title font-semibold leading-none mb-3 shrink-0"
+        className="view-title font-semibold leading-none mt-2 mb-3 shrink-0"
         style={{ fontSize: "1.5rem", color: "var(--fg-strong)" }}
       >
         垃圾箱

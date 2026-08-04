@@ -35,12 +35,23 @@ export function AppShell() {
     queryKey: ["cards", "all", { view: "all" }],
     queryFn: () => api.getCards({ view: "all" }),
   });
+  // Undated view=day returns every active standard, including parent members.
+  const { data: activeStandardsData } = useQuery({
+    queryKey: ["cards", "active-standards"],
+    queryFn: () => api.getCards({ view: "day" }),
+  });
   const { data: trashCardsData } = useQuery({
     queryKey: ["cards", "trash"],
     queryFn: () => api.getCards({ view: "trash" }),
   });
-  const searchCards = [...(allCardsData?.items ?? []), ...(trashCardsData?.items ?? [])];
-  const knownTitles = (allCardsData?.items ?? []).map((c) => c.title);
+  const searchById = new Map<string, ScheduleCard>();
+  for (const c of allCardsData?.items ?? []) searchById.set(c.id, c);
+  for (const c of activeStandardsData?.items ?? []) searchById.set(c.id, c);
+  for (const c of trashCardsData?.items ?? []) searchById.set(c.id, c);
+  const searchCards = [...searchById.values()];
+  const knownTitles = searchCards
+    .filter((c) => c.status === "active")
+    .map((c) => c.title);
 
   useEffect(() => {
     if (anchorDate === prevTodayRef.current) {

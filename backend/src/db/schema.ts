@@ -64,6 +64,19 @@ export const dailyReports = sqliteTable(
   (t) => [index("idx_daily_reports_updated_at").on(t.updatedAt)],
 );
 
+export const monthlyReports = sqliteTable(
+  "monthly_reports",
+  {
+    month: text("month").primaryKey(),
+    goal: text("goal").notNull().default(""),
+    result: text("result").notNull().default(""),
+    analysis: text("analysis").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("idx_monthly_reports_updated_at").on(t.updatedAt)],
+);
+
 export const ownerPreferences = sqliteTable("owner_preferences", {
   id: integer("id").primaryKey(),
   dueSoonDays: integer("due_soon_days").notNull().default(7),
@@ -96,6 +109,7 @@ export const chatMessages = sqliteTable("chat_messages", {
 export type ScheduleCard = typeof scheduleCards.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type DailyReport = typeof dailyReports.$inferSelect;
+export type MonthlyReport = typeof monthlyReports.$inferSelect;
 export type OwnerPreference = typeof ownerPreferences.$inferSelect;
 export type ChatSession = typeof chatSessions.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;

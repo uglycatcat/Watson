@@ -45,6 +45,15 @@ export interface DailyReportDto {
   updatedAt: string;
 }
 
+export interface MonthlyReportDto {
+  month: string;
+  goal: string;
+  result: string;
+  analysis: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function priorityScore(importance: number, urgency: number): number {
   return importance * 11 + urgency;
 }

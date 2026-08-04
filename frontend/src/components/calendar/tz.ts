@@ -25,6 +25,10 @@ export function monthLabel(day: string, tz: string): string {
   return formatInTimeZone(parseDayInTz(day, tz), tz, "yyyy年M月");
 }
 
+export function monthKey(day: string, tz: string): string {
+  return formatInTimeZone(parseDayInTz(day, tz), tz, "yyyy-MM");
+}
+
 export function weekDayLabel(day: string, tz: string): string {
   return formatInTimeZone(parseDayInTz(day, tz), tz, "M/d EEE");
 }
