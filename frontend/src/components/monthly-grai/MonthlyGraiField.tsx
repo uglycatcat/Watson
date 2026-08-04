@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { MarkdownBody } from "../ui/MarkdownBody";
 
 interface MonthlyGraiFieldProps {
   label: string;
@@ -64,9 +64,7 @@ export function MonthlyGraiField({
       </header>
       <div className="monthly-grai-field__body">
         {value ? (
-          <div className="monthly-grai-markdown">
-            <ReactMarkdown>{value}</ReactMarkdown>
-          </div>
+          <MarkdownBody className="monthly-grai-markdown">{value}</MarkdownBody>
         ) : (
           <span className="monthly-grai-empty">点击记录本月…</span>
         )}

@@ -2,6 +2,13 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, gt, ne } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { ownerPreferences, scheduleCards } from "../db/schema.js";
+import {
+  dayBoundsShanghai,
+  dayEndShanghai,
+  dayStartShanghai,
+  dueSoonWindowEndShanghai,
+  rangeForViewShanghai,
+} from "../lib/shanghai-time.js";
 import type { CardKind, CardStage, CardStatus, ScheduleCardDto } from "../types.js";
 import { isCardStage, nowIso, priorityScore } from "../types.js";
 import type { CategoryService } from "./category.service.js";
@@ -963,13 +970,13 @@ export class ScheduleService {
       // All active standards (including parent members). Optional date limits range.
       rows = rows.filter((r) => r.kind === "standard");
       if (filters.date) {
-        const { start, end } = rangeForView("day", filters.date);
+        const { start, end } = rangeForViewShanghai("day", filters.date);
         rows = rows.filter((r) => cardInRange(r, start, end));
       }
     } else {
       rows = rows.filter((r) => r.kind === "parent" || (r.kind === "standard" && r.parentId == null));
       if (filters.date && view !== "all") {
-        const { start, end } = rangeForView(view, filters.date);
+        const { start, end } = rangeForViewShanghai(view, filters.date);
         rows = rows.filter((r) => cardInRange(r, start, end));
       }
     }
@@ -1060,8 +1067,7 @@ export class ScheduleService {
   }
 
   cardsOnDate(dateStr: string): ScheduleCardDto[] {
-    const start = new Date(`${dateStr}T00:00:00`);
-    const end = new Date(`${dateStr}T23:59:59.999`);
+    const { start, end } = dayBoundsShanghai(dateStr);
     return this.db
       .select()
       .from(scheduleCards)
@@ -1072,8 +1078,13 @@ export class ScheduleService {
   }
 
   cardsInRange(startStr: string, endStr: string): ScheduleCardDto[] {
-    const start = new Date(startStr);
-    const end = new Date(endStr);
+    // Date-only args are Shanghai calendar days; full ISO (with Z/offset) stays absolute.
+    const start = /^\d{4}-\d{2}-\d{2}$/.test(startStr)
+      ? dayStartShanghai(startStr)
+      : new Date(startStr);
+    const end = /^\d{4}-\d{2}-\d{2}$/.test(endStr)
+      ? dayEndShanghai(endStr)
+      : new Date(endStr);
     return this.db
       .select()
       .from(scheduleCards)
@@ -1087,9 +1098,7 @@ export class ScheduleService {
     const prefs = this.db.select().from(ownerPreferences).where(eq(ownerPreferences.id, 1)).get();
     const days = prefs?.dueSoonDays ?? 7;
     const now = new Date();
-    const windowEnd = new Date(now);
-    windowEnd.setDate(windowEnd.getDate() + days);
-    windowEnd.setHours(23, 59, 59, 999);
+    const windowEnd = dueSoonWindowEndShanghai(days, now);
 
     return this.db
       .select()
@@ -1139,26 +1148,3 @@ function cardInRange(row: CardRow, start: Date, end: Date): boolean {
   return s <= end && e >= start;
 }
 
-function rangeForView(view: "day" | "week" | "month", dateStr: string) {
-  const d = new Date(dateStr);
-  if (view === "day") {
-    return {
-      start: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
-      end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999),
-    };
-  }
-  if (view === "week") {
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const monday = new Date(d);
-    monday.setDate(d.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return { start: monday, end: sunday };
-  }
-  const start = new Date(d.getFullYear(), d.getMonth(), 1);
-  const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-  return { start, end };
-}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { MarkdownBody } from "../ui/MarkdownBody";
 
 interface DailyReportFieldProps {
   label: string;
@@ -52,9 +52,13 @@ export function DailyReportField({ label, value, status = "idle", onChange, onSa
       }}
     >
       <div className="daily-report-label">{label}</div>
-      <div className="daily-report-markdown">
-        {value ? <ReactMarkdown>{value}</ReactMarkdown> : <span className="daily-report-empty">点击记录…</span>}
-      </div>
+      {value ? (
+        <MarkdownBody className="daily-report-markdown">{value}</MarkdownBody>
+      ) : (
+        <div className="daily-report-markdown">
+          <span className="daily-report-empty">点击记录…</span>
+        </div>
+      )}
       <span className="daily-report-status" role="status">
         {status === "saving" ? "保存中…" : status === "error" ? "未保存，点击重试" : ""}
       </span>
