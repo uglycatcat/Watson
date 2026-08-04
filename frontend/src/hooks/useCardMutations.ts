@@ -2,6 +2,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type ScheduleCardInput } from "../lib/api";
 import { useToast } from "./useToast";
 
+/** Lean hook for per-card complete control — avoids mounting all card mutations N times. */
+export function useCompleteCard() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => api.completeCard(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["cards"] });
+      toast.success("已标记完成");
+    },
+  });
+  return {
+    completeCard: completeMutation.mutateAsync,
+    isCompleting: completeMutation.isPending,
+  };
+}
+
 export function useCardMutations() {
   const qc = useQueryClient();
   const toast = useToast();

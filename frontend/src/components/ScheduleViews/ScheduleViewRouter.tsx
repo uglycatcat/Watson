@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { DayView } from "./DayView";
@@ -9,8 +10,6 @@ import { todayInTz, DEFAULT_TIMEZONE } from "../calendar/tz";
 import type { ScheduleCard } from "../../lib/api";
 
 export type ViewMode = "day" | "week" | "month" | "all" | "trash";
-
-const VIEW_ORDER: ViewMode[] = ["day", "week", "month", "all", "trash"];
 
 interface ScheduleViewRouterProps {
   view: ViewMode;
@@ -25,6 +24,12 @@ interface ScheduleViewRouterProps {
   onLeaveTrash?: () => void;
 }
 
+/**
+ * Mount only the active schedule view.
+ * Previously all five views stayed mounted (translateX carousel), so every AppShell
+ * setState reconciled day+week+month+all+trash card trees — snappy while empty,
+ * laggy once cards filled the hidden panes.
+ */
 export function ScheduleViewRouter({
   view,
   anchorDate,
@@ -38,46 +43,49 @@ export function ScheduleViewRouter({
   onLeaveTrash,
 }: ScheduleViewRouterProps) {
   const setDate = onDateChange ?? (() => {});
-  const activeIndex = VIEW_ORDER.indexOf(view);
+
+  let body: ReactNode;
+  switch (view) {
+    case "day":
+      body = (
+        <DayView
+          date={anchorDate}
+          onDateChange={setDate}
+          onCardClick={onCardClick}
+          onParentClick={onParentIdClick}
+          onCreateClick={onCreateClick}
+        />
+      );
+      break;
+    case "week":
+      body = <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
+      break;
+    case "month":
+      body = <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />;
+      break;
+    case "all":
+      body = (
+        <AllView
+          onCardClick={onCardClick}
+          onParentClick={onParentClick}
+          onCreateClick={onCreateClick}
+          onComposeDraft={onComposeDraft}
+          composeSuccessAnim={composeSuccessAnim}
+        />
+      );
+      break;
+    case "trash":
+      body = <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />;
+      break;
+  }
 
   return (
     <div className="h-full w-full overflow-hidden">
       <div
-        className="h-full flex transition-transform"
-        style={{
-          width: `${VIEW_ORDER.length * 100}%`,
-          transform: `translateX(-${activeIndex * (100 / VIEW_ORDER.length)}%)`,
-          transitionDuration: "var(--duration-normal)",
-          transitionTimingFunction: "var(--ease-standard)",
-        }}
+        key={view}
+        className="h-full w-full schedule-view-pane"
       >
-        <div className="h-full min-h-0 shrink-0 overflow-hidden" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <DayView
-            date={anchorDate}
-            onDateChange={setDate}
-            onCardClick={onCardClick}
-            onParentClick={onParentIdClick}
-            onCreateClick={onCreateClick}
-          />
-        </div>
-        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <WeekView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
-        </div>
-        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <MonthView date={anchorDate} onDateChange={setDate} onCardClick={onCardClick} />
-        </div>
-        <div className="h-full min-h-0 shrink-0 overflow-hidden" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <AllView
-            onCardClick={onCardClick}
-            onParentClick={onParentClick}
-            onCreateClick={onCreateClick}
-            onComposeDraft={onComposeDraft}
-            composeSuccessAnim={composeSuccessAnim}
-          />
-        </div>
-        <div className="h-full shrink-0 overflow-auto" style={{ width: `${100 / VIEW_ORDER.length}%` }}>
-          <TrashView onCardClick={onCardClick} onLeaveTrash={onLeaveTrash} />
-        </div>
+        {body}
       </div>
     </div>
   );

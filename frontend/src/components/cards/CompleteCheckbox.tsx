@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCardMutations } from "../../hooks/useCardMutations";
+import { useCompleteCard } from "../../hooks/useCardMutations";
 
 interface CompleteCheckboxProps {
   cardId: string;
@@ -8,7 +8,7 @@ interface CompleteCheckboxProps {
 }
 
 export function CompleteCheckbox({ cardId, onComplete, className = "" }: CompleteCheckboxProps) {
-  const { completeCard, isCompleting } = useCardMutations();
+  const { completeCard, isCompleting } = useCompleteCard();
   const [checked, setChecked] = useState(false);
   const [animating, setAnimating] = useState(false);
 

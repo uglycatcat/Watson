@@ -1509,6 +1509,14 @@ h1, h2, h3,
 @keyframes drawer-left-in { from { transform: translateX(-100%); } }
 @keyframes drawer-right-in { from { transform: translateX(100%); } }
 
+.schedule-view-pane {
+  animation: schedule-view-in var(--duration-fast, 150ms) var(--ease-standard) both;
+}
+@keyframes schedule-view-in {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 700px) {
   .daily-report-panel { grid-template-columns: 1fr; }
 }
