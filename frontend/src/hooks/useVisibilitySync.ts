@@ -9,13 +9,12 @@ import {
 } from "../lib/api";
 
 /**
- * Heartbeat while the tab stays visible.
- * Spec 007 FR-035 asked for 3s; that interval caused a perceptible remote UI hitch
- * every tick even when sync returned no card changes. Visibility/focus still sync
- * immediately; 60s bounds multi-device drift without janking interactions.
+ * Multi-device freshness target (spec 007 FR-035: ~3s while visible).
+ * Idle ticks use `/api/sync` fingerprints and return `{ unchanged: true }` so
+ * React Query is not touched — no visual or feature change when nothing moved.
  */
-const SYNC_HEARTBEAT_MS = 60_000;
-/** Defer sync if the user interacted this recently (avoid hitch mid-click). */
+const SYNC_INTERVAL_MS = 3000;
+/** Defer background sync briefly after input so a poll never lands mid-click. */
 const INPUT_QUIET_MS = 500;
 
 function categoriesEqual(a: Category[] | undefined, b: Category[]): boolean {
@@ -130,7 +129,7 @@ export function useVisibilitySync(enabled: boolean) {
     const onFocus = () => void apply(true);
 
     void apply(true);
-    const timer = window.setInterval(() => void apply(false), SYNC_HEARTBEAT_MS);
+    const timer = window.setInterval(() => void apply(false), SYNC_INTERVAL_MS);
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onFocus);
     window.addEventListener("pointerdown", markInput, true);

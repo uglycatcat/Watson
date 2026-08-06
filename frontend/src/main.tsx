@@ -1,8 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-/* Body weight only on boot — 500/700 synthesize or load later via CSS if needed.
-   Full CJK 400/500/700 triples remote first-paint transfer (~3MB). */
+/* Full CJK coverage via unicode-range subsets (local single-file was incomplete → system fallback) */
 import "@fontsource/noto-sans-sc/chinese-simplified-400.css";
+import "@fontsource/noto-sans-sc/chinese-simplified-500.css";
+import "@fontsource/noto-sans-sc/chinese-simplified-700.css";
 import App from "./App";
 import "./index.css";
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isParentCard, type ScheduleCard } from "../lib/api";
 import { api } from "../lib/api";
@@ -31,15 +31,11 @@ export function AppShell() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  const searchOpen = searchFocused || searchQuery.trim().length > 0;
-
-  // Search index: only fetch while the user is searching (cuts 2 eager remote GETs on boot).
-  // ACTIVE telemetry stays on TopBar via shared ["cards","active-standards"].
   const { data: allCardsData } = useQuery({
     queryKey: ["cards", "all", { view: "all" }],
     queryFn: () => api.getCards({ view: "all" }),
-    enabled: searchOpen || !!composeDraft,
   });
+  // Undated view=day returns every active standard, including parent members.
   const { data: activeStandardsData } = useQuery({
     queryKey: ["cards", "active-standards"],
     queryFn: () => api.getCards({ view: "day" }),
@@ -47,19 +43,15 @@ export function AppShell() {
   const { data: trashCardsData } = useQuery({
     queryKey: ["cards", "trash"],
     queryFn: () => api.getCards({ view: "trash" }),
-    enabled: searchOpen,
   });
-  const searchCards = useMemo(() => {
-    const searchById = new Map<string, ScheduleCard>();
-    for (const c of allCardsData?.items ?? []) searchById.set(c.id, c);
-    for (const c of activeStandardsData?.items ?? []) searchById.set(c.id, c);
-    for (const c of trashCardsData?.items ?? []) searchById.set(c.id, c);
-    return [...searchById.values()];
-  }, [allCardsData?.items, activeStandardsData?.items, trashCardsData?.items]);
-  const knownTitles = useMemo(
-    () => searchCards.filter((c) => c.status === "active").map((c) => c.title),
-    [searchCards],
-  );
+  const searchById = new Map<string, ScheduleCard>();
+  for (const c of allCardsData?.items ?? []) searchById.set(c.id, c);
+  for (const c of activeStandardsData?.items ?? []) searchById.set(c.id, c);
+  for (const c of trashCardsData?.items ?? []) searchById.set(c.id, c);
+  const searchCards = [...searchById.values()];
+  const knownTitles = searchCards
+    .filter((c) => c.status === "active")
+    .map((c) => c.title);
 
   useEffect(() => {
     if (anchorDate === prevTodayRef.current) {
