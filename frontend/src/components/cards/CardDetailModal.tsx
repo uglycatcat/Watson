@@ -30,7 +30,11 @@ function formatTime(iso: string | null) {
 
 export function CardDetailModal({ card, onClose, onUpdated }: CardDetailModalProps) {
   const { deleteCard, updateCard, isDeleting, isUpdating } = useCardMutations();
-  const { data: catData } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
+  const { data: catData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.getCategories,
+    enabled: !!card,
+  });
   const categories = catData?.items ?? [];
 
   const [values, setValues] = useState<CardFormValues | null>(null);

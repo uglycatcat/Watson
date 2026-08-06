@@ -221,17 +221,27 @@ export const api = {
   getPreferences: () => request<OwnerPreferences>("/api/preferences"),
   patchPreferences: (body: Partial<OwnerPreferences>) =>
     request<OwnerPreferences>("/api/preferences", { method: "PATCH", body: JSON.stringify(body) }),
-  sync: (since?: string) =>
-    request<{
+  sync: (opts?: { since?: string; cardMeta?: SyncCardMeta; catSig?: string }) => {
+    const q = new URLSearchParams();
+    if (opts?.since) q.set("since", opts.since);
+    if (opts?.cardMeta) {
+      q.set("cardCount", String(opts.cardMeta.count));
+      q.set("cardMax", opts.cardMeta.maxUpdatedAt ?? "");
+    }
+    if (opts?.catSig) q.set("catSig", opts.catSig);
+    const qs = q.toString();
+    return request<{
+      unchanged?: boolean;
       serverTime: string;
-      cards: ScheduleCard[];
-      preferences: OwnerPreferences | null;
-      categories: Category[];
-      dailyReports: DailyReport[];
-      monthlyReports: MonthlyReport[];
-      /** Detects permanent deletes (and any count/maxUpdatedAt shift) without tombstones. */
-      cardMeta: SyncCardMeta;
-    }>(`/api/sync${since ? `?since=${encodeURIComponent(since)}` : ""}`),
+      cards?: ScheduleCard[];
+      preferences?: OwnerPreferences | null;
+      categories?: Category[];
+      dailyReports?: DailyReport[];
+      monthlyReports?: MonthlyReport[];
+      cardMeta?: SyncCardMeta;
+      catSig?: string;
+    }>(`/api/sync${qs ? `?${qs}` : ""}`);
+  },
   createChatSession: () => request<{ id: string }>("/api/chat/sessions", { method: "POST" }),
   getChatMessages: (sessionId: string) =>
     request<{ items: ChatMessage[] }>(`/api/chat/sessions/${sessionId}/messages`),

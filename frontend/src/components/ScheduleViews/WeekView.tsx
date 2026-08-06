@@ -6,8 +6,9 @@ import {
   MAX_CHIPS_PER_CELL,
   buildSpanSegments,
   cardsForDay,
+  indexCardsByDay,
   isMultiDay,
-  singleDayCardsForCell,
+  singleDayCardsFromIndex,
 } from "../calendar/cardPlacement";
 import { LANE_HEIGHT, SpanBar } from "../calendar/SpanBar";
 import { buildWeekDays, DEFAULT_TIMEZONE, todayInTz, weekDayLabel } from "../calendar/weekGrid";
@@ -41,6 +42,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
   const weeks = useMemo(() => [{ days }], [days]);
   const segments = useMemo(() => buildSpanSegments(cards, weeks, tz), [cards, weeks, tz]);
   const multiDayIds = useMemo(() => new Set(cards.filter((c) => isMultiDay(c, tz)).map((c) => c.id)), [cards, tz]);
+  const cardsByDay = useMemo(() => indexCardsByDay(cards, tz), [cards, tz]);
   const drawerCards = drawerDate ? cardsForDay(cards, drawerDate, tz) : [];
 
   const maxLane = segments.reduce((m, s) => Math.max(m, s.lane), -1);
@@ -62,7 +64,7 @@ export function WeekView({ date, onDateChange, onCardClick }: WeekViewProps) {
       ) : (
         <div className="relative flex-1 min-h-0 grid grid-cols-7 gap-1.5 px-0.5 pt-3 pb-2 overflow-hidden">
           {days.map((cell) => {
-            const chipCards = singleDayCardsForCell(cards, cell.date, tz, multiDayIds);
+            const chipCards = singleDayCardsFromIndex(cardsByDay, cell.date, multiDayIds);
             const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
             const extra = chipCards.length - visible.length;
             const hasSpan = segments.some((s) => cardDayInSegment(s, cell.date, days));

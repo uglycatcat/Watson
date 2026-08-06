@@ -129,6 +129,28 @@ export function singleDayCardsForCell(
     .sort(compareCards);
 }
 
+/** Build day → cards once; week/month cells then O(1) lookup instead of O(cells×cards). */
+export function indexCardsByDay(cards: ScheduleCard[], tz: string): Map<string, ScheduleCard[]> {
+  const map = new Map<string, ScheduleCard[]>();
+  for (const card of cards) {
+    for (const day of cardDayKeys(card, tz)) {
+      const list = map.get(day);
+      if (list) list.push(card);
+      else map.set(day, [card]);
+    }
+  }
+  for (const list of map.values()) list.sort(compareCards);
+  return map;
+}
+
+export function singleDayCardsFromIndex(
+  byDay: Map<string, ScheduleCard[]>,
+  day: string,
+  multiDayIds: Set<string>,
+): ScheduleCard[] {
+  return (byDay.get(day) ?? []).filter((c) => !multiDayIds.has(c.id));
+}
+
 export function allCardsForCell(
   cards: ScheduleCard[],
   day: string,
@@ -137,4 +159,8 @@ export function allCardsForCell(
   return cards
     .filter((c) => cardDayKeys(c, tz).includes(day))
     .sort(compareCards);
+}
+
+export function allCardsFromIndex(byDay: Map<string, ScheduleCard[]>, day: string): ScheduleCard[] {
+  return byDay.get(day) ?? [];
 }

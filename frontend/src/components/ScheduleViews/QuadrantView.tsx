@@ -49,7 +49,6 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
   const ref = useRef<HTMLDivElement>(null);
   const uid = useId().replace(/:/g, "");
   const clipId = `clip-${uid}`;
-  const glowId = `glow-${uid}`;
   const scanId = `scan-${uid}`;
   const [hover, setHover] = useState<Bucket | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -112,13 +111,6 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
         <clipPath id={clipId}>
           <rect x={PAD} y={PAD} width={PLOT} height={PLOT} rx={14} ry={14} />
         </clipPath>
-        <filter id={glowId} x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="3.4" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
         <radialGradient id={scanId} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.10" />
           <stop offset="70%" stopColor="var(--accent)" stopOpacity="0.03" />
@@ -196,7 +188,7 @@ export function QuadrantView({ cards, onClose, variant = "overlay", onHoverCardI
               <circle className="radar-blip__hit" cx={cx} cy={cy} r={hitR} />
               <g className="radar-blip__viz">
                 <circle className="radar-blip__ring" cx={cx} cy={cy} r={r + 5} fill={tone} opacity={0.12} />
-                <circle className="radar-blip__core" cx={cx} cy={cy} r={r} fill={tone} opacity={0.92} filter={`url(#${glowId})`} />
+                <circle className="radar-blip__core" cx={cx} cy={cy} r={r} fill={tone} opacity={0.92} />
                 {b.cards.length > 1 && (
                   <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700} fill="var(--on-accent)">
                     {b.cards.length}

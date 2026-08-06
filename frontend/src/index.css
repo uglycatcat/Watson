@@ -502,32 +502,13 @@ h1, h2, h3,
   position: relative;
   isolation: isolate;
   animation: card-enter var(--duration-slow) var(--ease-standard) both;
-  /* Instrument panel fill — kept soft so inline overdue washes still read */
+  /* Single soft fill — multi-layer grid was expensive with many cards on remote GPUs */
   background-color: var(--panel);
   background-image:
     linear-gradient(
       165deg,
       color-mix(in srgb, var(--accent) 8%, transparent) 0%,
-      transparent 38%
-    ),
-    linear-gradient(
-      15deg,
-      color-mix(in srgb, var(--tele-info) 5%, transparent) 0%,
-      transparent 45%
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 9px,
-      color-mix(in srgb, var(--grid-line) 80%, transparent) 9px,
-      color-mix(in srgb, var(--grid-line) 80%, transparent) 10px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 9px,
-      color-mix(in srgb, var(--grid-line) 80%, transparent) 9px,
-      color-mix(in srgb, var(--grid-line) 80%, transparent) 10px
+      transparent 42%
     );
 }
 /* Mission-control panel hover: green edge + glow + slight lift */
@@ -661,9 +642,7 @@ h1, h2, h3,
   min-height: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
   padding: 10px;
   transition: border-color var(--duration-normal), box-shadow var(--duration-normal), background-color var(--duration-normal);
 }
@@ -1549,9 +1528,7 @@ h1, h2, h3,
 .console-modal-backdrop {
   background:
     radial-gradient(ellipse 70% 50% at 50% 40%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%),
-    rgba(2, 4, 8, 0.72);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+    rgba(2, 4, 8, 0.82);
 }
 
 .console-modal {
@@ -1897,15 +1874,27 @@ h1, h2, h3,
   50% { opacity: 1; transform: scaleY(1.03); }
 }
 
+/* Pause starfield while tab is hidden (see SpaceBackdrop). */
+.space-backdrop-paused .space-backdrop__stars,
+.space-backdrop-paused .space-backdrop__horizon {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .space-backdrop__stars,
+  .space-backdrop__horizon {
+    animation: none !important;
+  }
+}
+
 /* Schedule shell sits on the shared backdrop */
 .app-shell {
   background: transparent;
 }
 
 .app-shell-topbar {
-  background: color-mix(in srgb, var(--panel) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  /* No backdrop-filter: remote GPUs hitch when blur sits over animated stars. */
   box-shadow: 0 1px 0 0 color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
@@ -1940,9 +1929,7 @@ h1, h2, h3,
 }
 
 .app-shell-aside {
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  backdrop-filter: blur(16px) saturate(1.08);
-  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
 }
 
 .app-shell .app-main {
@@ -2752,9 +2739,7 @@ h1, h2, h3,
   border: 1px solid var(--border-strong);
   background:
     radial-gradient(ellipse 100% 70% at 50% 40%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 65%),
-    color-mix(in srgb, var(--panel) 82%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    color-mix(in srgb, var(--panel) 94%, transparent);
   box-shadow:
     inset 0 0 0 1px var(--accent-subtle),
     inset 0 2px 18px -8px var(--accent-glow),

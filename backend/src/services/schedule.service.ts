@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, gt, ne } from "drizzle-orm";
+import { and, asc, eq, gt, ne, sql } from "drizzle-orm";
 import type { Db } from "../db/index.js";
 import { ownerPreferences, scheduleCards } from "../db/schema.js";
 import {
@@ -240,8 +240,12 @@ export class ScheduleService {
     };
   }
 
-  private joinCategory(row: CardRow, extras: DtoExtras = {}): ScheduleCardDto {
-    const cat = this.categoryService.findById(row.categoryId);
+  private joinCategory(
+    row: CardRow,
+    extras: DtoExtras = {},
+    catById?: Map<string, { name: string; color: string }>,
+  ): ScheduleCardDto {
+    const cat = catById?.get(row.categoryId) ?? this.categoryService.findById(row.categoryId);
     return this.toDto(row, cat?.name ?? "未知", cat?.color ?? "#90A4AE", extras);
   }
 
@@ -953,13 +957,16 @@ export class ScheduleService {
   listAll(filters: CardQueryFilters = {}): ScheduleCardDto[] {
     let rows = this.db.select().from(scheduleCards).all();
     const view = filters.view ?? "all";
+    const catById = new Map(
+      this.categoryService.list().map((c) => [c.id, { name: c.name, color: c.color }] as const),
+    );
 
     if (view === "trash") {
       rows = rows.filter(
         (r) => r.kind === "standard" && (r.status === "completed" || r.status === "deleted"),
       );
       const dtos = rows.map((r) =>
-        this.joinCategory(r, { lastParentTitle: r.lastParentTitle }),
+        this.joinCategory(r, { lastParentTitle: r.lastParentTitle }, catById),
       );
       return dtos.sort((a, b) => (b.trashedAt ?? "").localeCompare(a.trashedAt ?? ""));
     }
@@ -1036,13 +1043,13 @@ export class ScheduleService {
 
     const dtos = rows.map((r) => {
       if (r.kind === "parent") {
-        return this.joinCategory(r, this.parentListExtras(r.id, r.timeManual));
+        return this.joinCategory(r, this.parentListExtras(r.id, r.timeManual), catById);
       }
       const extras: DtoExtras = {};
       if (r.parentId) {
         extras.parentTitle = parentTitleById.get(r.parentId) ?? null;
       }
-      return this.joinCategory(r, extras);
+      return this.joinCategory(r, extras, catById);
     });
 
     if (filters.sort === "priority") {
@@ -1138,12 +1145,14 @@ export class ScheduleService {
 
   /** Compact fingerprint so clients can detect permanent deletes (no tombstone rows). */
   cardSyncMeta(): { count: number; maxUpdatedAt: string | null } {
-    const rows = this.db.select({ updatedAt: scheduleCards.updatedAt }).from(scheduleCards).all();
-    let maxUpdatedAt: string | null = null;
-    for (const row of rows) {
-      if (!maxUpdatedAt || row.updatedAt > maxUpdatedAt) maxUpdatedAt = row.updatedAt;
-    }
-    return { count: rows.length, maxUpdatedAt };
+    const row = this.db
+      .select({
+        count: sql<number>`count(*)`.mapWith(Number),
+        maxUpdatedAt: sql<string | null>`max(${scheduleCards.updatedAt})`,
+      })
+      .from(scheduleCards)
+      .get();
+    return { count: row?.count ?? 0, maxUpdatedAt: row?.maxUpdatedAt ?? null };
   }
 }
 

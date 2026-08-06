@@ -4,8 +4,9 @@ import { api, isParentCard, type ScheduleCard } from "../../lib/api";
 import { isOverdueCard } from "../../lib/cardDisplay";
 import {
   MAX_CHIPS_PER_CELL,
-  allCardsForCell,
+  allCardsFromIndex,
   cardsForDay,
+  indexCardsByDay,
   isMultiDay,
 } from "../calendar/cardPlacement";
 import { buildMonthGrid, DEFAULT_TIMEZONE, monthKey, monthLabel, todayInTz } from "../calendar/tz";
@@ -52,6 +53,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
   const cards = data?.items ?? [];
   const weeks = useMemo(() => buildMonthGrid(date, tz, today), [date, tz, today]);
   const multiDayIds = useMemo(() => new Set(cards.filter((c) => isMultiDay(c, tz)).map((c) => c.id)), [cards, tz]);
+  const cardsByDay = useMemo(() => indexCardsByDay(cards, tz), [cards, tz]);
   const drawerCards = drawerDate ? cardsForDay(cards, drawerDate, tz) : [];
 
   const openGrai = () => {
@@ -90,7 +92,7 @@ export function MonthView({ date, onDateChange, onCardClick }: MonthViewProps) {
             {weeks.map((week, wi) => (
               <div key={wi} className="grid grid-cols-7 gap-px flex-1 min-h-0">
                 {week.days.map((cell) => {
-                  const chipCards = allCardsForCell(cards, cell.date, tz);
+                  const chipCards = allCardsFromIndex(cardsByDay, cell.date);
                   const visible = chipCards.slice(0, MAX_CHIPS_PER_CELL);
                   const extra = chipCards.length - visible.length;
                   return (

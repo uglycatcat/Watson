@@ -8,8 +8,15 @@ import {
   type SyncCardMeta,
 } from "../lib/api";
 
-/** Multi-device freshness target (spec 007 FR-035). */
-const SYNC_INTERVAL_MS = 3000;
+/**
+ * Heartbeat while the tab stays visible.
+ * Spec 007 FR-035 asked for 3s; that interval caused a perceptible remote UI hitch
+ * every tick even when sync returned no card changes. Visibility/focus still sync
+ * immediately; 60s bounds multi-device drift without janking interactions.
+ */
+const SYNC_HEARTBEAT_MS = 60_000;
+/** Defer sync if the user interacted this recently (avoid hitch mid-click). */
+const INPUT_QUIET_MS = 500;
 
 function categoriesEqual(a: Category[] | undefined, b: Category[]): boolean {
   if (!a || a.length !== b.length) return false;
@@ -29,33 +36,64 @@ function cardMetaChanged(prev: SyncCardMeta | null, next: SyncCardMeta): boolean
 }
 
 /**
- * Multi-device sync via lightweight GET /api/sync?since=.
- * Idle tabs issue one cheap poll every 3s; list/detail queries refetch only when
- * the payload shows real changes (not a full cards/categories/reports refetch storm).
+ * Multi-device sync via GET /api/sync.
+ * Idle path: tiny `{ unchanged: true }` when fingerprints match — no React Query writes.
  */
 export function useVisibilitySync(enabled: boolean) {
   const queryClient = useQueryClient();
-  /** null until aligned with serverTime (avoids client-clock skew gaps). */
   const sinceRef = useRef<string | null>(null);
   const cardMetaRef = useRef<SyncCardMeta | null>(null);
+  const catSigRef = useRef<string | null>(null);
   const inFlightRef = useRef(false);
+  const lastInputRef = useRef(0);
+  const deferTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const apply = async () => {
+    const markInput = () => {
+      lastInputRef.current = Date.now();
+    };
+
+    const apply = async (force = false) => {
       if (document.visibilityState !== "visible") return;
       if (inFlightRef.current) return;
+
+      if (!force && Date.now() - lastInputRef.current < INPUT_QUIET_MS) {
+        if (deferTimerRef.current != null) window.clearTimeout(deferTimerRef.current);
+        deferTimerRef.current = window.setTimeout(() => {
+          deferTimerRef.current = null;
+          void apply(false);
+        }, INPUT_QUIET_MS);
+        return;
+      }
+
       inFlightRef.current = true;
       try {
         const aligning = sinceRef.current === null;
-        const data = await api.sync(aligning ? undefined : sinceRef.current!);
+        const data = await api.sync(
+          aligning
+            ? undefined
+            : {
+                since: sinceRef.current!,
+                cardMeta: cardMetaRef.current ?? undefined,
+                catSig: catSigRef.current ?? undefined,
+              },
+        );
         sinceRef.current = data.serverTime;
 
-        if (!aligning && (data.cards.length > 0 || cardMetaChanged(cardMetaRef.current, data.cardMeta))) {
-          void queryClient.invalidateQueries({ queryKey: ["cards"] });
+        // Nothing changed — do not touch React Query (this is the idle hot path).
+        if (data.unchanged) return;
+
+        if (
+          !aligning &&
+          data.cardMeta &&
+          ((data.cards?.length ?? 0) > 0 || cardMetaChanged(cardMetaRef.current, data.cardMeta))
+        ) {
+          void queryClient.invalidateQueries({ queryKey: ["cards"], type: "active" });
         }
-        cardMetaRef.current = data.cardMeta;
+        if (data.cardMeta) cardMetaRef.current = data.cardMeta;
+        if (data.catSig) catSigRef.current = data.catSig;
 
         if (data.preferences) {
           queryClient.setQueryData(["preferences"], data.preferences);
@@ -87,16 +125,24 @@ export function useVisibilitySync(enabled: boolean) {
     };
 
     const onVisible = () => {
-      if (document.visibilityState === "visible") void apply();
+      if (document.visibilityState === "visible") void apply(true);
     };
+    const onFocus = () => void apply(true);
 
-    // First tick aligns serverTime/cardMeta without invalidating (initial queries already loaded).
-    void apply();
-    const timer = window.setInterval(() => void apply(), SYNC_INTERVAL_MS);
+    void apply(true);
+    const timer = window.setInterval(() => void apply(false), SYNC_HEARTBEAT_MS);
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pointerdown", markInput, true);
+    window.addEventListener("keydown", markInput, true);
+
     return () => {
       window.clearInterval(timer);
+      if (deferTimerRef.current != null) window.clearTimeout(deferTimerRef.current);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pointerdown", markInput, true);
+      window.removeEventListener("keydown", markInput, true);
     };
   }, [enabled, queryClient]);
 }
