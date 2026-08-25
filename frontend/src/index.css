@@ -624,9 +624,10 @@ h1, h2, h3,
   opacity: 1;
   transform: scaleX(1);
 }
-/* Parent: keep static topband; hover bar expands flush beneath it */
+/* Parent: keep static topband; hover bar expands flush beneath it, 2px thicker upward */
 .parent-cover-card .card-hover-bar {
-  top: 3px;
+  top: 1px;
+  height: 5px;
   border-radius: 0;
   z-index: 2;
 }

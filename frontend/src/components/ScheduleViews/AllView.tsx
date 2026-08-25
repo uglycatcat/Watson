@@ -129,7 +129,7 @@ export function AllView({
           </span>
           <h2
             className="view-title font-semibold leading-none"
-            style={{ fontSize: "1.5rem", color: "var(--fg-strong)", marginTop: "4px" }}
+            style={{ fontSize: "1.5rem", color: "var(--fg-strong)", marginTop: "6px" }}
           >
             全部视图
           </h2>
